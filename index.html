@@ -1002,6 +1002,8 @@
                 <option value="在读">在读</option>
                 <option value="想读">想读</option>
                 <option value="听过">听过</option>
+                <option value="在听">在听</option>
+                <option value="未听">未听（想听／尚未设置）</option>
                 <option value="想听">想听</option>
               </select>
             </label>
@@ -1028,6 +1030,7 @@
           </div>
 
           <div class="gallery-wrap">
+            <section id="collectionTools" aria-label="分类与个人榜单"></section>
             <div class="gallery" id="gallery"></div>
           </div>
         </section>
@@ -1115,6 +1118,7 @@
                 <option>想读</option>
                 <option>读过</option>
                 <option>听过</option>
+                <option>在听</option>
                 <option>想听</option>
               </select>
             </div>
@@ -1129,6 +1133,16 @@
             <div class="field full">
               <label for="posterField">封面 URL</label>
               <input id="posterField" name="poster" placeholder="https://..." />
+            </div>
+            <div class="field">
+              <label for="languagesField">语言（可多选、自定义）</label>
+              <input id="languagesField" list="languageSuggestions" placeholder="普通话, 粤语；用逗号分隔" />
+              <datalist id="languageSuggestions"><option>普通话</option><option>粤语</option><option>英语</option><option>日语</option><option>韩语</option><option>闽南语</option><option>纯音乐</option></datalist>
+            </div>
+            <div class="field">
+              <label for="genresField">音乐类型（专辑，可多选、自定义）</label>
+              <input id="genresField" list="genreSuggestions" placeholder="摇滚, 嘻哈；用逗号分隔" />
+              <datalist id="genreSuggestions"><option>摇滚</option><option>流行</option><option>嘻哈</option><option>爵士</option><option>电子</option><option>民谣</option><option>古典</option><option>R&B</option><option>实验</option></datalist>
             </div>
             <div class="field full">
               <label for="ratingField">我的评分</label>
@@ -1561,6 +1575,8 @@
           creator: String(item.creator || ""),
           year: item.year || "",
           rating: 0,
+          languages: splitLabels(item.languages),
+          genres: splitLabels(item.genres),
           poster: String(item.poster || ""),
           tags: Array.isArray(item.tags) ? item.tags : [],
           comment: "",
@@ -1736,6 +1752,7 @@
           source: "Apple", sourceId: album.collectionId, category: "专辑",
           title: album.collectionName, creator: album.artistName,
           year: String(album.releaseDate || "").slice(0, 4),
+          genres: album.primaryGenreName ? [album.primaryGenreName] : [],
           poster: album.artworkUrl100 || "",
           sourceUrl: album.collectionViewUrl || ""
         }));
@@ -1941,6 +1958,7 @@
 
       function saveItems() {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(state.items));
+        saveRankings();
       }
 
       function clampScore(value, fallback = 0) {
@@ -2138,7 +2156,10 @@
         const query = normalizeText(state.search);
         return state.items
           .filter(item => state.selectedCategory === "all" || item.category === state.selectedCategory)
-          .filter(item => state.status === "all" || item.status === state.status)
+          .filter(item => state.status === "all" || (state.status === "未听"
+            ? item.category === "专辑" && (!item.status || item.status === "想听" || item.status === "未听")
+            : item.status === state.status))
+          .filter(matchesCollectionFilters)
           .filter(item => {
             if (!query) return true;
             return [
@@ -2220,6 +2241,7 @@
       }
 
       function renderGallery() {
+        if (document.querySelector("#bulkRows")) renderBulkTools();
         const items = getFilteredItems();
         el.gallery.className = `gallery ${state.view}`;
         el.resultTitle.textContent = state.selectedCategory === "all" ? "全部作品" : state.selectedCategory;
@@ -2269,6 +2291,7 @@
       function render() {
         renderCategoryList();
         renderStats();
+        renderCollectionTools();
         renderGallery();
       }
 
@@ -2299,6 +2322,8 @@
         el.statusField.value = item.status || "想看";
         el.creatorField.value = item.creator || "";
         el.yearField.value = item.year || "";
+        document.querySelector("#languagesField").value = splitLabels(item.languages).join(", ");
+        document.querySelector("#genresField").value = splitLabels(item.genres).join(", ");
         el.posterField.value = item.poster || "";
         el.ratingField.value = Number(item.rating || 0);
         el.ratingValue.textContent = Number(item.rating || 0).toFixed(1);
@@ -2331,6 +2356,8 @@
           status: el.statusField.value,
           creator: el.creatorField.value.trim(),
           year: el.yearField.value.trim(),
+          languages: splitLabels(document.querySelector("#languagesField").value),
+          genres: splitLabels(document.querySelector("#genresField").value),
           rating: Number(el.ratingField.value || 0),
           aspectScores: {
             ...(state.items.find(item => item.id === state.editingId)?.aspectScores || {}),
@@ -2367,7 +2394,7 @@
       }
 
       function exportData() {
-        const blob = new Blob([JSON.stringify(state.items, null, 2)], { type: "application/json" });
+        const blob = new Blob([JSON.stringify({ version: 3, items: state.items, rankings }, null, 2)], { type: "application/json" });
         const url = URL.createObjectURL(blob);
         const link = document.createElement("a");
         link.href = url;
@@ -2379,8 +2406,11 @@
       async function importData(file) {
         const text = await file.text();
         const parsed = JSON.parse(text);
-        if (!Array.isArray(parsed)) throw new Error("JSON 顶层必须是数组");
-        state.items = parsed.map(item => ({
+        const incoming = Array.isArray(parsed) ? parsed : parsed?.items;
+        if (!Array.isArray(incoming) || incoming.some(item => !item || typeof item !== "object")) throw new Error("备份格式无效");
+        const incomingRankings = Array.isArray(parsed) ? [] : normalizeRankings(parsed.rankings);
+        if (!confirm("导入会替换当前作品和榜单，建议先导出备份。继续？")) return;
+        state.items = incoming.map(item => ({
           id: item.id || crypto.randomUUID(),
           title: String(item.title || "未命名作品"),
           originalTitle: String(item.originalTitle || ""),
@@ -2389,6 +2419,8 @@
           creator: String(item.creator || ""),
           year: item.year || "",
           rating: Number(item.rating || 0),
+          languages: splitLabels(item.languages),
+          genres: splitLabels(item.genres),
           poster: String(item.poster || ""),
           tags: Array.isArray(item.tags) ? item.tags.map(String) : [],
           aspectScores: getAspectScores(item),
@@ -2398,13 +2430,20 @@
           comment: String(item.comment || ""),
           updatedAt: item.updatedAt || new Date().toISOString()
         }));
+        rankings = incomingRankings;
+        activeRanking = rankings[0]?.id || "";
+        saveRankings();
         saveItems();
         render();
-        showToast("导入完成");
+        showToast("作品、分类与榜单已导入");
       }
 
       function resetData() {
+        if (!confirm("清空本机全部作品和榜单？此操作无法撤销，请先导出备份。")) return;
         state.items = [];
+        rankings = [];
+        activeRanking = "";
+        saveRankings();
         saveItems();
         render();
         showToast("已清空本机数据");
@@ -2424,6 +2463,259 @@
           .replaceAll(">", "&gt;")
           .replaceAll('"', "&quot;")
           .replaceAll("'", "&#039;");
+      }
+
+      // Collection metadata is additive; the existing item storage key is unchanged.
+      const RANKINGS_KEY = "yao-media-cabinet-rankings-v1";
+      const collectionFilters = { year: "", language: "", genre: "" };
+      let rankings = loadRankings();
+      let activeRanking = rankings[0]?.id || "";
+      const bulkSelection = new Set();
+
+      function splitLabels(value) {
+        const list = Array.isArray(value) ? value : String(value || "").split(/[,，;；]/);
+        return [...new Set(list.map(value => String(value).trim()).filter(Boolean))];
+      }
+
+      function normalizeRankings(value) {
+        if (!Array.isArray(value)) return [];
+        const ids = new Set();
+        return value.filter(entry => entry && typeof entry === "object").map(entry => {
+          let id = String(entry.id || crypto.randomUUID());
+          if (ids.has(id)) id = crypto.randomUUID();
+          ids.add(id);
+          const limit = [10, 50, 100].includes(Number(entry.limit)) ? Number(entry.limit) : 10;
+          return { id, name: String(entry.name || "我的榜单").slice(0, 100), limit,
+            itemIds: [...new Set((Array.isArray(entry.itemIds) ? entry.itemIds : []).map(String))].slice(0, limit) };
+        });
+      }
+
+      function loadRankings() {
+        try { return normalizeRankings(JSON.parse(localStorage.getItem(RANKINGS_KEY) || "[]")); }
+        catch { return []; }
+      }
+
+      function saveRankings() {
+        const ids = new Set(state.items.map(item => item.id));
+        rankings.forEach(list => { list.itemIds = list.itemIds.filter(id => ids.has(id)); });
+        localStorage.setItem(RANKINGS_KEY, JSON.stringify(rankings));
+      }
+
+      function matchesCollectionFilters(item) {
+        const year = /^\d{4}$/.test(String(item.year)) ? String(item.year) : "unknown";
+        const selected = collectionFilters.year;
+        if (selected && (selected.startsWith("decade:")
+          ? year === "unknown" || Math.floor(Number(year) / 10) * 10 !== Number(selected.slice(7))
+          : year !== selected)) return false;
+        for (const [filter, field] of [["language", "languages"], ["genre", "genres"]]) {
+          const wanted = collectionFilters[filter];
+          if (!wanted) continue;
+          if (filter === "genre" && item.category !== "专辑") return false;
+          const values = splitLabels(item[field]);
+          if (wanted === "unknown" ? values.length > 0 : !values.includes(wanted)) return false;
+        }
+        return true;
+      }
+
+      function collectionButton(text, onClick, disabled = false) {
+        const button = document.createElement("button");
+        button.type = "button"; button.className = "ghost-button";
+        button.textContent = text; button.disabled = disabled;
+        button.addEventListener("click", onClick); return button;
+      }
+
+      function fillSelect(select, choices, value) {
+        select.replaceChildren(...choices.map(([id, title]) => {
+          const option = document.createElement("option");
+          option.value = id; option.textContent = title; return option;
+        }));
+        select.value = value;
+      }
+
+      function initializeCollectionTools() {
+        const style = document.createElement("style");
+        style.textContent = `#collectionTools{margin-bottom:24px;padding:16px;border:1px solid var(--line);border-radius:14px;background:var(--panel-strong);color:var(--text)}
+          #collectionTools .collection-row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:10px 0}
+          #collectionTools label{font-size:13px;display:flex;gap:6px;align-items:center}
+          #collectionTools input:not([type=checkbox]),#collectionTools select{min-width:0;max-width:100%;padding:9px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--text);font:inherit}
+          #collectionTools details{border-top:1px solid var(--line);padding-top:12px;margin-top:14px}
+          #collectionTools summary{cursor:pointer;font-weight:600;padding:5px 0}
+          #collectionTools .collection-scroll{max-height:360px;overflow:auto;margin-top:12px}
+          #collectionTools .ranking-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:10px 0;border-bottom:1px solid var(--line)}
+          #collectionTools .ranking-title{flex:1;min-width:120px;text-align:left;overflow-wrap:anywhere}
+          #collectionTools .ranking-row input{width:65px}#collectionTools small{color:var(--muted)}
+          #collectionTools button:disabled{opacity:.4;cursor:not-allowed}
+          #collectionTools .bulk-entry{display:flex;padding:8px;gap:10px}
+          @media(max-width:600px){#collectionTools{padding:12px}#collectionTools .collection-row>input,#collectionTools .collection-row>select{width:100%}#collectionTools .ghost-button{padding:8px}}`;
+        document.head.append(style);
+        document.querySelector("#collectionTools").innerHTML = `
+          <div class="collection-row">
+            <label>发行年份 <select id="yearFilter"></select></label>
+            <label>语言 <select id="languageFilter"></select></label>
+            <label>音乐类型 <select id="genreFilter"></select></label>
+            <button type="button" class="ghost-button" id="clearCollectionFilters">清除筛选</button>
+          </div>
+          <small>可与上方分类、状态和搜索叠加。语言与类型支持多值；未知资料不会自动猜测。</small>
+          <details id="rankingsPanel"><summary>我的榜单 · Top 10 / 50 / 100</summary>
+            <div class="collection-row"><input id="newRankingName" placeholder="榜单名称，例如：最爱华语专辑" aria-label="新榜单名称" maxlength="100">
+              <select id="newRankingLimit" aria-label="榜单容量"><option value="10">Top 10</option><option value="50">Top 50</option><option value="100">Top 100</option></select>
+              <button type="button" class="ghost-button" id="createRanking">新建榜单</button></div>
+            <div class="collection-row"><select id="rankingSelect" aria-label="选择榜单"></select>
+              <button type="button" class="ghost-button" id="renameRanking">改名</button>
+              <button type="button" class="ghost-button" id="deleteRanking">删除榜单</button></div>
+            <div class="collection-row"><input id="rankingSearch" placeholder="搜索已导入作品（标题或作者）" aria-label="搜索榜单候选作品">
+              <select id="rankingCandidate" aria-label="选择已有作品"></select>
+              <button type="button" class="ghost-button" id="addToRanking">加入榜单</button></div>
+            <small id="rankingHint" role="status"></small><div id="rankingRows" class="collection-scroll"></div>
+          </details>
+          <details id="bulkPanel"><summary>批量修改分类与状态</summary>
+            <small>勾选下列当前筛选结果。语言、音乐类型为追加，留空不修改；年份和状态为替换。</small>
+            <div class="collection-row"><button type="button" class="ghost-button" id="selectFiltered">全选当前结果</button>
+              <button type="button" class="ghost-button" id="clearBulk">取消选择</button><span id="bulkCount"></span></div>
+            <div class="collection-row"><input id="bulkLanguages" list="languageSuggestions" placeholder="追加语言：普通话, 粤语" aria-label="批量语言">
+              <input id="bulkGenres" list="genreSuggestions" placeholder="追加音乐类型：摇滚, 嘻哈" aria-label="批量音乐类型">
+              <input id="bulkYear" placeholder="发行年份，例如 2020" inputmode="numeric" aria-label="批量发行年份">
+              <select id="bulkStatus" aria-label="批量收听状态"><option value="">不修改状态</option><option>想听</option><option>在听</option><option>听过</option></select>
+              <button type="button" class="ghost-button" id="applyBulk">应用到所选作品</button></div>
+            <small>音乐类型和收听状态只应用于所选专辑，不改变电影、书籍等作品的状态。</small>
+            <div id="bulkRows" class="collection-scroll"></div>
+          </details>`;
+        for (const key of ["year", "language", "genre"]) {
+          document.querySelector(`#${key}Filter`).addEventListener("change", event => {
+            collectionFilters[key] = event.target.value; bulkSelection.clear(); render();
+          });
+        }
+        document.querySelector("#clearCollectionFilters").onclick = () => {
+          Object.keys(collectionFilters).forEach(key => { collectionFilters[key] = ""; });
+          state.status = "all"; state.search = ""; state.selectedCategory = "all";
+          el.statusFilter.value = "all"; el.searchInput.value = ""; bulkSelection.clear(); render();
+        };
+        document.querySelector("#createRanking").onclick = () => {
+          const name = document.querySelector("#newRankingName").value.trim();
+          if (!name) return showToast("请先给榜单取个名字");
+          const list = { id: crypto.randomUUID(), name, limit: Number(document.querySelector("#newRankingLimit").value), itemIds: [] };
+          rankings.push(list); activeRanking = list.id; saveRankings();
+          document.querySelector("#newRankingName").value = ""; renderRankingTools();
+        };
+        document.querySelector("#rankingSelect").onchange = event => { activeRanking = event.target.value; renderRankingTools(); };
+        document.querySelector("#renameRanking").onclick = () => {
+          const list = rankings.find(list => list.id === activeRanking); if (!list) return;
+          const name = prompt("榜单新名称", list.name)?.trim(); if (!name) return;
+          list.name = name.slice(0, 100); saveRankings(); renderRankingTools();
+        };
+        document.querySelector("#deleteRanking").onclick = () => {
+          if (!activeRanking || !confirm("删除这个榜单？作品与评分会保留。")) return;
+          rankings = rankings.filter(list => list.id !== activeRanking); activeRanking = rankings[0]?.id || "";
+          saveRankings(); renderRankingTools();
+        };
+        document.querySelector("#rankingSearch").oninput = renderRankingCandidates;
+        document.querySelector("#addToRanking").onclick = () => {
+          const list = rankings.find(list => list.id === activeRanking);
+          const id = document.querySelector("#rankingCandidate").value;
+          if (!list || !id || list.itemIds.includes(id) || !state.items.some(item => item.id === id)) return;
+          if (list.itemIds.length >= list.limit) return showToast(`这个 Top ${list.limit} 已满，请先移出一部作品`);
+          list.itemIds.push(id); saveRankings(); renderRankingTools();
+        };
+        document.querySelector("#selectFiltered").onclick = () => { getFilteredItems().forEach(item => bulkSelection.add(item.id)); renderBulkTools(); };
+        document.querySelector("#clearBulk").onclick = () => { bulkSelection.clear(); renderBulkTools(); };
+        document.querySelector("#applyBulk").onclick = applyBulkMetadata;
+      }
+
+      function renderCollectionTools() {
+        if (!document.querySelector("#yearFilter")) return;
+        const years = [...new Set(state.items.map(item => String(item.year)).filter(year => /^\d{4}$/.test(year)))].sort().reverse();
+        const decades = [...new Set(years.map(year => Math.floor(Number(year) / 10) * 10))];
+        fillSelect(document.querySelector("#yearFilter"), [["", "全部年份"], ["unknown", "年份未知"],
+          ...decades.map(year => [`decade:${year}`, `${year} 年代`]), ...years.map(year => [year, year])], collectionFilters.year);
+        for (const [key, field, title] of [["language", "languages", "语言"], ["genre", "genres", "音乐类型"]]) {
+          const values = [...new Set(state.items.filter(item => key !== "genre" || item.category === "专辑").flatMap(item => splitLabels(item[field])))].sort((a,b) => a.localeCompare(b,"zh-CN"));
+          fillSelect(document.querySelector(`#${key}Filter`), [["", `全部${title}`], ["unknown", `${title}未知`], ...values.map(value => [value, value])], collectionFilters[key]);
+        }
+        renderRankingTools();
+      }
+
+      function renderRankingCandidates() {
+        const list = rankings.find(list => list.id === activeRanking);
+        const query = normalizeText(document.querySelector("#rankingSearch").value);
+        const select = document.querySelector("#rankingCandidate");
+        const previous = select.value;
+        const candidates = state.items.filter(item => !list?.itemIds.includes(item.id) &&
+          normalizeText(`${item.title} ${item.creator} ${item.originalTitle || ""}`).includes(query));
+        const choices = candidates.map(item => [item.id, `${item.title} · ${item.creator || item.category}`]);
+        fillSelect(select, choices.length ? choices : [["", "没有可添加的作品"]], candidates.some(item => item.id === previous) ? previous : candidates[0]?.id || "");
+        document.querySelector("#addToRanking").disabled = !list || !candidates.length || list.itemIds.length >= list.limit;
+      }
+
+      function moveRankingItem(list, id, target) {
+        const from = list.itemIds.indexOf(id);
+        if (from < 0 || !Number.isInteger(target) || target < 0 || target >= list.itemIds.length) return;
+        list.itemIds.splice(from, 1); list.itemIds.splice(target, 0, id);
+        saveRankings(); renderRankingTools();
+      }
+
+      function renderRankingTools() {
+        const itemMap = new Map(state.items.map(item => [item.id, item]));
+        rankings.forEach(list => { list.itemIds = list.itemIds.filter(id => itemMap.has(id)); });
+        if (!rankings.some(list => list.id === activeRanking)) activeRanking = rankings[0]?.id || "";
+        fillSelect(document.querySelector("#rankingSelect"), rankings.length
+          ? rankings.map(list => [list.id, `${list.name} · Top ${list.limit}`]) : [["", "先新建一个榜单"]], activeRanking);
+        const list = rankings.find(list => list.id === activeRanking);
+        for (const id of ["renameRanking", "deleteRanking"]) document.querySelector(`#${id}`).disabled = !list;
+        document.querySelector("#rankingHint").textContent = list
+          ? `${list.itemIds.length} / ${list.limit} 部 · 独立于评分和上方筛选。上下移动，或输入名次后确认；点击标题编辑作品。`
+          : "从已有作品中挑选，自定义顺序。不足 10 / 50 / 100 部也可以保存。";
+        document.querySelector("#rankingRows").replaceChildren(...(list?.itemIds || []).map((id, index) => {
+          const item = itemMap.get(id); const row = document.createElement("div"); row.className = "ranking-row";
+          const position = document.createElement("input"); position.type = "number"; position.min = "1";
+          position.max = String(list.itemIds.length); position.value = String(index + 1);
+          position.setAttribute("aria-label", `${item.title}的名次`);
+          const title = collectionButton(`${item.title} · ${item.creator || item.category}`, () => openDetail(id)); title.classList.add("ranking-title");
+          row.append(position, collectionButton("移到", () => moveRankingItem(list, id, Number(position.value) - 1)), title,
+            collectionButton("↑", () => moveRankingItem(list, id, index - 1), index === 0),
+            collectionButton("↓", () => moveRankingItem(list, id, index + 1), index === list.itemIds.length - 1),
+            collectionButton("移出", () => { list.itemIds = list.itemIds.filter(value => value !== id); saveRankings(); renderRankingTools(); }));
+          return row;
+        }));
+        renderRankingCandidates();
+      }
+
+      function renderBulkTools() {
+        const items = getFilteredItems(); const visible = new Set(items.map(item => item.id));
+        for (const id of bulkSelection) if (!visible.has(id)) bulkSelection.delete(id);
+        document.querySelector("#bulkCount").textContent = `已选 ${bulkSelection.size} / ${items.length} 部`;
+        document.querySelector("#applyBulk").disabled = !bulkSelection.size;
+        document.querySelector("#bulkRows").replaceChildren(...items.map(item => {
+          const label = document.createElement("label"); label.className = "bulk-entry";
+          const checkbox = document.createElement("input"); checkbox.type = "checkbox"; checkbox.checked = bulkSelection.has(item.id);
+          checkbox.onchange = () => {
+            checkbox.checked ? bulkSelection.add(item.id) : bulkSelection.delete(item.id);
+            document.querySelector("#bulkCount").textContent = `已选 ${bulkSelection.size} / ${items.length} 部`;
+            document.querySelector("#applyBulk").disabled = !bulkSelection.size;
+          };
+          label.append(checkbox, document.createTextNode(`${item.title} · ${item.creator || item.category}`)); return label;
+        }));
+      }
+
+      function applyBulkMetadata() {
+        const languages = splitLabels(document.querySelector("#bulkLanguages").value);
+        const genres = splitLabels(document.querySelector("#bulkGenres").value);
+        const year = document.querySelector("#bulkYear").value.trim();
+        const status = document.querySelector("#bulkStatus").value;
+        if (year && !/^\d{4}$/.test(year)) return showToast("年份请填写四位数字");
+        if (!languages.length && !genres.length && !year && !status) return showToast("请先填写要修改的内容");
+        if (!bulkSelection.size || !confirm(`修改所选 ${bulkSelection.size} 部作品的分类资料？评分和短评保持不变。`)) return;
+        state.items = state.items.map(item => {
+          if (!bulkSelection.has(item.id)) return item;
+          const next = { ...item, updatedAt: new Date().toISOString() };
+          if (languages.length) next.languages = splitLabels([...splitLabels(item.languages), ...languages]);
+          if (year) next.year = year;
+          if (item.category === "专辑") {
+            if (genres.length) next.genres = splitLabels([...splitLabels(item.genres), ...genres]);
+            if (status) next.status = status;
+          }
+          return next;
+        });
+        saveItems(); bulkSelection.clear(); render(); showToast("批量修改已保存");
       }
 
       function registerWebMcpTools() {
@@ -2681,6 +2973,7 @@
         }
       });
 
+      initializeCollectionTools();
       render();
       registerWebMcpTools();
     </script>
