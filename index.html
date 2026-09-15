@@ -1631,10 +1631,43 @@
       let musicBrainzNextRequest = 0;
       let albumSearchVersion = 0;
 
+      // Verified artist identity: musicbrainz.org/artist/7e4448d1-4ee1-40fa-9f81-38fa6caa131e
+      const softLipaNames = ["蛋堡", "Soft Lipa", "Softlipa", "杜振熙", "蛋堡Soft Lipa"];
+      const albumText = value => String(value || "").normalize("NFKC").toLowerCase()
+        .replace(/[\s\p{P}\p{S}]/gu, "");
+      const isSoftLipa = value => softLipaNames.some(name => albumText(name) === albumText(value));
+      // A small verified supplement, not a claim of a complete offline catalogue.
+      // Metadata: MusicBrainz release bf6dda80-e085-4afa-9711-249b4fe99ec1.
+      const albumSupplement = [{
+        source: "华语补充·任性的人", sourceId: "rsdr-96", category: "专辑",
+        title: "家常音樂", originalTitle: "家常音乐", creator: "蛋堡", year: "2020",
+        poster: "https://coverartarchive.org/release/bf6dda80-e085-4afa-9711-249b4fe99ec1/front-500",
+        sourceUrl: "https://rsdr.online/digital/96"
+      }, ...[
+        ["0164d77e-0e07-42e4-9f28-c03b39a8ece5", "收斂水", "收敛水", "蛋堡", "2009"],
+        ["e6e030f0-07a7-429f-82e8-4ea22bea4ce4", "Winter Sweet", "", "蛋堡", "2009"],
+        ["f387340b-c582-4057-9fe2-5362b4a0b38b", "月光", "", "JABBERLOOP / Soft Lipa", "2010"],
+        ["12936847-334b-4851-bd25-d4c7889d5037", "踩腳踏車", "踩脚踏车", "蛋堡 / Shin‐Ski", "2011"],
+        ["f1bf800c-8948-4113-bec2-fa0be2dcae58", "你所不知道的杜振熙之内部整修", "你所不知道的杜振熙之內部整修", "杜振熙", "2013"],
+        ["41896897-31fd-4ad2-b7a8-dfc522ef9ce5", "運河", "运河", "蛋堡", "2026"]
+      ].map(([sourceId, title, originalTitle, creator, year]) => ({
+        source: "MusicBrainz·华语补充", sourceId, category: "专辑", title, originalTitle, creator, year,
+        poster: `https://coverartarchive.org/release-group/${sourceId}/front-500`,
+        sourceUrl: `https://musicbrainz.org/release-group/${sourceId}`
+      }))];
+
+      function searchAlbumSupplement(query) {
+        const tokens = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
+        return albumSupplement.filter(item => isSoftLipa(query) || tokens.every(token =>
+          albumText([item.title, item.originalTitle, item.creator, ...softLipaNames].join(" "))
+            .includes(albumText(token)))).map(normalizeLibraryItem);
+      }
+
       function albumIdentity(item) {
         const clean = value => String(value || "").normalize("NFKC").toLowerCase()
           .replace(/[\s\p{P}\p{S}]/gu, "");
-        return `${clean(item.title)}|${clean(item.creator)}`;
+        const title = clean(item.title).replaceAll("家常音乐", "家常音樂");
+        return `${title}|${isSoftLipa(item.creator) ? "softlipa" : clean(item.creator)}`;
       }
 
       function mergeAlbums(items) {
@@ -1647,8 +1680,8 @@
         });
       }
 
-      // Apple's documented cross-site Search API uses JSONP; no third-party proxy.
-      function appleAlbumRequest(query, country) {
+      // Fixed provider endpoints only; JSONP avoids third-party CORS proxies.
+      function albumJsonp(provider, endpoint, params, resultField) {
         return new Promise((resolve, reject) => {
           const callback = `cabinetAlbums_${crypto.randomUUID().replaceAll("-", "")}`;
           const script = document.createElement("script");
@@ -1663,18 +1696,35 @@
             setTimeout(() => { delete window[callback]; }, 60000);
             error ? reject(error) : resolve(value);
           };
-          const timer = setTimeout(() => finish(new Error("Apple 连接超时")), 10000);
+          const timer = setTimeout(() => finish(new Error(`${provider} 连接超时`)), 10000);
           window[callback] = data => {
-            if (!Array.isArray(data?.results)) return finish(new Error("Apple 返回异常"));
-            finish(null, data.results);
+            if (!Array.isArray(data?.[resultField])) return finish(new Error(`${provider} 返回异常`));
+            finish(null, data[resultField]);
           };
-          script.onerror = () => finish(new Error("Apple 暂时无法连接"));
+          script.onerror = () => finish(new Error(`${provider} 暂时无法连接`));
           script.referrerPolicy = "no-referrer";
-          script.src = `https://itunes.apple.com/search?${new URLSearchParams({
-            term: query, country, media: "music", entity: "album", limit: "100", callback
-          })}`;
+          script.src = `${endpoint}?${new URLSearchParams({ ...params, callback })}`;
           document.head.append(script);
         });
+      }
+
+      function appleAlbumRequest(query, country) {
+        return albumJsonp("Apple", "https://itunes.apple.com/search", {
+          term: query, country, media: "music", entity: "album", limit: "100"
+        }, "results");
+      }
+
+      async function searchDeezerAlbums(query) {
+        const results = await albumJsonp("Deezer", "https://api.deezer.com/search/album", {
+          q: isSoftLipa(query) ? "Soft Lipa" : query, limit: "100", output: "jsonp"
+        }, "data");
+        return results.filter(album => album.id && album.title).map(album => normalizeLibraryItem({
+          source: "Deezer", sourceId: album.id, category: "专辑",
+          title: album.title, creator: album.artist?.name || "",
+          year: String(album.release_date || "").slice(0, 4),
+          poster: album.cover_big || album.cover_medium || "",
+          sourceUrl: album.link || `https://www.deezer.com/album/${album.id}`
+        }));
       }
 
       async function searchAppleAlbums(query, country) {
@@ -1698,7 +1748,8 @@
         const timer = setTimeout(() => controller.abort(), 10000);
         let data;
         try {
-          const url = `https://musicbrainz.org/ws/2/release-group/?query=${encodeURIComponent(query)}&fmt=json&limit=100`;
+          const expression = isSoftLipa(query) ? "arid:7e4448d1-4ee1-40fa-9f81-38fa6caa131e" : query;
+          const url = `https://musicbrainz.org/ws/2/release-group/?query=${encodeURIComponent(expression)}&fmt=json&limit=100`;
           const response = await fetch(url, { signal: controller.signal });
           if (!response.ok) {
             if (response.status === 429 || response.status === 503) {
@@ -1728,21 +1779,25 @@
       async function searchAlbums(query, onProgress = () => {}) {
         const cacheKey = query.trim().normalize("NFKC").toLowerCase();
         const cached = albumCache.get(cacheKey);
-        if (cached && Date.now() - cached.time < 600000) {
+        if (cached && Date.now() - cached.time < (cached.partial ? 30000 : 600000)) {
           onProgress(cached.items, `已找到 ${cached.items.length} 张专辑（缓存）。${cached.partial ? "部分资料源上次连接失败。" : ""}点封面评分。`);
           return cached.items;
         }
-        let items = [], done = 0;
+        let items = searchAlbumSupplement(query), done = 0;
+        onProgress(items, items.length ? "已找到华语补充条目，正在搜索在线资料源，可以先点选。" : "正在搜索多个专辑资料源…");
         const failures = [];
-        const countries = /[\u3400-\u9fff]/.test(query) ? ["TW", "US"] : ["US", "TW"];
+        const countries = /[\u3400-\u9fff]/.test(query) || isSoftLipa(query)
+          ? ["TW", "CN", "HK", "US"] : ["US", "TW"];
         const sources = [
-          ["Apple 台湾", () => searchAppleAlbums(query, countries[0])],
-          ["Apple 美国", () => searchAppleAlbums(query, countries[1])],
+          ...countries.map(country => [`Apple ${country}`, () => searchAppleAlbums(query, country)]),
+          ["Deezer", () => searchDeezerAlbums(query)],
           ["MusicBrainz", () => searchMusicBrainzAlbums(query)]
         ];
+        if (isSoftLipa(query)) {
+          const alternate = /soft/i.test(query) ? "蛋堡" : "Soft Lipa";
+          sources.push(["Apple 艺人别名", () => searchAppleAlbums(alternate, "TW")]);
+        }
         // Reserve one Apple request every 3.5 seconds across searches.
-        sources[0][0] = `Apple ${countries[0]}`;
-        sources[1][0] = `Apple ${countries[1]}`;
         await Promise.all(sources.map(async ([name, request]) => {
           try { items = mergeAlbums([...items, ...await request()]); }
           catch { failures.push(name); }
@@ -1756,7 +1811,7 @@
           if (albumCache.size > 30) albumCache.delete(albumCache.keys().next().value);
         } else if (failures.length) {
           onProgress([], "资料源暂时未能完整连接，不能判断是否收录。稍后重试，或用艺人名＋专辑名搜索。");
-        } else onProgress([], "两个资料库都未找到，试试艺人名、专辑原名或其他译名。");
+        } else onProgress([], "已连接的资料源未找到，试试艺人名、专辑原名或其他译名。");
         return items;
       }
 
@@ -1815,7 +1870,7 @@
           meta.textContent = [item.creator, item.year, item.source].filter(Boolean).join(" · ");
           button.append(title, meta);
           button.addEventListener("click", () => selectLibraryResult(item));
-          if (item.category === "专辑" && /^https:\/\/(musicbrainz\.org|music\.apple\.com|itunes\.apple\.com)\//.test(item.sourceUrl || "")) {
+          if (item.category === "专辑" && /^https:\/\/(musicbrainz\.org|music\.apple\.com|itunes\.apple\.com|www\.deezer\.com|deezer\.com|rsdr\.online)\//.test(item.sourceUrl || "")) {
             const wrapper = document.createElement("div");
             wrapper.className = "album-result";
             const link = document.createElement("a");
