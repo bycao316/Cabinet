@@ -751,6 +751,115 @@
         display: block;
       }
 
+      .library-panel {
+        width: min(980px, 100%);
+        max-height: min(860px, calc(100vh - 48px));
+        overflow: auto;
+        border: 1px solid rgba(255, 236, 205, 0.18);
+        border-radius: 8px;
+        background: var(--panel-strong);
+        box-shadow: 0 30px 120px rgba(0, 0, 0, 0.72);
+      }
+
+      .library-body {
+        display: grid;
+        gap: 14px;
+        padding: 18px;
+      }
+
+      .library-search-form {
+        display: grid;
+        grid-template-columns: 150px minmax(0, 1fr) auto;
+        gap: 10px;
+      }
+
+      .library-search-form input,
+      .library-search-form select,
+      .api-settings input {
+        min-height: 46px;
+        width: 100%;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 0 12px;
+        background: rgba(0, 0, 0, 0.24);
+        color: var(--text);
+      }
+
+      .library-message {
+        min-height: 22px;
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      .library-results {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 12px;
+      }
+
+      .library-result {
+        display: grid;
+        gap: 8px;
+        padding: 8px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.035);
+        color: var(--text);
+        text-align: left;
+        cursor: pointer;
+      }
+
+      .library-result:hover {
+        border-color: var(--line-bright);
+        transform: translateY(-1px);
+      }
+
+      .library-result .poster {
+        aspect-ratio: 2 / 3;
+      }
+
+      .library-result strong {
+        overflow-wrap: anywhere;
+        line-height: 1.35;
+      }
+
+      .library-result small {
+        color: var(--muted);
+        line-height: 1.45;
+      }
+
+      .api-settings {
+        padding: 12px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        color: var(--muted);
+      }
+
+      .api-settings summary {
+        cursor: pointer;
+        font-weight: 850;
+      }
+
+      .api-key-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+        margin-top: 12px;
+      }
+
+      .api-key-grid label {
+        display: grid;
+        gap: 6px;
+        font-size: 13px;
+      }
+
+      .library-foot {
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+        align-items: center;
+      }
+
       @media (max-width: 980px) {
         .app {
           padding: 12px;
@@ -812,6 +921,15 @@
 
         .detail-actions {
           flex-direction: column-reverse;
+        }
+
+        .library-search-form,
+        .api-key-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .library-results {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
         }
       }
     </style>
@@ -875,12 +993,15 @@
                 <option value="在看">在看</option>
                 <option value="玩过">玩过</option>
                 <option value="在玩">在玩</option>
+                <option value="想玩">想玩</option>
                 <option value="读过">读过</option>
                 <option value="在读">在读</option>
+                <option value="想读">想读</option>
                 <option value="听过">听过</option>
+                <option value="想听">想听</option>
               </select>
             </label>
-            <button class="primary-button" id="addButton" type="button">添加作品</button>
+            <button class="primary-button" id="addButton" type="button">搜索添加</button>
           </header>
 
           <div class="subbar">
@@ -908,6 +1029,38 @@
         </section>
       </div>
     </main>
+
+    <section class="detail" id="librarySearch" aria-hidden="true">
+      <div class="library-panel" role="dialog" aria-modal="true" aria-labelledby="libraryTitle">
+        <header class="detail-head">
+          <div>
+            <h2 id="libraryTitle">搜索资料库</h2>
+            <p>搜到作品后点一下，资料会自动填好。</p>
+          </div>
+          <button class="close-button" id="libraryCloseButton" type="button" aria-label="关闭">×</button>
+        </header>
+        <div class="library-body">
+          <form class="library-search-form" id="librarySearchForm">
+            <select id="libraryCategory" aria-label="作品分类"></select>
+            <input id="libraryQuery" type="search" placeholder="输入作品名，例如 千与千寻" autocomplete="off" required />
+            <button class="primary-button" type="submit">搜索</button>
+          </form>
+          <div class="library-message" id="libraryMessage">选择分类，输入名字开始搜索。</div>
+          <div class="library-results" id="libraryResults"></div>
+          <details class="api-settings">
+            <summary>电影与游戏资料库设置（只需一次）</summary>
+            <div class="api-key-grid">
+              <label>TMDB API Key（电影）<input id="tmdbKey" type="password" autocomplete="off" placeholder="免费申请的 API Key" /><a href="https://www.themoviedb.org/settings/api" target="_blank" rel="noreferrer">申请 TMDB Key</a></label>
+              <label>RAWG API Key（游戏）<input id="rawgKey" type="password" autocomplete="off" placeholder="免费申请的 API Key" /><a href="https://rawg.io/apidocs" target="_blank" rel="noreferrer">申请 RAWG Key</a></label>
+            </div>
+          </details>
+          <div class="library-foot">
+            <small>密钥只保存在当前浏览器，不会上传到作品柜。</small>
+            <button class="ghost-button" id="manualAddButton" type="button">手动添加</button>
+          </div>
+        </div>
+      </div>
+    </section>
 
     <section class="detail" id="detail" aria-hidden="true">
       <div class="detail-panel" role="dialog" aria-modal="true" aria-labelledby="detailTitle">
@@ -952,10 +1105,13 @@
                 <option>在看</option>
                 <option>看过</option>
                 <option>在玩</option>
+                <option>想玩</option>
                 <option>玩过</option>
                 <option>在读</option>
+                <option>想读</option>
                 <option>读过</option>
                 <option>听过</option>
+                <option>想听</option>
               </select>
             </div>
             <div class="field">
@@ -1009,6 +1165,7 @@
 
     <script>
       const STORAGE_KEY = "yao-media-cabinet-v2";
+      const API_SETTINGS_KEY = "yao-media-cabinet-api-settings";
       const categories = [
         { id: "all", label: "全部" },
         { id: "电影", label: "电影" },
@@ -1245,7 +1402,9 @@
         status: "all",
         sort: "updated",
         view: "grid",
-        editingId: null
+        editingId: null,
+        editingSource: null,
+        libraryBusy: false
       };
 
       const el = {
@@ -1261,6 +1420,16 @@
         gridView: document.querySelector("#gridView"),
         listView: document.querySelector("#listView"),
         addButton: document.querySelector("#addButton"),
+        librarySearch: document.querySelector("#librarySearch"),
+        librarySearchForm: document.querySelector("#librarySearchForm"),
+        libraryCategory: document.querySelector("#libraryCategory"),
+        libraryQuery: document.querySelector("#libraryQuery"),
+        libraryMessage: document.querySelector("#libraryMessage"),
+        libraryResults: document.querySelector("#libraryResults"),
+        libraryCloseButton: document.querySelector("#libraryCloseButton"),
+        manualAddButton: document.querySelector("#manualAddButton"),
+        tmdbKey: document.querySelector("#tmdbKey"),
+        rawgKey: document.querySelector("#rawgKey"),
         detail: document.querySelector("#detail"),
         detailTitle: document.querySelector("#detailTitle"),
         detailSubtitle: document.querySelector("#detailSubtitle"),
@@ -1299,7 +1468,12 @@
           option.value = category.id;
           option.textContent = category.label;
           el.categoryField.append(option);
+          el.libraryCategory.append(option.cloneNode(true));
         });
+
+      const apiSettings = loadApiSettings();
+      el.tmdbKey.value = apiSettings.tmdb || "";
+      el.rawgKey.value = apiSettings.rawg || "";
 
       function getMetrics(category) {
         return metricSets[category] || metricSets.default;
@@ -1336,6 +1510,220 @@
           row.append(label, input, output);
           el.aspectFields.append(row);
         });
+      }
+
+      function loadApiSettings() {
+        try {
+          return JSON.parse(localStorage.getItem(API_SETTINGS_KEY) || "{}") || {};
+        } catch {
+          return {};
+        }
+      }
+
+      function saveApiSettings() {
+        localStorage.setItem(API_SETTINGS_KEY, JSON.stringify({
+          tmdb: el.tmdbKey.value.trim(),
+          rawg: el.rawgKey.value.trim()
+        }));
+      }
+
+      function openLibrarySearch() {
+        if (state.selectedCategory !== "all") el.libraryCategory.value = state.selectedCategory;
+        el.librarySearch.classList.add("open");
+        el.librarySearch.setAttribute("aria-hidden", "false");
+        setTimeout(() => el.libraryQuery.focus(), 0);
+      }
+
+      function closeLibrarySearch() {
+        el.librarySearch.classList.remove("open");
+        el.librarySearch.setAttribute("aria-hidden", "true");
+      }
+
+      function defaultStatus(category) {
+        if (category === "游戏") return "想玩";
+        if (category === "书籍") return "想读";
+        if (category === "专辑") return "想听";
+        return "想看";
+      }
+
+      function normalizeLibraryItem(item) {
+        return {
+          id: crypto.randomUUID(),
+          title: String(item.title || "未命名作品"),
+          originalTitle: String(item.originalTitle || ""),
+          category: item.category,
+          status: defaultStatus(item.category),
+          creator: String(item.creator || ""),
+          year: item.year || "",
+          rating: 0,
+          poster: String(item.poster || ""),
+          tags: Array.isArray(item.tags) ? item.tags : [],
+          comment: "",
+          aspectScores: {},
+          source: item.source || "",
+          sourceId: String(item.sourceId || ""),
+          updatedAt: new Date().toISOString()
+        };
+      }
+
+      async function fetchJson(url, options) {
+        const response = await fetch(url, options);
+        if (!response.ok) throw new Error(`资料库暂时不可用（${response.status}）`);
+        return response.json();
+      }
+
+      async function searchBooks(query) {
+        const fields = "key,title,author_name,first_publish_year,cover_i";
+        const data = await fetchJson(`https://openlibrary.org/search.json?q=${encodeURIComponent(query)}&limit=12&fields=${fields}`);
+        return (data.docs || []).map(book => normalizeLibraryItem({
+          source: "Open Library",
+          sourceId: book.key,
+          category: "书籍",
+          title: book.title,
+          creator: (book.author_name || []).slice(0, 2).join(" / "),
+          year: book.first_publish_year,
+          poster: book.cover_i ? `https://covers.openlibrary.org/b/id/${book.cover_i}-L.jpg` : ""
+        }));
+      }
+
+      async function searchAniList(query, category) {
+        const mediaType = category === "动漫" ? "ANIME" : "MANGA";
+        const graphQuery = `query ($search: String, $type: MediaType) {
+          Page(page: 1, perPage: 12) {
+            media(search: $search, type: $type, sort: SEARCH_MATCH) {
+              id title { native romaji english }
+              coverImage { extraLarge large }
+              startDate { year }
+              staff(perPage: 2, sort: RELEVANCE) { nodes { name { full } } }
+              studios(isMain: true, perPage: 2) { nodes { name } }
+            }
+          }
+        }`;
+        const data = await fetchJson("https://graphql.anilist.co", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Accept: "application/json" },
+          body: JSON.stringify({ query: graphQuery, variables: { search: query, type: mediaType } })
+        });
+        return (data.data?.Page?.media || []).map(media => {
+          const studio = media.studios?.nodes?.map(node => node.name).join(" / ");
+          const staff = media.staff?.nodes?.map(node => node.name.full).join(" / ");
+          return normalizeLibraryItem({
+            source: "AniList",
+            sourceId: media.id,
+            category,
+            title: media.title.native || media.title.english || media.title.romaji,
+            originalTitle: media.title.romaji || media.title.english || "",
+            creator: category === "动漫" ? (studio || staff) : staff,
+            year: media.startDate?.year,
+            poster: media.coverImage?.extraLarge || media.coverImage?.large || ""
+          });
+        });
+      }
+
+      async function searchAlbums(query) {
+        const url = `https://musicbrainz.org/ws/2/release-group/?query=${encodeURIComponent(query)}&fmt=json&limit=12`;
+        const data = await fetchJson(url);
+        return (data["release-groups"] || []).map(album => normalizeLibraryItem({
+          source: "MusicBrainz",
+          sourceId: album.id,
+          category: "专辑",
+          title: album.title,
+          creator: (album["artist-credit"] || []).map(credit => credit.name).join(" / "),
+          year: String(album["first-release-date"] || "").slice(0, 4),
+          poster: `https://coverartarchive.org/release-group/${album.id}/front-500`
+        }));
+      }
+
+      async function searchMovies(query) {
+        const key = el.tmdbKey.value.trim();
+        if (!key) throw new Error("请展开下方设置，先填入免费的 TMDB API Key。");
+        saveApiSettings();
+        const url = `https://api.themoviedb.org/3/search/movie?api_key=${encodeURIComponent(key)}&language=zh-CN&query=${encodeURIComponent(query)}&include_adult=false`;
+        const data = await fetchJson(url);
+        return (data.results || []).slice(0, 12).map(movie => normalizeLibraryItem({
+          source: "TMDB",
+          sourceId: movie.id,
+          category: "电影",
+          title: movie.title,
+          originalTitle: movie.original_title === movie.title ? "" : movie.original_title,
+          year: String(movie.release_date || "").slice(0, 4),
+          poster: movie.poster_path ? `https://image.tmdb.org/t/p/w500${movie.poster_path}` : ""
+        }));
+      }
+
+      async function searchGames(query) {
+        const key = el.rawgKey.value.trim();
+        if (!key) throw new Error("请展开下方设置，先填入免费的 RAWG API Key。");
+        saveApiSettings();
+        const url = `https://api.rawg.io/api/games?key=${encodeURIComponent(key)}&search=${encodeURIComponent(query)}&page_size=12&search_precise=true`;
+        const data = await fetchJson(url);
+        return (data.results || []).map(game => normalizeLibraryItem({
+          source: "RAWG",
+          sourceId: game.id,
+          category: "游戏",
+          title: game.name,
+          year: String(game.released || "").slice(0, 4),
+          poster: game.background_image || "",
+          tags: (game.platforms || []).slice(0, 3).map(entry => entry.platform?.name).filter(Boolean)
+        }));
+      }
+
+      async function searchExternalLibrary(query, category) {
+        if (category === "书籍") return searchBooks(query);
+        if (category === "动漫" || category === "漫画") return searchAniList(query, category);
+        if (category === "专辑") return searchAlbums(query);
+        if (category === "电影") return searchMovies(query);
+        if (category === "游戏") return searchGames(query);
+        return [];
+      }
+
+      function renderLibraryResults(items) {
+        el.libraryResults.replaceChildren(...items.map(item => {
+          const button = document.createElement("button");
+          button.type = "button";
+          button.className = "library-result";
+          button.append(createPoster(item));
+          const title = document.createElement("strong");
+          title.textContent = item.title;
+          const meta = document.createElement("small");
+          meta.textContent = [item.creator, item.year, item.source].filter(Boolean).join(" · ");
+          button.append(title, meta);
+          button.addEventListener("click", () => selectLibraryResult(item));
+          return button;
+        }));
+      }
+
+      function selectLibraryResult(item) {
+        const duplicate = state.items.find(entry =>
+          (item.sourceId && entry.source === item.source && entry.sourceId === item.sourceId) ||
+          (entry.category === item.category && normalizeText(entry.title) === normalizeText(item.title))
+        );
+        closeLibrarySearch();
+        if (duplicate) {
+          showToast("作品柜里已经有这条，已打开原记录");
+          openDetail(duplicate.id);
+          return;
+        }
+        openDetail(item);
+      }
+
+      async function runLibrarySearch() {
+        if (state.libraryBusy) return;
+        const query = el.libraryQuery.value.trim();
+        const category = el.libraryCategory.value;
+        if (!query) return;
+        state.libraryBusy = true;
+        el.libraryMessage.textContent = "正在搜索…";
+        el.libraryResults.replaceChildren();
+        try {
+          const items = await searchExternalLibrary(query, category);
+          renderLibraryResults(items);
+          el.libraryMessage.textContent = items.length ? `找到 ${items.length} 条，点一项直接评分。` : "没有找到，换个名字试试。";
+        } catch (error) {
+          el.libraryMessage.textContent = error.message || "搜索失败，请稍后重试。";
+        } finally {
+          state.libraryBusy = false;
+        }
       }
 
       function loadItems() {
@@ -1681,9 +2069,9 @@
         renderGallery();
       }
 
-      function openDetail(id) {
+      function openDetail(target) {
         const item =
-          state.items.find(entry => entry.id === id) || {
+          (target && typeof target === "object" ? target : state.items.find(entry => entry.id === target)) || {
             id: crypto.randomUUID(),
             title: "",
             originalTitle: "",
@@ -1699,6 +2087,7 @@
             updatedAt: new Date().toISOString()
           };
         state.editingId = item.id;
+        state.editingSource = { source: item.source || "", sourceId: item.sourceId || "" };
         el.detailTitle.textContent = item.title || "新作品";
         el.detailSubtitle.textContent = [item.category, item.creator, item.year].filter(Boolean).join(" · ") || "编辑评分与短评";
         el.titleField.value = item.title || "";
@@ -1725,6 +2114,7 @@
 
       function closeDetail() {
         state.editingId = null;
+        state.editingSource = null;
         el.detail.classList.remove("open");
         el.detail.setAttribute("aria-hidden", "true");
       }
@@ -1743,6 +2133,8 @@
             ...(state.items.find(item => item.id === state.editingId)?.aspectScores || {}),
             ...getCurrentAspectScores()
           },
+          source: state.editingSource?.source || "",
+          sourceId: state.editingSource?.sourceId || "",
           poster: el.posterField.value.trim(),
           tags: el.tagsField.value
             .split(/[,，]/)
@@ -1796,6 +2188,8 @@
           poster: String(item.poster || ""),
           tags: Array.isArray(item.tags) ? item.tags.map(String) : [],
           aspectScores: getAspectScores(item),
+          source: String(item.source || ""),
+          sourceId: String(item.sourceId || ""),
           comment: String(item.comment || ""),
           updatedAt: item.updatedAt || new Date().toISOString()
         }));
@@ -1997,7 +2391,25 @@
         el.gridView.classList.remove("active");
         renderGallery();
       });
-      el.addButton.addEventListener("click", () => openDetail());
+      el.addButton.addEventListener("click", openLibrarySearch);
+      el.libraryCloseButton.addEventListener("click", closeLibrarySearch);
+      el.librarySearch.addEventListener("click", event => {
+        if (event.target === el.librarySearch) closeLibrarySearch();
+      });
+      el.librarySearchForm.addEventListener("submit", event => {
+        event.preventDefault();
+        runLibrarySearch();
+      });
+      el.libraryCategory.addEventListener("change", () => {
+        el.libraryResults.replaceChildren();
+        el.libraryMessage.textContent = "输入名字开始搜索。";
+      });
+      el.tmdbKey.addEventListener("change", saveApiSettings);
+      el.rawgKey.addEventListener("change", saveApiSettings);
+      el.manualAddButton.addEventListener("click", () => {
+        closeLibrarySearch();
+        openDetail();
+      });
       el.closeButton.addEventListener("click", closeDetail);
       el.cancelButton.addEventListener("click", closeDetail);
       el.detail.addEventListener("click", event => {
@@ -2056,7 +2468,10 @@
       });
       el.resetButton.addEventListener("click", resetData);
       window.addEventListener("keydown", event => {
-        if (event.key === "Escape") closeDetail();
+        if (event.key === "Escape") {
+          closeLibrarySearch();
+          closeDetail();
+        }
       });
 
       render();
