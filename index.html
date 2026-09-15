@@ -828,6 +828,10 @@
         line-height: 1.45;
       }
 
+      .album-result { display: grid; gap: 6px; align-content: start; min-width: 0; }
+      .album-result .poster { aspect-ratio: 1; }
+      .album-result a { color: var(--blue); font-size: 13px; }
+
       .api-settings {
         padding: 12px;
         border: 1px solid var(--line);
@@ -1535,6 +1539,7 @@
       }
 
       function closeLibrarySearch() {
+        albumSearchVersion++;
         el.librarySearch.classList.remove("open");
         el.librarySearch.setAttribute("aria-hidden", "true");
       }
@@ -1562,6 +1567,7 @@
           aspectScores: {},
           source: item.source || "",
           sourceId: String(item.sourceId || ""),
+          sourceUrl: String(item.sourceUrl || ""),
           updatedAt: new Date().toISOString()
         };
       }
@@ -1620,18 +1626,138 @@
         });
       }
 
-      async function searchAlbums(query) {
-        const url = `https://musicbrainz.org/ws/2/release-group/?query=${encodeURIComponent(query)}&fmt=json&limit=12`;
-        const data = await fetchJson(url);
-        return (data["release-groups"] || []).map(album => normalizeLibraryItem({
+      const albumCache = new Map();
+      let appleNextRequest = 0;
+      let musicBrainzNextRequest = 0;
+      let albumSearchVersion = 0;
+
+      function albumIdentity(item) {
+        const clean = value => String(value || "").normalize("NFKC").toLowerCase()
+          .replace(/[\s\p{P}\p{S}]/gu, "");
+        return `${clean(item.title)}|${clean(item.creator)}`;
+      }
+
+      function mergeAlbums(items) {
+        const seen = new Set();
+        return items.filter(item => {
+          const key = albumIdentity(item);
+          if (seen.has(key)) return false;
+          seen.add(key);
+          return true;
+        });
+      }
+
+      // Apple's documented cross-site Search API uses JSONP; no third-party proxy.
+      function appleAlbumRequest(query, country) {
+        return new Promise((resolve, reject) => {
+          const callback = `cabinetAlbums_${crypto.randomUUID().replaceAll("-", "")}`;
+          const script = document.createElement("script");
+          let settled = false;
+          const finish = (error, value) => {
+            if (settled) return;
+            settled = true;
+            clearTimeout(timer);
+            script.remove();
+            // A timed-out script may still finish; make its late callback harmless.
+            window[callback] = () => {};
+            setTimeout(() => { delete window[callback]; }, 60000);
+            error ? reject(error) : resolve(value);
+          };
+          const timer = setTimeout(() => finish(new Error("Apple 连接超时")), 10000);
+          window[callback] = data => {
+            if (!Array.isArray(data?.results)) return finish(new Error("Apple 返回异常"));
+            finish(null, data.results);
+          };
+          script.onerror = () => finish(new Error("Apple 暂时无法连接"));
+          script.referrerPolicy = "no-referrer";
+          script.src = `https://itunes.apple.com/search?${new URLSearchParams({
+            term: query, country, media: "music", entity: "album", limit: "100", callback
+          })}`;
+          document.head.append(script);
+        });
+      }
+
+      async function searchAppleAlbums(query, country) {
+        const wait = Math.max(0, appleNextRequest - Date.now());
+        appleNextRequest = Date.now() + wait + 3500;
+        if (wait) await new Promise(resolve => setTimeout(resolve, wait));
+        const results = await appleAlbumRequest(query, country);
+        return results.map(album => normalizeLibraryItem({
+          source: "Apple", sourceId: album.collectionId, category: "专辑",
+          title: album.collectionName, creator: album.artistName,
+          year: String(album.releaseDate || "").slice(0, 4),
+          poster: album.artworkUrl100 || "",
+          sourceUrl: album.collectionViewUrl || ""
+        }));
+      }
+
+      async function searchMusicBrainzAlbums(query) {
+        if (Date.now() < musicBrainzNextRequest) throw new Error("MusicBrainz 正在冷却，请稍后再试");
+        musicBrainzNextRequest = Date.now() + 1200;
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), 10000);
+        let data;
+        try {
+          const url = `https://musicbrainz.org/ws/2/release-group/?query=${encodeURIComponent(query)}&fmt=json&limit=100`;
+          const response = await fetch(url, { signal: controller.signal });
+          if (!response.ok) {
+            if (response.status === 429 || response.status === 503) {
+              const retry = response.headers.get("Retry-After");
+              const delay = /^\d+$/.test(retry || "") ? Number(retry) * 1000 : Date.parse(retry || "") - Date.now();
+              musicBrainzNextRequest = Date.now() + Math.max(30000, Number.isFinite(delay) ? delay : 0);
+            }
+            throw new Error(`MusicBrainz 暂时不可用（${response.status}）`);
+          }
+          data = await response.json();
+          if (!Array.isArray(data["release-groups"])) throw new Error("MusicBrainz 返回异常");
+        } finally {
+          clearTimeout(timer);
+        }
+        return data["release-groups"].map(album => normalizeLibraryItem({
           source: "MusicBrainz",
           sourceId: album.id,
           category: "专辑",
           title: album.title,
           creator: (album["artist-credit"] || []).map(credit => credit.name).join(" / "),
           year: String(album["first-release-date"] || "").slice(0, 4),
-          poster: `https://coverartarchive.org/release-group/${album.id}/front-500`
+          poster: `https://coverartarchive.org/release-group/${album.id}/front-500`,
+          sourceUrl: `https://musicbrainz.org/release-group/${album.id}`
         }));
+      }
+
+      async function searchAlbums(query, onProgress = () => {}) {
+        const cacheKey = query.trim().normalize("NFKC").toLowerCase();
+        const cached = albumCache.get(cacheKey);
+        if (cached && Date.now() - cached.time < 600000) {
+          onProgress(cached.items, `已找到 ${cached.items.length} 张专辑（缓存）。${cached.partial ? "部分资料源上次连接失败。" : ""}点封面评分。`);
+          return cached.items;
+        }
+        let items = [], done = 0;
+        const failures = [];
+        const countries = /[\u3400-\u9fff]/.test(query) ? ["TW", "US"] : ["US", "TW"];
+        const sources = [
+          ["Apple 台湾", () => searchAppleAlbums(query, countries[0])],
+          ["Apple 美国", () => searchAppleAlbums(query, countries[1])],
+          ["MusicBrainz", () => searchMusicBrainzAlbums(query)]
+        ];
+        // Reserve one Apple request every 3.5 seconds across searches.
+        sources[0][0] = `Apple ${countries[0]}`;
+        sources[1][0] = `Apple ${countries[1]}`;
+        await Promise.all(sources.map(async ([name, request]) => {
+          try { items = mergeAlbums([...items, ...await request()]); }
+          catch { failures.push(name); }
+          done++;
+          const suffix = done < sources.length ? "其余资料源仍在搜索，可以先点选。"
+            : failures.length ? `暂未连通：${failures.join("、")}；已保留可用结果。` : "点封面直接评分。";
+          onProgress(items, `已找到 ${items.length} 张专辑。${suffix}`);
+        }));
+        if (items.length) {
+          albumCache.set(cacheKey, { time: Date.now(), items, partial: failures.length > 0 });
+          if (albumCache.size > 30) albumCache.delete(albumCache.keys().next().value);
+        } else if (failures.length) {
+          onProgress([], "资料源暂时未能完整连接，不能判断是否收录。稍后重试，或用艺人名＋专辑名搜索。");
+        } else onProgress([], "两个资料库都未找到，试试艺人名、专辑原名或其他译名。");
+        return items;
       }
 
       async function searchMovies(query) {
@@ -1689,6 +1815,17 @@
           meta.textContent = [item.creator, item.year, item.source].filter(Boolean).join(" · ");
           button.append(title, meta);
           button.addEventListener("click", () => selectLibraryResult(item));
+          if (item.category === "专辑" && /^https:\/\/(musicbrainz\.org|music\.apple\.com|itunes\.apple\.com)\//.test(item.sourceUrl || "")) {
+            const wrapper = document.createElement("div");
+            wrapper.className = "album-result";
+            const link = document.createElement("a");
+            link.href = item.sourceUrl;
+            link.target = "_blank";
+            link.rel = "noopener noreferrer";
+            link.textContent = `在 ${item.source} 查看专辑`;
+            wrapper.append(button, link);
+            return wrapper;
+          }
           return button;
         }));
       }
@@ -1696,7 +1833,8 @@
       function selectLibraryResult(item) {
         const duplicate = state.items.find(entry =>
           (item.sourceId && entry.source === item.source && entry.sourceId === item.sourceId) ||
-          (entry.category === item.category && normalizeText(entry.title) === normalizeText(item.title))
+          (entry.category === item.category && normalizeText(entry.title) === normalizeText(item.title) &&
+            (item.category !== "专辑" || normalizeText(entry.creator) === normalizeText(item.creator)))
         );
         closeLibrarySearch();
         if (duplicate) {
@@ -1713,10 +1851,20 @@
         const category = el.libraryCategory.value;
         if (!query) return;
         state.libraryBusy = true;
+        const searchVersion = ++albumSearchVersion;
         el.libraryMessage.textContent = "正在搜索…";
         el.libraryResults.replaceChildren();
         try {
+          if (category === "专辑") {
+            await searchAlbums(query, (items, message) => {
+              if (searchVersion !== albumSearchVersion) return;
+              renderLibraryResults(items);
+              el.libraryMessage.textContent = message;
+            });
+            return;
+          }
           const items = await searchExternalLibrary(query, category);
+          if (searchVersion !== albumSearchVersion) return;
           renderLibraryResults(items);
           el.libraryMessage.textContent = items.length ? `找到 ${items.length} 条，点一项直接评分。` : "没有找到，换个名字试试。";
         } catch (error) {
@@ -2087,7 +2235,7 @@
             updatedAt: new Date().toISOString()
           };
         state.editingId = item.id;
-        state.editingSource = { source: item.source || "", sourceId: item.sourceId || "" };
+        state.editingSource = { source: item.source || "", sourceId: item.sourceId || "", sourceUrl: item.sourceUrl || "" };
         el.detailTitle.textContent = item.title || "新作品";
         el.detailSubtitle.textContent = [item.category, item.creator, item.year].filter(Boolean).join(" · ") || "编辑评分与短评";
         el.titleField.value = item.title || "";
@@ -2135,6 +2283,7 @@
           },
           source: state.editingSource?.source || "",
           sourceId: state.editingSource?.sourceId || "",
+          sourceUrl: state.editingSource?.sourceUrl || "",
           poster: el.posterField.value.trim(),
           tags: el.tagsField.value
             .split(/[,，]/)
@@ -2190,6 +2339,7 @@
           aspectScores: getAspectScores(item),
           source: String(item.source || ""),
           sourceId: String(item.sourceId || ""),
+          sourceUrl: String(item.sourceUrl || ""),
           comment: String(item.comment || ""),
           updatedAt: item.updatedAt || new Date().toISOString()
         }));
@@ -2401,6 +2551,8 @@
         runLibrarySearch();
       });
       el.libraryCategory.addEventListener("change", () => {
+        albumSearchVersion++;
+        el.libraryQuery.placeholder = el.libraryCategory.value === "专辑" ? "输入专辑名或艺人名，例如 崔健 宽容" : "输入作品名";
         el.libraryResults.replaceChildren();
         el.libraryMessage.textContent = "输入名字开始搜索。";
       });
