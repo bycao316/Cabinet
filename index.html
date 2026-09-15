@@ -1,0 +1,2066 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Yao Media Cabinet</title>
+    <meta
+      name="description"
+      content="私人作品评分柜：收藏电影、书籍、游戏、漫画、动漫和专辑，记录评分与短评。"
+    />
+    <link
+      rel="icon"
+      type="image/svg+xml"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23080706'/%3E%3Cpath d='M16 14h32v36H16z' fill='%23181713' stroke='%23f0a23a' stroke-width='3'/%3E%3Cpath d='M23 22h18M23 32h18M23 42h10' stroke='%2376d7d0' stroke-width='4' stroke-linecap='round'/%3E%3Ccircle cx='46' cy='18' r='5' fill='%23e84b6a'/%3E%3C/svg%3E"
+    />
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #070706;
+        --panel: rgba(18, 18, 17, 0.84);
+        --panel-strong: rgba(26, 24, 22, 0.94);
+        --line: rgba(255, 236, 205, 0.13);
+        --line-bright: rgba(255, 170, 70, 0.42);
+        --text: #f6ead5;
+        --muted: rgba(246, 234, 213, 0.66);
+        --soft: rgba(246, 234, 213, 0.42);
+        --orange: #f0a23a;
+        --blue: #76d7d0;
+        --red: #e84b6a;
+        --green: #61d394;
+        --shadow: 0 24px 90px rgba(0, 0, 0, 0.48);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-width: 320px;
+        background:
+          radial-gradient(circle at 15% 0%, rgba(240, 162, 58, 0.16), transparent 28rem),
+          radial-gradient(circle at 82% 8%, rgba(118, 215, 208, 0.11), transparent 24rem),
+          linear-gradient(180deg, #0b0a08 0%, #070706 46%, #030303 100%);
+        color: var(--text);
+        font-family:
+          Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+          "Noto Sans SC", sans-serif;
+      }
+
+      button,
+      input,
+      select,
+      textarea {
+        font: inherit;
+      }
+
+      button {
+        color: inherit;
+      }
+
+      .app {
+        min-height: 100vh;
+        padding: 24px;
+      }
+
+      .shell {
+        display: grid;
+        grid-template-columns: 280px minmax(0, 1fr);
+        gap: 18px;
+        max-width: 1680px;
+        min-height: calc(100vh - 48px);
+        margin: 0 auto;
+      }
+
+      .sidebar,
+      .workspace {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+        box-shadow: var(--shadow);
+        backdrop-filter: blur(18px);
+      }
+
+      .sidebar {
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+        padding: 18px;
+        position: sticky;
+        top: 24px;
+        height: calc(100vh - 48px);
+        overflow: auto;
+      }
+
+      .brand {
+        display: grid;
+        gap: 10px;
+      }
+
+      .brand small {
+        color: var(--orange);
+        font-size: 12px;
+        font-weight: 900;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+      }
+
+      h1,
+      h2,
+      h3,
+      p {
+        margin: 0;
+      }
+
+      h1 {
+        font-size: clamp(34px, 4.2vw, 68px);
+        line-height: 0.95;
+        letter-spacing: 0;
+      }
+
+      .brand p {
+        color: var(--muted);
+        font-size: 15px;
+        line-height: 1.7;
+      }
+
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+      }
+
+      .stat {
+        min-height: 84px;
+        padding: 12px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.035);
+      }
+
+      .stat strong {
+        display: block;
+        font-size: 28px;
+        line-height: 1;
+      }
+
+      .stat span {
+        display: block;
+        margin-top: 8px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .section-title {
+        margin-bottom: 10px;
+        color: var(--soft);
+        font-size: 13px;
+        font-weight: 900;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .category-list,
+      .tool-list {
+        display: grid;
+        gap: 8px;
+      }
+
+      .category-button,
+      .tool-button,
+      .ghost-button,
+      .primary-button,
+      .icon-button {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.035);
+        cursor: pointer;
+        transition:
+          transform 130ms ease,
+          border-color 130ms ease,
+          background 130ms ease,
+          box-shadow 130ms ease;
+      }
+
+      .category-button,
+      .tool-button {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        min-height: 44px;
+        padding: 10px 12px;
+        text-align: left;
+      }
+
+      .category-button:hover,
+      .tool-button:hover,
+      .ghost-button:hover,
+      .primary-button:hover,
+      .icon-button:hover {
+        transform: translateY(-1px);
+        border-color: var(--line-bright);
+        background: rgba(240, 162, 58, 0.10);
+      }
+
+      .category-button.active {
+        border-color: rgba(118, 215, 208, 0.50);
+        background: rgba(118, 215, 208, 0.12);
+        box-shadow: 0 0 0 1px rgba(118, 215, 208, 0.14) inset;
+      }
+
+      .count-pill,
+      .type-pill,
+      .status-pill {
+        border-radius: 999px;
+        padding: 4px 8px;
+        color: var(--text);
+        font-size: 12px;
+        font-weight: 800;
+        background: rgba(255, 255, 255, 0.08);
+      }
+
+      .workspace {
+        display: grid;
+        grid-template-rows: auto auto 1fr;
+        min-width: 0;
+        overflow: hidden;
+      }
+
+      .topbar {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto auto;
+        gap: 12px;
+        align-items: center;
+        padding: 16px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .search {
+        position: relative;
+      }
+
+      .search input,
+      .control select,
+      .field input,
+      .field select,
+      .field textarea {
+        width: 100%;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: rgba(0, 0, 0, 0.24);
+        color: var(--text);
+        outline: none;
+      }
+
+      .search input {
+        height: 46px;
+        padding: 0 15px;
+        font-size: 16px;
+      }
+
+      .search input:focus,
+      .control select:focus,
+      .field input:focus,
+      .field select:focus,
+      .field textarea:focus {
+        border-color: rgba(118, 215, 208, 0.68);
+        box-shadow: 0 0 0 3px rgba(118, 215, 208, 0.13);
+      }
+
+      .control {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .control select {
+        height: 46px;
+        min-width: 132px;
+        padding: 0 12px;
+      }
+
+      .primary-button,
+      .ghost-button {
+        min-height: 46px;
+        padding: 0 16px;
+        font-weight: 900;
+      }
+
+      .primary-button {
+        border-color: rgba(240, 162, 58, 0.54);
+        background: linear-gradient(135deg, rgba(240, 162, 58, 0.32), rgba(232, 75, 106, 0.20));
+      }
+
+      .subbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 14px 16px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .subbar h2 {
+        font-size: 18px;
+      }
+
+      .subbar p {
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      .view-toggle {
+        display: inline-flex;
+        gap: 6px;
+        padding: 4px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.035);
+      }
+
+      .icon-button {
+        width: 38px;
+        height: 34px;
+        border-color: transparent;
+        font-size: 16px;
+      }
+
+      .icon-button.active {
+        background: rgba(118, 215, 208, 0.16);
+        color: var(--blue);
+      }
+
+      .gallery-wrap {
+        overflow: auto;
+        padding: 16px;
+      }
+
+      .gallery {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+        gap: 16px;
+        align-items: start;
+      }
+
+      .gallery.list {
+        grid-template-columns: 1fr;
+      }
+
+      .card {
+        display: grid;
+        gap: 10px;
+        padding: 10px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.036);
+        text-align: left;
+        cursor: pointer;
+        overflow: hidden;
+        min-width: 0;
+      }
+
+      .card:hover {
+        border-color: var(--line-bright);
+        background: rgba(255, 255, 255, 0.060);
+        transform: translateY(-2px);
+      }
+
+      .poster {
+        position: relative;
+        width: 100%;
+        aspect-ratio: 2 / 3;
+        overflow: hidden;
+        border-radius: 6px;
+        background:
+          linear-gradient(145deg, rgba(240, 162, 58, 0.28), transparent),
+          radial-gradient(circle at 70% 25%, rgba(118, 215, 208, 0.25), transparent 38%),
+          #171411;
+      }
+
+      .poster img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+
+      .poster-fallback {
+        display: grid;
+        place-items: end start;
+        height: 100%;
+        padding: 14px;
+        color: rgba(255, 238, 210, 0.92);
+        font-size: 22px;
+        font-weight: 900;
+        line-height: 1.1;
+      }
+
+      .poster::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(180deg, transparent 50%, rgba(0, 0, 0, 0.70));
+        pointer-events: none;
+      }
+
+      .rating-badge {
+        position: absolute;
+        right: 8px;
+        top: 8px;
+        z-index: 2;
+        border-radius: 999px;
+        padding: 5px 8px;
+        background: rgba(0, 0, 0, 0.68);
+        color: var(--orange);
+        font-size: 13px;
+        font-weight: 950;
+      }
+
+      .card-body {
+        display: grid;
+        gap: 7px;
+      }
+
+      .card h3 {
+        overflow-wrap: anywhere;
+        font-size: 16px;
+        line-height: 1.35;
+      }
+
+      .meta,
+      .card-comment {
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.5;
+      }
+
+      .card-comment {
+        display: -webkit-box;
+        overflow: hidden;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+      }
+
+      .card-foot {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+
+      .gallery.list .card {
+        grid-template-columns: 92px minmax(0, 1fr);
+        align-items: center;
+      }
+
+      .gallery.list .poster {
+        aspect-ratio: 2 / 3;
+      }
+
+      .empty-state {
+        display: grid;
+        place-items: center;
+        min-height: 420px;
+        border: 1px dashed var(--line);
+        border-radius: 8px;
+        color: var(--muted);
+        text-align: center;
+      }
+
+      .detail {
+        position: fixed;
+        inset: 0;
+        z-index: 20;
+        display: none;
+        background: rgba(0, 0, 0, 0.58);
+        padding: 24px;
+      }
+
+      .detail.open {
+        display: grid;
+        place-items: center;
+      }
+
+      .detail-panel {
+        display: grid;
+        grid-template-columns: minmax(220px, 330px) minmax(0, 1fr);
+        width: min(1060px, 100%);
+        max-height: min(880px, calc(100vh - 48px));
+        overflow: hidden;
+        border: 1px solid rgba(255, 236, 205, 0.18);
+        border-radius: 8px;
+        background:
+          radial-gradient(circle at 10% 0%, rgba(240, 162, 58, 0.12), transparent 22rem),
+          var(--panel-strong);
+        box-shadow: 0 30px 120px rgba(0, 0, 0, 0.72);
+      }
+
+      .detail-art {
+        padding: 18px;
+        border-right: 1px solid var(--line);
+        overflow: auto;
+      }
+
+      .detail-art .poster {
+        box-shadow: 0 18px 54px rgba(0, 0, 0, 0.46);
+      }
+
+      .radar-card {
+        display: grid;
+        gap: 12px;
+        margin-top: 14px;
+        padding: 14px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background:
+          radial-gradient(circle at 50% 32%, rgba(118, 215, 208, 0.10), transparent 62%),
+          rgba(255, 255, 255, 0.035);
+      }
+
+      .radar-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+      }
+
+      .radar-head span,
+      .aspect-heading span {
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 900;
+      }
+
+      .radar-head strong {
+        color: var(--orange);
+        font-size: 24px;
+        line-height: 1;
+      }
+
+      .radar-chart {
+        width: 100%;
+        aspect-ratio: 1;
+        min-height: 220px;
+      }
+
+      .radar-chart svg {
+        width: 100%;
+        height: 100%;
+        display: block;
+        overflow: visible;
+      }
+
+      .radar-label {
+        fill: rgba(246, 234, 213, 0.80);
+        font-size: 14px;
+        font-weight: 850;
+      }
+
+      .radar-score-label {
+        fill: rgba(240, 162, 58, 0.92);
+        font-size: 12px;
+        font-weight: 950;
+      }
+
+      .radar-summary {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+
+      .radar-chip {
+        border-radius: 999px;
+        padding: 4px 7px;
+        background: rgba(118, 215, 208, 0.10);
+        color: rgba(246, 234, 213, 0.78);
+        font-size: 12px;
+        font-weight: 800;
+      }
+
+      .detail-main {
+        display: grid;
+        grid-template-rows: auto 1fr auto;
+        min-width: 0;
+        max-height: inherit;
+      }
+
+      .detail-head {
+        display: flex;
+        align-items: start;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 18px 18px 12px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .detail-head h2 {
+        font-size: clamp(24px, 3vw, 40px);
+        line-height: 1.05;
+      }
+
+      .detail-head p {
+        margin-top: 8px;
+        color: var(--muted);
+      }
+
+      .close-button {
+        width: 40px;
+        height: 40px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.04);
+        cursor: pointer;
+        font-size: 22px;
+      }
+
+      .detail-form {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 14px;
+        padding: 18px;
+        overflow: auto;
+      }
+
+      .field {
+        display: grid;
+        gap: 7px;
+      }
+
+      .field.full {
+        grid-column: 1 / -1;
+      }
+
+      .field label {
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 850;
+      }
+
+      .aspect-section {
+        padding: 14px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.030);
+      }
+
+      .aspect-heading {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 12px;
+      }
+
+      .aspect-heading small {
+        color: var(--soft);
+        font-size: 12px;
+      }
+
+      .aspect-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+      }
+
+      .aspect-field {
+        display: grid;
+        grid-template-columns: 44px minmax(0, 1fr) 42px;
+        gap: 10px;
+        align-items: center;
+      }
+
+      .aspect-field label,
+      .aspect-field output {
+        font-size: 13px;
+        font-weight: 900;
+      }
+
+      .aspect-field label {
+        color: rgba(246, 234, 213, 0.78);
+      }
+
+      .aspect-field output {
+        color: var(--orange);
+        text-align: right;
+      }
+
+      .field input,
+      .field select {
+        min-height: 42px;
+        padding: 0 11px;
+      }
+
+      .field textarea {
+        min-height: 110px;
+        resize: vertical;
+        padding: 11px;
+        line-height: 1.6;
+      }
+
+      .rating-line {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 14px;
+        align-items: center;
+      }
+
+      input[type="range"] {
+        accent-color: var(--orange);
+      }
+
+      .rating-value {
+        min-width: 52px;
+        color: var(--orange);
+        font-size: 24px;
+        font-weight: 950;
+        text-align: right;
+      }
+
+      .detail-actions {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 14px 18px 18px;
+        border-top: 1px solid var(--line);
+      }
+
+      .danger {
+        border-color: rgba(232, 75, 106, 0.42);
+        color: #ff9caf;
+      }
+
+      .file-input {
+        display: none;
+      }
+
+      .toast {
+        position: fixed;
+        left: 50%;
+        bottom: 24px;
+        z-index: 40;
+        display: none;
+        transform: translateX(-50%);
+        padding: 10px 14px;
+        border: 1px solid var(--line-bright);
+        border-radius: 8px;
+        background: rgba(10, 10, 9, 0.90);
+        color: var(--text);
+        box-shadow: var(--shadow);
+      }
+
+      .toast.show {
+        display: block;
+      }
+
+      @media (max-width: 980px) {
+        .app {
+          padding: 12px;
+        }
+
+        .shell {
+          grid-template-columns: 1fr;
+          min-height: auto;
+        }
+
+        .sidebar {
+          position: static;
+          height: auto;
+        }
+
+        .topbar {
+          grid-template-columns: 1fr;
+        }
+
+        .subbar {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+
+        .detail-panel {
+          grid-template-columns: 1fr;
+          overflow: auto;
+        }
+
+        .detail-art {
+          border-right: 0;
+          border-bottom: 1px solid var(--line);
+        }
+
+        .detail-art .poster {
+          max-width: 260px;
+          margin: 0 auto;
+        }
+
+        .detail-main {
+          max-height: none;
+        }
+      }
+
+      @media (max-width: 620px) {
+        .stats,
+        .detail-form {
+          grid-template-columns: 1fr;
+        }
+
+        .gallery {
+          grid-template-columns: repeat(auto-fill, minmax(138px, 1fr));
+          gap: 12px;
+        }
+
+        .detail {
+          padding: 10px;
+        }
+
+        .detail-actions {
+          flex-direction: column-reverse;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="app">
+      <div class="shell">
+        <aside class="sidebar">
+          <section class="brand">
+            <small>Yao / Media Cabinet</small>
+            <h1>作品柜</h1>
+            <p>电影、书、游戏、漫画、动漫和专辑都放在这里。点开一张封面，直接评分、写短评、改状态。</p>
+          </section>
+
+          <section class="stats" aria-label="统计">
+            <div class="stat">
+              <strong id="totalCount">0</strong>
+              <span>条作品</span>
+            </div>
+            <div class="stat">
+              <strong id="avgRating">-</strong>
+              <span>平均分</span>
+            </div>
+          </section>
+
+          <section>
+            <div class="section-title">分类</div>
+            <div class="category-list" id="categoryList"></div>
+          </section>
+
+          <section>
+            <div class="section-title">数据</div>
+            <div class="tool-list">
+              <button class="tool-button" id="exportButton" type="button">
+                <span>导出 JSON</span>
+                <span class="count-pill">备份</span>
+              </button>
+              <button class="tool-button" id="importButton" type="button">
+                <span>导入 JSON</span>
+                <span class="count-pill">恢复</span>
+              </button>
+              <button class="tool-button" id="resetButton" type="button">
+                <span>清空本机</span>
+                <span class="count-pill">重置</span>
+              </button>
+              <input class="file-input" id="fileInput" type="file" accept="application/json" />
+            </div>
+          </section>
+        </aside>
+
+        <section class="workspace">
+          <header class="topbar">
+            <label class="search" aria-label="搜索作品">
+              <input id="searchInput" type="search" placeholder="搜索标题、作者、标签、短评..." />
+            </label>
+            <label class="control">
+              <select id="statusFilter" aria-label="状态筛选">
+                <option value="all">全部状态</option>
+                <option value="看过">看过</option>
+                <option value="想看">想看</option>
+                <option value="在看">在看</option>
+                <option value="玩过">玩过</option>
+                <option value="在玩">在玩</option>
+                <option value="读过">读过</option>
+                <option value="在读">在读</option>
+                <option value="听过">听过</option>
+              </select>
+            </label>
+            <button class="primary-button" id="addButton" type="button">添加作品</button>
+          </header>
+
+          <div class="subbar">
+            <div>
+              <h2 id="resultTitle">全部作品</h2>
+              <p id="resultMeta">按最近更新排列</p>
+            </div>
+            <div class="control">
+              <select id="sortSelect" aria-label="排序">
+                <option value="updated">最近更新</option>
+                <option value="rating">评分最高</option>
+                <option value="year">年份最新</option>
+                <option value="title">标题 A-Z</option>
+              </select>
+              <div class="view-toggle" aria-label="视图">
+                <button class="icon-button active" id="gridView" type="button" title="海报墙">▦</button>
+                <button class="icon-button" id="listView" type="button" title="列表">☰</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="gallery-wrap">
+            <div class="gallery" id="gallery"></div>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <section class="detail" id="detail" aria-hidden="true">
+      <div class="detail-panel" role="dialog" aria-modal="true" aria-labelledby="detailTitle">
+        <aside class="detail-art">
+          <div class="poster" id="detailPoster"></div>
+          <article class="radar-card" aria-label="评分雷达图">
+            <div class="radar-head">
+              <span>八维评分雷达</span>
+              <strong id="radarAverage">0.0</strong>
+            </div>
+            <div class="radar-chart" id="detailRadar"></div>
+            <div class="radar-summary" id="radarSummary"></div>
+            <small>待评项暂置中心，不计入维度均分。</small>
+          </article>
+        </aside>
+        <div class="detail-main">
+          <header class="detail-head">
+            <div>
+              <h2 id="detailTitle">作品</h2>
+              <p id="detailSubtitle">编辑评分与短评</p>
+            </div>
+            <button class="close-button" id="closeButton" type="button" aria-label="关闭">×</button>
+          </header>
+
+          <form class="detail-form" id="detailForm">
+            <div class="field">
+              <label for="titleField">标题</label>
+              <input id="titleField" name="title" required />
+            </div>
+            <div class="field">
+              <label for="originalTitleField">原名 / 英文名</label>
+              <input id="originalTitleField" name="originalTitle" />
+            </div>
+            <div class="field">
+              <label for="categoryField">分类</label>
+              <select id="categoryField" name="category"></select>
+            </div>
+            <div class="field">
+              <label for="statusField">状态</label>
+              <select id="statusField" name="status">
+                <option>想看</option>
+                <option>在看</option>
+                <option>看过</option>
+                <option>在玩</option>
+                <option>玩过</option>
+                <option>在读</option>
+                <option>读过</option>
+                <option>听过</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="creatorField">作者 / 导演 / 制作方</label>
+              <input id="creatorField" name="creator" />
+            </div>
+            <div class="field">
+              <label for="yearField">年份</label>
+              <input id="yearField" name="year" inputmode="numeric" />
+            </div>
+            <div class="field full">
+              <label for="posterField">封面 URL</label>
+              <input id="posterField" name="poster" placeholder="https://..." />
+            </div>
+            <div class="field full">
+              <label for="ratingField">我的评分</label>
+              <div class="rating-line">
+                <input id="ratingField" name="rating" type="range" min="0" max="10" step="0.1" />
+                <strong class="rating-value" id="ratingValue">0.0</strong>
+              </div>
+            </div>
+            <section class="aspect-section field full" aria-label="维度评分">
+              <div class="aspect-heading">
+                <span>八维评分</span>
+                <small id="aspectHint">会画成左侧雷达图</small>
+              </div>
+              <div class="aspect-grid" id="aspectFields"></div>
+            </section>
+            <div class="field full">
+              <label for="tagsField">标签</label>
+              <input id="tagsField" name="tags" placeholder="用逗号分隔，比如 科幻, 孤独, 神作" />
+            </div>
+            <div class="field full">
+              <label for="commentField">短评</label>
+              <textarea id="commentField" name="comment"></textarea>
+            </div>
+          </form>
+
+          <footer class="detail-actions">
+            <button class="ghost-button danger" id="deleteButton" type="button">删除</button>
+            <div>
+              <button class="ghost-button" id="cancelButton" type="button">取消</button>
+              <button class="primary-button" id="saveButton" type="submit" form="detailForm">保存</button>
+            </div>
+          </footer>
+        </div>
+      </div>
+    </section>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <script>
+      const STORAGE_KEY = "yao-media-cabinet-v2";
+      const categories = [
+        { id: "all", label: "全部" },
+        { id: "电影", label: "电影" },
+        { id: "书籍", label: "书籍" },
+        { id: "游戏", label: "游戏" },
+        { id: "漫画", label: "漫画" },
+        { id: "动漫", label: "动漫" },
+        { id: "专辑", label: "专辑" }
+      ];
+      const metricSets = {
+        default: [
+          { key: "concept", label: "构想" },
+          { key: "craft", label: "技艺" },
+          { key: "structure", label: "结构" },
+          { key: "expression", label: "表达" },
+          { key: "immersion", label: "沉浸" },
+          { key: "aftertaste", label: "余味" },
+          { key: "originality", label: "新意" },
+          { key: "coherence", label: "完整" }
+        ],
+        电影: [
+          { key: "story", label: "剧情" },
+          { key: "visual", label: "画面" },
+          { key: "music", label: "音乐" },
+          { key: "performance", label: "表演" },
+          { key: "atmosphere", label: "氛围" },
+          { key: "emotion", label: "共鸣" },
+          { key: "editing", label: "剪辑" },
+          { key: "theme", label: "主题" }
+        ],
+        书籍: [
+          { key: "story", label: "故事" },
+          { key: "prose", label: "文笔" },
+          { key: "character", label: "角色" },
+          { key: "world", label: "世界" },
+          { key: "thought", label: "思想" },
+          { key: "emotion", label: "共鸣" },
+          { key: "structure", label: "结构" },
+          { key: "originality", label: "新意" }
+        ],
+        游戏: [
+          { key: "gameplay", label: "玩法" },
+          { key: "controls", label: "操作" },
+          { key: "levelDesign", label: "关卡" },
+          { key: "art", label: "美术" },
+          { key: "music", label: "音乐" },
+          { key: "immersion", label: "沉浸" },
+          { key: "balance", label: "平衡" },
+          { key: "polish", label: "完成度" }
+        ],
+        漫画: [
+          { key: "story", label: "故事" },
+          { key: "style", label: "画风" },
+          { key: "paneling", label: "分镜" },
+          { key: "character", label: "角色" },
+          { key: "rhythm", label: "节奏" },
+          { key: "emotion", label: "共鸣" },
+          { key: "drawing", label: "画工" },
+          { key: "theme", label: "主题" }
+        ],
+        动漫: [
+          { key: "story", label: "剧情" },
+          { key: "style", label: "画风" },
+          { key: "music", label: "音乐" },
+          { key: "character", label: "角色" },
+          { key: "direction", label: "演出" },
+          { key: "emotion", label: "共鸣" },
+          { key: "animation", label: "作画" },
+          { key: "voice", label: "配音" }
+        ],
+        专辑: [
+          { key: "songwriting", label: "词曲" },
+          { key: "concept", label: "概念" },
+          { key: "distinctiveness", label: "独特" },
+          { key: "emotion", label: "感动" },
+          { key: "artistry", label: "艺术" },
+          { key: "innovation", label: "开创" },
+          { key: "arrangement", label: "编曲" },
+          { key: "production", label: "制作" }
+        ]
+      };
+      const categoryHelp = Object.fromEntries(
+        Object.entries(metricSets).map(([category, metrics]) =>
+          [category, metrics.map(metric => metric.label).join(" / ")])
+      );
+
+      const seedItems = [
+        {
+          id: "spirited-away",
+          title: "千与千寻",
+          originalTitle: "Spirited Away",
+          category: "电影",
+          status: "看过",
+          creator: "宫崎骏",
+          year: 2001,
+          rating: 10,
+          poster: "https://image.tmdb.org/t/p/w500/39wmItIWsg5sZMyRUHLkWBcuVCM.jpg",
+          tags: ["动画", "奇幻"],
+          comment: "童话的外壳下是关于成长、劳动、名字和记忆的长梦。",
+          updatedAt: "2026-09-12T04:00:00.000Z"
+        },
+        {
+          id: "blade-runner",
+          title: "银翼杀手",
+          originalTitle: "Blade Runner",
+          category: "电影",
+          status: "看过",
+          creator: "Ridley Scott",
+          year: 1982,
+          rating: 9,
+          poster: "https://image.tmdb.org/t/p/w500/63N9uy8nd9j7Eog2axPQ8lbr3Wj.jpg",
+          tags: ["科幻", "赛博朋克"],
+          comment: "雨、霓虹、复制人和“人是什么”的问题放在一起，后劲很长。",
+          updatedAt: "2026-09-12T04:02:00.000Z"
+        },
+        {
+          id: "in-the-mood-for-love",
+          title: "花样年华",
+          originalTitle: "In the Mood for Love",
+          category: "电影",
+          status: "看过",
+          creator: "王家卫",
+          year: 2000,
+          rating: 9,
+          poster: "https://image.tmdb.org/t/p/w500/iYypPT4bhqXfq1b6EnmxvRt6b2Y.jpg",
+          tags: ["爱情", "克制"],
+          comment: "情绪被压得很低，但每一帧都像在说没说出口的话。",
+          updatedAt: "2026-09-12T04:03:00.000Z"
+        },
+        {
+          id: "arrival",
+          title: "降临",
+          originalTitle: "Arrival",
+          category: "电影",
+          status: "看过",
+          creator: "Denis Villeneuve",
+          year: 2016,
+          rating: 8,
+          poster: "https://image.tmdb.org/t/p/w500/x2FJsf1ElAgr63Y3PNPtJrcmpoe.jpg",
+          tags: ["科幻", "语言"],
+          comment: "科幻设定很克制，真正打人的地方是语言、时间和选择。",
+          updatedAt: "2026-09-12T04:04:00.000Z"
+        },
+        {
+          id: "dune-part-two",
+          title: "沙丘2",
+          originalTitle: "Dune: Part Two",
+          category: "电影",
+          status: "想看",
+          creator: "Denis Villeneuve",
+          year: 2024,
+          rating: 0,
+          poster: "https://image.tmdb.org/t/p/w500/1pdfLvkbY9ohJlCjQH2CZjjYVvJ.jpg",
+          tags: ["科幻", "史诗"],
+          comment: "先放进想看，等看完再补评分。",
+          updatedAt: "2026-09-12T04:05:00.000Z"
+        },
+        {
+          id: "steins-gate",
+          title: "命运石之门",
+          originalTitle: "Steins;Gate",
+          category: "游戏",
+          status: "玩过",
+          creator: "5pb. / Nitroplus",
+          year: 2009,
+          rating: 9.6,
+          poster: "",
+          tags: ["视觉小说", "时间旅行"],
+          comment: "慢热，但一旦齿轮咬上，整部作品会变成一台很锋利的机器。",
+          updatedAt: "2026-09-12T04:06:00.000Z"
+        },
+        {
+          id: "disco-elysium",
+          title: "极乐迪斯科",
+          originalTitle: "Disco Elysium",
+          category: "游戏",
+          status: "在玩",
+          creator: "ZA/UM",
+          year: 2019,
+          rating: 9.4,
+          poster: "",
+          tags: ["RPG", "文学", "侦探"],
+          comment: "像一本会反过来审问你的小说。",
+          updatedAt: "2026-09-12T04:07:00.000Z"
+        },
+        {
+          id: "social-anxiety-book",
+          title: "Dying of Embarrassment",
+          originalTitle: "Help for Social Anxiety & Phobia",
+          category: "书籍",
+          status: "在读",
+          creator: "Barbara G. Markway",
+          year: 1992,
+          rating: 0,
+          poster: "",
+          tags: ["社恐", "CBT"],
+          comment: "先试着把练习拆小，不急着把自己扔进人群。",
+          updatedAt: "2026-09-12T04:08:00.000Z"
+        },
+        {
+          id: "monster",
+          title: "MONSTER",
+          originalTitle: "Monster",
+          category: "漫画",
+          status: "想看",
+          creator: "浦泽直树",
+          year: 1994,
+          rating: 0,
+          poster: "",
+          tags: ["悬疑", "人性"],
+          comment: "先占位，适合以后做长评。",
+          updatedAt: "2026-09-12T04:09:00.000Z"
+        },
+        {
+          id: "ok-computer",
+          title: "OK Computer",
+          originalTitle: "",
+          category: "专辑",
+          status: "听过",
+          creator: "Radiohead",
+          year: 1997,
+          rating: 9.2,
+          poster: "",
+          tags: ["Alternative", "焦虑"],
+          comment: "漂亮、冰冷，又很人。",
+          updatedAt: "2026-09-12T04:10:00.000Z"
+        }
+      ];
+
+      const state = {
+        items: loadItems(),
+        selectedCategory: "all",
+        search: "",
+        status: "all",
+        sort: "updated",
+        view: "grid",
+        editingId: null
+      };
+
+      const el = {
+        categoryList: document.querySelector("#categoryList"),
+        gallery: document.querySelector("#gallery"),
+        totalCount: document.querySelector("#totalCount"),
+        avgRating: document.querySelector("#avgRating"),
+        searchInput: document.querySelector("#searchInput"),
+        statusFilter: document.querySelector("#statusFilter"),
+        sortSelect: document.querySelector("#sortSelect"),
+        resultTitle: document.querySelector("#resultTitle"),
+        resultMeta: document.querySelector("#resultMeta"),
+        gridView: document.querySelector("#gridView"),
+        listView: document.querySelector("#listView"),
+        addButton: document.querySelector("#addButton"),
+        detail: document.querySelector("#detail"),
+        detailTitle: document.querySelector("#detailTitle"),
+        detailSubtitle: document.querySelector("#detailSubtitle"),
+        detailPoster: document.querySelector("#detailPoster"),
+        detailRadar: document.querySelector("#detailRadar"),
+        radarAverage: document.querySelector("#radarAverage"),
+        radarSummary: document.querySelector("#radarSummary"),
+        detailForm: document.querySelector("#detailForm"),
+        titleField: document.querySelector("#titleField"),
+        originalTitleField: document.querySelector("#originalTitleField"),
+        categoryField: document.querySelector("#categoryField"),
+        statusField: document.querySelector("#statusField"),
+        creatorField: document.querySelector("#creatorField"),
+        yearField: document.querySelector("#yearField"),
+        posterField: document.querySelector("#posterField"),
+        ratingField: document.querySelector("#ratingField"),
+        ratingValue: document.querySelector("#ratingValue"),
+        aspectHint: document.querySelector("#aspectHint"),
+        aspectFields: document.querySelector("#aspectFields"),
+        tagsField: document.querySelector("#tagsField"),
+        commentField: document.querySelector("#commentField"),
+        closeButton: document.querySelector("#closeButton"),
+        cancelButton: document.querySelector("#cancelButton"),
+        deleteButton: document.querySelector("#deleteButton"),
+        exportButton: document.querySelector("#exportButton"),
+        importButton: document.querySelector("#importButton"),
+        resetButton: document.querySelector("#resetButton"),
+        fileInput: document.querySelector("#fileInput"),
+        toast: document.querySelector("#toast")
+      };
+
+      categories
+        .filter(category => category.id !== "all")
+        .forEach(category => {
+          const option = document.createElement("option");
+          option.value = category.id;
+          option.textContent = category.label;
+          el.categoryField.append(option);
+        });
+
+      function getMetrics(category) {
+        return metricSets[category] || metricSets.default;
+      }
+
+      function renderAspectControls(category, scores = {}) {
+        const metrics = getMetrics(category);
+        el.aspectHint.textContent = categoryHelp[category] || categoryHelp.default || "会画成左侧雷达图";
+        el.aspectFields.replaceChildren();
+        metrics.forEach(metric => {
+          const row = document.createElement("div");
+          row.className = "aspect-field";
+
+          const label = document.createElement("label");
+          label.htmlFor = `aspect-${metric.key}`;
+          label.textContent = metric.label;
+
+          const input = document.createElement("input");
+          input.id = `aspect-${metric.key}`;
+          input.type = "range";
+          input.min = "0";
+          input.max = "10";
+          input.step = "0.1";
+          input.dataset.aspectKey = metric.key;
+          input.dataset.unscored = String(scores[metric.key] == null);
+          input.value = scores[metric.key] == null ? "5" : clampScore(scores[metric.key]).toFixed(1);
+          input.setAttribute("aria-valuetext", formatAspectScore(scores[metric.key]));
+
+          const output = document.createElement("output");
+          output.htmlFor = input.id;
+          output.dataset.aspectOutput = metric.key;
+          output.textContent = formatAspectScore(scores[metric.key]);
+
+          row.append(label, input, output);
+          el.aspectFields.append(row);
+        });
+      }
+
+      function loadItems() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          const parsed = raw ? JSON.parse(raw) : null;
+          return Array.isArray(parsed) ? parsed : [];
+        } catch {
+          return [];
+        }
+      }
+
+      function saveItems() {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state.items));
+      }
+
+      function clampScore(value, fallback = 0) {
+        const number = Number(value);
+        if (!Number.isFinite(number)) return fallback;
+        return Math.max(0, Math.min(10, number));
+      }
+
+      function getAspectScores(item = {}) {
+        const source =
+          item.aspectScores && typeof item.aspectScores === "object" && !Array.isArray(item.aspectScores)
+            ? item.aspectScores
+            : {};
+        const metrics = getMetrics(item.category);
+        return metrics.reduce((scores, metric) => {
+          const saved = source[metric.key];
+          scores[metric.key] = saved != null && saved !== "" && Number.isFinite(Number(saved))
+            ? clampScore(saved)
+            : null;
+          return scores;
+        }, { ...source });
+      }
+
+      function formatAspectScore(value) {
+        return value == null ? "待评" : clampScore(value).toFixed(1);
+      }
+
+      function averageAspectScores(scores, category) {
+        const values = getMetrics(category).map(metric => scores[metric.key])
+          .filter(value => value != null).map(value => clampScore(value));
+        return values.length ? values.reduce((sum, value) => sum + value, 0) / values.length : null;
+      }
+
+      function getCurrentAspectScores() {
+        return Array.from(el.aspectFields.querySelectorAll("[data-aspect-key]")).reduce((scores, input) => {
+          scores[input.dataset.aspectKey] = input.dataset.unscored === "true" ? null : clampScore(input.value, 0);
+          return scores;
+        }, {});
+      }
+
+      function setAspectControls(scores) {
+        el.aspectFields.querySelectorAll("[data-aspect-key]").forEach(input => {
+          const key = input.dataset.aspectKey;
+          const value = scores[key];
+          const output = el.aspectFields.querySelector(`[data-aspect-output="${key}"]`);
+          input.dataset.unscored = String(value == null);
+          input.value = value == null ? "5" : clampScore(value).toFixed(1);
+          input.setAttribute("aria-valuetext", formatAspectScore(value));
+          if (output) output.textContent = formatAspectScore(value);
+        });
+      }
+
+      function updateAspectOutput(key, value) {
+        const output = el.aspectFields.querySelector(`[data-aspect-output="${key}"]`);
+        if (output) output.textContent = clampScore(value).toFixed(1);
+      }
+
+      function makeSvgElement(name, attributes = {}) {
+        const element = document.createElementNS("http://www.w3.org/2000/svg", name);
+        Object.entries(attributes).forEach(([key, value]) => element.setAttribute(key, value));
+        return element;
+      }
+
+      function radarPoint(index, value, total, radius = 92) {
+        const angle = -Math.PI / 2 + (index * Math.PI * 2) / total;
+        const distance = (clampScore(value, 0) / 10) * radius;
+        return {
+          x: 150 + Math.cos(angle) * distance,
+          y: 150 + Math.sin(angle) * distance
+        };
+      }
+
+      function radarPoints(scores, metrics, radius = 92) {
+        return metrics
+          .map((metric, index) => {
+            const point = radarPoint(index, scores[metric.key], metrics.length, radius);
+            return `${point.x.toFixed(2)},${point.y.toFixed(2)}`;
+          })
+          .join(" ");
+      }
+
+      function createRadarSvg(scores, category) {
+        const metrics = getMetrics(category);
+        const svg = makeSvgElement("svg", {
+          viewBox: "-12 -12 324 324",
+          role: "img",
+          "aria-label": `${category || "作品"}八维评分雷达图`
+        });
+
+        [0.25, 0.5, 0.75, 1].forEach(scale => {
+          svg.append(
+            makeSvgElement("polygon", {
+              points: radarPoints(
+                metrics.reduce((acc, metric) => {
+                  acc[metric.key] = scale * 10;
+                  return acc;
+                }, {}),
+                metrics,
+                92
+              ),
+              fill: "none",
+              stroke: "rgba(246,234,213,0.12)",
+              "stroke-width": scale === 1 ? "1.4" : "1"
+            })
+          );
+        });
+
+        metrics.forEach((metric, index) => {
+          const end = radarPoint(index, 10, metrics.length, 92);
+          const label = radarPoint(index, 10, metrics.length, 112);
+          const scoreLabel = radarPoint(index, 10, metrics.length, 72);
+          svg.append(
+            makeSvgElement("line", {
+              x1: "150",
+              y1: "150",
+              x2: end.x.toFixed(2),
+              y2: end.y.toFixed(2),
+              stroke: "rgba(246,234,213,0.13)",
+              "stroke-width": "1"
+            })
+          );
+          const labelText = makeSvgElement("text", {
+            x: label.x.toFixed(2),
+            y: label.y.toFixed(2),
+            "text-anchor": label.x < 132 ? "end" : label.x > 168 ? "start" : "middle",
+            "dominant-baseline": "middle",
+            class: "radar-label"
+          });
+          labelText.textContent = metric.label;
+          svg.append(labelText);
+
+          const scoreText = makeSvgElement("text", {
+            x: scoreLabel.x.toFixed(2),
+            y: scoreLabel.y.toFixed(2),
+            "text-anchor": "middle",
+            "dominant-baseline": "middle",
+            class: "radar-score-label"
+          });
+          scoreText.textContent = formatAspectScore(scores[metric.key]);
+          svg.append(scoreText);
+        });
+
+        svg.append(
+          makeSvgElement("polygon", {
+            points: radarPoints(scores, metrics, 92),
+            fill: "rgba(118,215,208,0.22)",
+            stroke: "rgba(118,215,208,0.92)",
+            "stroke-width": "2.2"
+          })
+        );
+
+        metrics.forEach((metric, index) => {
+          if (scores[metric.key] == null) return;
+          const point = radarPoint(index, scores[metric.key], metrics.length, 92);
+          svg.append(
+            makeSvgElement("circle", {
+              cx: point.x.toFixed(2),
+              cy: point.y.toFixed(2),
+              r: "3.4",
+              fill: "#f0a23a",
+              stroke: "rgba(0,0,0,0.68)",
+              "stroke-width": "1.5"
+            })
+          );
+        });
+
+        return svg;
+      }
+
+      function renderRadar(item) {
+        const scores = getAspectScores(item);
+        const metrics = getMetrics(item.category);
+        el.detailRadar.replaceChildren(createRadarSvg(scores, item.category));
+        el.radarAverage.textContent = formatAspectScore(averageAspectScores(scores, item.category));
+        el.radarSummary.replaceChildren(
+          ...metrics.map(metric => {
+            const chip = document.createElement("span");
+            chip.className = "radar-chip";
+            chip.textContent = `${metric.label} ${formatAspectScore(scores[metric.key])}`;
+            return chip;
+          })
+        );
+      }
+
+      function formatRating(value) {
+        const number = Number(value);
+        return number > 0 ? number.toFixed(number % 1 ? 1 : 0) : "未评";
+      }
+
+      function normalizeText(value) {
+        return String(value ?? "").trim().toLowerCase();
+      }
+
+      function getFilteredItems() {
+        const query = normalizeText(state.search);
+        return state.items
+          .filter(item => state.selectedCategory === "all" || item.category === state.selectedCategory)
+          .filter(item => state.status === "all" || item.status === state.status)
+          .filter(item => {
+            if (!query) return true;
+            return [
+              item.title,
+              item.originalTitle,
+              item.creator,
+              item.year,
+              item.status,
+              item.category,
+              item.comment,
+              ...(item.tags || [])
+            ]
+              .map(normalizeText)
+              .some(text => text.includes(query));
+          })
+          .sort((a, b) => {
+            if (state.sort === "rating") return Number(b.rating || 0) - Number(a.rating || 0);
+            if (state.sort === "year") return Number(b.year || 0) - Number(a.year || 0);
+            if (state.sort === "title") return String(a.title).localeCompare(String(b.title), "zh-CN");
+            return new Date(b.updatedAt || 0) - new Date(a.updatedAt || 0);
+          });
+      }
+
+      function getCounts() {
+        return categories.reduce((acc, category) => {
+          acc[category.id] =
+            category.id === "all"
+              ? state.items.length
+              : state.items.filter(item => item.category === category.id).length;
+          return acc;
+        }, {});
+      }
+
+      function renderCategoryList() {
+        const counts = getCounts();
+        el.categoryList.replaceChildren(
+          ...categories.map(category => {
+            const button = document.createElement("button");
+            button.type = "button";
+            button.className = `category-button ${state.selectedCategory === category.id ? "active" : ""}`;
+            button.innerHTML = `<span>${category.label}</span><span class="count-pill">${counts[category.id] || 0}</span>`;
+            button.addEventListener("click", () => {
+              state.selectedCategory = category.id;
+              render();
+            });
+            return button;
+          })
+        );
+      }
+
+      function createPoster(item) {
+        const poster = document.createElement("div");
+        poster.className = "poster";
+        const badge = document.createElement("span");
+        badge.className = "rating-badge";
+        badge.textContent = formatRating(item.rating);
+        poster.append(badge);
+        if (item.poster) {
+          const image = document.createElement("img");
+          image.loading = "lazy";
+          image.alt = `${item.title} 封面`;
+          image.src = item.poster;
+          image.onerror = () => {
+            image.remove();
+            poster.append(createFallback(item.title));
+          };
+          poster.append(image);
+        } else {
+          poster.append(createFallback(item.title));
+        }
+        return poster;
+      }
+
+      function createFallback(title) {
+        const fallback = document.createElement("div");
+        fallback.className = "poster-fallback";
+        fallback.textContent = title;
+        return fallback;
+      }
+
+      function renderGallery() {
+        const items = getFilteredItems();
+        el.gallery.className = `gallery ${state.view}`;
+        el.resultTitle.textContent = state.selectedCategory === "all" ? "全部作品" : state.selectedCategory;
+        el.resultMeta.textContent = `${items.length} 条结果 · ${el.sortSelect.options[el.sortSelect.selectedIndex].text}`;
+
+        if (!items.length) {
+          const empty = document.createElement("div");
+          empty.className = "empty-state";
+          empty.innerHTML = "<div><strong>这里还没有作品</strong><p>添加第一条作品，开始建立自己的评分柜。</p></div>";
+          el.gallery.replaceChildren(empty);
+          return;
+        }
+
+        el.gallery.replaceChildren(
+          ...items.map(item => {
+            const card = document.createElement("button");
+            card.type = "button";
+            card.className = "card";
+            card.append(createPoster(item));
+            const body = document.createElement("div");
+            body.className = "card-body";
+            body.innerHTML = `
+              <div class="card-foot">
+                <span class="type-pill">${item.category}</span>
+                <span class="status-pill">${item.status || "未设置"}</span>
+              </div>
+              <h3>${escapeHtml(item.title)}</h3>
+              <p class="meta">${escapeHtml([item.creator, item.year].filter(Boolean).join(" · "))}</p>
+              <p class="card-comment">${escapeHtml(item.comment || "还没有短评。")}</p>
+            `;
+            card.append(body);
+            card.addEventListener("click", () => openDetail(item.id));
+            return card;
+          })
+        );
+      }
+
+      function renderStats() {
+        const rated = state.items.filter(item => Number(item.rating) > 0);
+        const average = rated.length
+          ? rated.reduce((sum, item) => sum + Number(item.rating), 0) / rated.length
+          : 0;
+        el.totalCount.textContent = state.items.length;
+        el.avgRating.textContent = rated.length ? average.toFixed(1) : "-";
+      }
+
+      function render() {
+        renderCategoryList();
+        renderStats();
+        renderGallery();
+      }
+
+      function openDetail(id) {
+        const item =
+          state.items.find(entry => entry.id === id) || {
+            id: crypto.randomUUID(),
+            title: "",
+            originalTitle: "",
+            category: "电影",
+            status: "想看",
+            creator: "",
+            year: "",
+            rating: 0,
+            poster: "",
+            tags: [],
+            comment: "",
+            aspectScores: {},
+            updatedAt: new Date().toISOString()
+          };
+        state.editingId = item.id;
+        el.detailTitle.textContent = item.title || "新作品";
+        el.detailSubtitle.textContent = [item.category, item.creator, item.year].filter(Boolean).join(" · ") || "编辑评分与短评";
+        el.titleField.value = item.title || "";
+        el.originalTitleField.value = item.originalTitle || "";
+        el.categoryField.value = item.category || "电影";
+        el.statusField.value = item.status || "想看";
+        el.creatorField.value = item.creator || "";
+        el.yearField.value = item.year || "";
+        el.posterField.value = item.poster || "";
+        el.ratingField.value = Number(item.rating || 0);
+        el.ratingValue.textContent = Number(item.rating || 0).toFixed(1);
+        const aspectScores = getAspectScores(item);
+        renderAspectControls(item.category || "电影", aspectScores);
+        setAspectControls(aspectScores);
+        el.tagsField.value = (item.tags || []).join(", ");
+        el.commentField.value = item.comment || "";
+        el.detailPoster.replaceChildren(createPoster({ ...item, aspectScores }));
+        renderRadar({ ...item, aspectScores });
+        el.deleteButton.style.visibility = state.items.some(entry => entry.id === item.id) ? "visible" : "hidden";
+        el.detail.classList.add("open");
+        el.detail.setAttribute("aria-hidden", "false");
+        setTimeout(() => el.titleField.focus(), 0);
+      }
+
+      function closeDetail() {
+        state.editingId = null;
+        el.detail.classList.remove("open");
+        el.detail.setAttribute("aria-hidden", "true");
+      }
+
+      function readFormItem() {
+        return {
+          id: state.editingId || crypto.randomUUID(),
+          title: el.titleField.value.trim() || "未命名作品",
+          originalTitle: el.originalTitleField.value.trim(),
+          category: el.categoryField.value,
+          status: el.statusField.value,
+          creator: el.creatorField.value.trim(),
+          year: el.yearField.value.trim(),
+          rating: Number(el.ratingField.value || 0),
+          aspectScores: {
+            ...(state.items.find(item => item.id === state.editingId)?.aspectScores || {}),
+            ...getCurrentAspectScores()
+          },
+          poster: el.posterField.value.trim(),
+          tags: el.tagsField.value
+            .split(/[,，]/)
+            .map(tag => tag.trim())
+            .filter(Boolean),
+          comment: el.commentField.value.trim(),
+          updatedAt: new Date().toISOString()
+        };
+      }
+
+      function upsertItem(item) {
+        const index = state.items.findIndex(entry => entry.id === item.id);
+        if (index >= 0) state.items.splice(index, 1, item);
+        else state.items.unshift(item);
+        saveItems();
+        render();
+      }
+
+      function deleteCurrentItem() {
+        if (!state.editingId) return;
+        state.items = state.items.filter(item => item.id !== state.editingId);
+        saveItems();
+        closeDetail();
+        render();
+        showToast("已删除");
+      }
+
+      function exportData() {
+        const blob = new Blob([JSON.stringify(state.items, null, 2)], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `media-cabinet-${new Date().toISOString().slice(0, 10)}.json`;
+        link.click();
+        URL.revokeObjectURL(url);
+      }
+
+      async function importData(file) {
+        const text = await file.text();
+        const parsed = JSON.parse(text);
+        if (!Array.isArray(parsed)) throw new Error("JSON 顶层必须是数组");
+        state.items = parsed.map(item => ({
+          id: item.id || crypto.randomUUID(),
+          title: String(item.title || "未命名作品"),
+          originalTitle: String(item.originalTitle || ""),
+          category: categories.some(category => category.id === item.category) ? item.category : "电影",
+          status: String(item.status || "想看"),
+          creator: String(item.creator || ""),
+          year: item.year || "",
+          rating: Number(item.rating || 0),
+          poster: String(item.poster || ""),
+          tags: Array.isArray(item.tags) ? item.tags.map(String) : [],
+          aspectScores: getAspectScores(item),
+          comment: String(item.comment || ""),
+          updatedAt: item.updatedAt || new Date().toISOString()
+        }));
+        saveItems();
+        render();
+        showToast("导入完成");
+      }
+
+      function resetData() {
+        state.items = [];
+        saveItems();
+        render();
+        showToast("已清空本机数据");
+      }
+
+      function showToast(message) {
+        el.toast.textContent = message;
+        el.toast.classList.add("show");
+        clearTimeout(showToast.timer);
+        showToast.timer = setTimeout(() => el.toast.classList.remove("show"), 1800);
+      }
+
+      function escapeHtml(value) {
+        return String(value ?? "")
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll('"', "&quot;")
+          .replaceAll("'", "&#039;");
+      }
+
+      function registerWebMcpTools() {
+        const context = document.modelContext;
+        if (!context?.registerTool) return;
+        const lifecycle = new AbortController();
+        const register = tool =>
+          Promise.resolve(context.registerTool(tool, { signal: lifecycle.signal })).catch(console.error);
+
+        register({
+          name: "list_media_items",
+          title: "List media items",
+          description: "Read the current visible personal media cabinet records.",
+          inputSchema: {
+            type: "object",
+            properties: {
+              category: { type: "string" },
+              search: { type: "string" }
+            },
+            additionalProperties: false
+          },
+          annotations: { readOnlyHint: true, untrustedContentHint: true },
+          execute(input = {}) {
+            const previous = { category: state.selectedCategory, search: state.search };
+            if (input.category) state.selectedCategory = input.category;
+            if (typeof input.search === "string") state.search = input.search;
+            const items = getFilteredItems().map(item => ({ ...item }));
+            state.selectedCategory = previous.category;
+            state.search = previous.search;
+            return { count: items.length, items };
+          }
+        });
+
+        register({
+          name: "create_media_item",
+          title: "Create media item",
+          description: "Create a new record in the personal media cabinet and update the visible page.",
+          inputSchema: {
+            type: "object",
+            properties: {
+              title: { type: "string" },
+              category: { type: "string" },
+              status: { type: "string" },
+              creator: { type: "string" },
+              year: { type: ["string", "number"] },
+              rating: { type: "number" },
+              aspectScores: {
+                type: "object",
+                additionalProperties: { type: "number" }
+              },
+              poster: { type: "string" },
+              tags: { type: "array", items: { type: "string" } },
+              comment: { type: "string" }
+            },
+            required: ["title", "category"],
+            additionalProperties: false
+          },
+          annotations: { readOnlyHint: false, untrustedContentHint: true },
+          execute(input) {
+            if (!input || typeof input.title !== "string") throw new Error("title is required");
+            const item = {
+              id: crypto.randomUUID(),
+              title: input.title,
+              originalTitle: "",
+              category: input.category,
+              status: input.status || "想看",
+              creator: input.creator || "",
+              year: input.year || "",
+              rating: Number(input.rating || 0),
+              aspectScores: getAspectScores(input),
+              poster: input.poster || "",
+              tags: Array.isArray(input.tags) ? input.tags : [],
+              comment: input.comment || "",
+              updatedAt: new Date().toISOString()
+            };
+            upsertItem(item);
+            return { id: item.id, title: item.title, count: state.items.length };
+          }
+        });
+
+        register({
+          name: "update_media_item",
+          title: "Update media item",
+          description: "Update an existing media cabinet record and refresh the visible page.",
+          inputSchema: {
+            type: "object",
+            properties: {
+              id: { type: "string" },
+              title: { type: "string" },
+              category: { type: "string" },
+              status: { type: "string" },
+              creator: { type: "string" },
+              year: { type: ["string", "number"] },
+              rating: { type: "number" },
+              aspectScores: {
+                type: "object",
+                additionalProperties: { type: "number" }
+              },
+              poster: { type: "string" },
+              tags: { type: "array", items: { type: "string" } },
+              comment: { type: "string" }
+            },
+            required: ["id"],
+            additionalProperties: false
+          },
+          annotations: { readOnlyHint: false, untrustedContentHint: true },
+          execute(input) {
+            if (!input || typeof input.id !== "string") throw new Error("id is required");
+            const item = state.items.find(entry => entry.id === input.id);
+            if (!item) throw new Error("item not found");
+            const next = {
+              ...item,
+              ...Object.fromEntries(
+                Object.entries(input).filter(([key, value]) => key !== "id" && value !== undefined)
+              ),
+              updatedAt: new Date().toISOString()
+            };
+            next.aspectScores = getAspectScores(next);
+            upsertItem(next);
+            return { id: next.id, title: next.title, count: state.items.length };
+          }
+        });
+
+        register({
+          name: "delete_media_item",
+          title: "Delete media item",
+          description: "Delete one media cabinet record by ID and refresh the visible page.",
+          inputSchema: {
+            type: "object",
+            properties: {
+              id: { type: "string" }
+            },
+            required: ["id"],
+            additionalProperties: false
+          },
+          annotations: { readOnlyHint: false, untrustedContentHint: true },
+          execute(input) {
+            if (!input || typeof input.id !== "string") throw new Error("id is required");
+            const before = state.items.length;
+            state.items = state.items.filter(item => item.id !== input.id);
+            if (state.items.length === before) throw new Error("item not found");
+            saveItems();
+            render();
+            return { deletedId: input.id, count: state.items.length };
+          }
+        });
+      }
+
+      el.searchInput.addEventListener("input", event => {
+        state.search = event.target.value;
+        renderGallery();
+      });
+      el.statusFilter.addEventListener("change", event => {
+        state.status = event.target.value;
+        renderGallery();
+      });
+      el.sortSelect.addEventListener("change", event => {
+        state.sort = event.target.value;
+        renderGallery();
+      });
+      el.gridView.addEventListener("click", () => {
+        state.view = "grid";
+        el.gridView.classList.add("active");
+        el.listView.classList.remove("active");
+        renderGallery();
+      });
+      el.listView.addEventListener("click", () => {
+        state.view = "list";
+        el.listView.classList.add("active");
+        el.gridView.classList.remove("active");
+        renderGallery();
+      });
+      el.addButton.addEventListener("click", () => openDetail());
+      el.closeButton.addEventListener("click", closeDetail);
+      el.cancelButton.addEventListener("click", closeDetail);
+      el.detail.addEventListener("click", event => {
+        if (event.target === el.detail) closeDetail();
+      });
+      el.ratingField.addEventListener("input", event => {
+        el.ratingValue.textContent = Number(event.target.value).toFixed(1);
+        renderRadar({
+          category: el.categoryField.value,
+          rating: Number(event.target.value || 0),
+          aspectScores: getCurrentAspectScores()
+        });
+      });
+      el.categoryField.addEventListener("change", event => {
+        const nextCategory = event.target.value;
+        const scores = getAspectScores({
+          category: nextCategory,
+          rating: Number(el.ratingField.value || 0)
+        });
+        renderAspectControls(nextCategory, scores);
+        renderRadar({
+          category: nextCategory,
+          rating: Number(el.ratingField.value || 0),
+          aspectScores: getCurrentAspectScores()
+        });
+      });
+      el.aspectFields.addEventListener("input", event => {
+        const key = event.target?.dataset?.aspectKey;
+        if (!key) return;
+        event.target.dataset.unscored = "false";
+        event.target.setAttribute("aria-valuetext", formatAspectScore(event.target.value));
+        updateAspectOutput(key, event.target.value);
+        renderRadar({
+          category: el.categoryField.value,
+          rating: Number(el.ratingField.value || 0),
+          aspectScores: getCurrentAspectScores()
+        });
+      });
+      el.posterField.addEventListener("change", () => {
+        el.detailPoster.replaceChildren(createPoster(readFormItem()));
+      });
+      el.detailForm.addEventListener("submit", event => {
+        event.preventDefault();
+        upsertItem(readFormItem());
+        closeDetail();
+        showToast("已保存");
+      });
+      el.deleteButton.addEventListener("click", deleteCurrentItem);
+      el.exportButton.addEventListener("click", exportData);
+      el.importButton.addEventListener("click", () => el.fileInput.click());
+      el.fileInput.addEventListener("change", event => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+        importData(file).catch(error => showToast(error.message || "导入失败"));
+        event.target.value = "";
+      });
+      el.resetButton.addEventListener("click", resetData);
+      window.addEventListener("keydown", event => {
+        if (event.key === "Escape") closeDetail();
+      });
+
+      render();
+      registerWebMcpTools();
+    </script>
+  </body>
+</html>
