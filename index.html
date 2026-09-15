@@ -2217,18 +2217,24 @@
         badge.className = "rating-badge";
         badge.textContent = formatRating(item.rating);
         poster.append(badge);
+        const fallback = createFallback(item.title);
+        poster.append(fallback);
         if (item.poster) {
           const image = document.createElement("img");
           image.loading = "lazy";
+          image.decoding = "async";
+          image.referrerPolicy = "no-referrer";
+          image.style.opacity = "0";
+          image.style.position = "absolute";
+          image.style.inset = "0";
           image.alt = `${item.title} 封面`;
-          image.src = item.poster;
+          image.onload = () => { fallback.remove(); image.style.opacity = "1"; };
           image.onerror = () => {
             image.remove();
-            poster.append(createFallback(item.title));
+            fallback.title = "封面源暂时无法访问，可在作品详情更换封面 URL";
           };
+          image.src = item.poster;
           poster.append(image);
-        } else {
-          poster.append(createFallback(item.title));
         }
         return poster;
       }
@@ -2485,7 +2491,7 @@
           if (ids.has(id)) id = crypto.randomUUID();
           ids.add(id);
           const limit = [10, 50, 100].includes(Number(entry.limit)) ? Number(entry.limit) : 10;
-          return { id, name: String(entry.name || "我的榜单").slice(0, 100), limit,
+          return { id, name: String(entry.name || "我的榜单").slice(0, 100), description: String(entry.description || "").slice(0, 300), limit,
             itemIds: [...new Set((Array.isArray(entry.itemIds) ? entry.itemIds : []).map(String))].slice(0, limit) };
         });
       }
@@ -2546,6 +2552,17 @@
           #collectionTools .ranking-row input{width:65px}#collectionTools small{color:var(--muted)}
           #collectionTools button:disabled{opacity:.4;cursor:not-allowed}
           #collectionTools .bulk-entry{display:flex;padding:8px;gap:10px}
+          #collectionTools #rankingRows{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;max-height:none;overflow:visible}
+          #collectionTools .ranking-row{display:flex;flex-direction:column;align-items:stretch;border:1px solid var(--line);border-radius:12px;padding:12px;background:var(--bg)}
+          #collectionTools .ranking-row .poster{aspect-ratio:1;height:auto;width:100%;border-radius:8px}
+          #collectionTools .ranking-row .ranking-title{min-width:0;flex:none}
+          #collectionTools .ranking-row.podium{border-color:var(--orange);background:linear-gradient(150deg,rgba(240,162,58,.14),var(--bg))}
+          #collectionTools .rank-number{font-size:22px;font-weight:900;color:var(--orange)}
+          #collectionTools .ranking-actions{display:flex;gap:4px;flex-wrap:wrap;align-items:center}
+          #collectionTools .ranking-actions button{min-height:36px;padding:5px 9px}
+          #collectionTools .ranking-row.drag-over{outline:2px solid var(--blue)}
+          #collectionTools #rankingDescription{width:100%}
+          @media(max-width:600px){#collectionTools #rankingRows{grid-template-columns:repeat(2,minmax(0,1fr))}#collectionTools .ranking-row:first-child{grid-column:1/-1}#collectionTools .ranking-row:first-child .poster{max-width:280px;align-self:center}}
           @media(max-width:600px){#collectionTools{padding:12px}#collectionTools .collection-row>input,#collectionTools .collection-row>select{width:100%}#collectionTools .ghost-button{padding:8px}}`;
         document.head.append(style);
         document.querySelector("#collectionTools").innerHTML = `
@@ -2563,6 +2580,9 @@
             <div class="collection-row"><select id="rankingSelect" aria-label="选择榜单"></select>
               <button type="button" class="ghost-button" id="renameRanking">改名</button>
               <button type="button" class="ghost-button" id="deleteRanking">删除榜单</button></div>
+            <div class="collection-row"><input id="rankingDescription" maxlength="300" placeholder="写一句榜单介绍，例如：反复听到现在的十张" aria-label="榜单介绍">
+              <button type="button" class="ghost-button" id="saveRankingDescription">保存介绍</button>
+              <button type="button" class="ghost-button" id="shareRanking">保存分享长图</button></div>
             <div class="collection-row"><input id="rankingSearch" placeholder="搜索已导入作品（标题或作者）" aria-label="搜索榜单候选作品">
               <select id="rankingCandidate" aria-label="选择已有作品"></select>
               <button type="button" class="ghost-button" id="addToRanking">加入榜单</button></div>
@@ -2593,7 +2613,7 @@
         document.querySelector("#createRanking").onclick = () => {
           const name = document.querySelector("#newRankingName").value.trim();
           if (!name) return showToast("请先给榜单取个名字");
-          const list = { id: crypto.randomUUID(), name, limit: Number(document.querySelector("#newRankingLimit").value), itemIds: [] };
+          const list = { id: crypto.randomUUID(), name, description: "", limit: Number(document.querySelector("#newRankingLimit").value), itemIds: [] };
           rankings.push(list); activeRanking = list.id; saveRankings();
           document.querySelector("#newRankingName").value = ""; renderRankingTools();
         };
@@ -2609,6 +2629,11 @@
           saveRankings(); renderRankingTools();
         };
         document.querySelector("#rankingSearch").oninput = renderRankingCandidates;
+        document.querySelector("#saveRankingDescription").onclick = () => {
+          const list = rankings.find(list => list.id === activeRanking); if (!list) return;
+          list.description = document.querySelector("#rankingDescription").value.trim(); saveRankings(); showToast("榜单介绍已保存");
+        };
+        document.querySelector("#shareRanking").onclick = exportRankingImage;
         document.querySelector("#addToRanking").onclick = () => {
           const list = rankings.find(list => list.id === activeRanking);
           const id = document.querySelector("#rankingCandidate").value;
@@ -2660,23 +2685,88 @@
         fillSelect(document.querySelector("#rankingSelect"), rankings.length
           ? rankings.map(list => [list.id, `${list.name} · Top ${list.limit}`]) : [["", "先新建一个榜单"]], activeRanking);
         const list = rankings.find(list => list.id === activeRanking);
+        document.querySelector("#rankingDescription").value = list?.description || "";
+        document.querySelector("#shareRanking").disabled = !list?.itemIds.length;
+        document.querySelector("#saveRankingDescription").disabled = !list;
         for (const id of ["renameRanking", "deleteRanking"]) document.querySelector(`#${id}`).disabled = !list;
         document.querySelector("#rankingHint").textContent = list
-          ? `${list.itemIds.length} / ${list.limit} 部 · 独立于评分和上方筛选。上下移动，或输入名次后确认；点击标题编辑作品。`
+          ? `${list.itemIds.length} / ${list.limit} 部 · 电脑可拖动封面调序；手机可上下移动或指定名次。点击标题编辑作品。`
           : "从已有作品中挑选，自定义顺序。不足 10 / 50 / 100 部也可以保存。";
         document.querySelector("#rankingRows").replaceChildren(...(list?.itemIds || []).map((id, index) => {
-          const item = itemMap.get(id); const row = document.createElement("div"); row.className = "ranking-row";
+          const item = itemMap.get(id); const row = document.createElement("div"); row.className = `ranking-row${index < 3 ? " podium" : ""}`;
+          row.draggable = true;
+          row.addEventListener("dragstart", event => { event.dataTransfer.setData("text/plain", id); event.dataTransfer.effectAllowed = "move"; });
+          row.addEventListener("dragover", event => { event.preventDefault(); row.classList.add("drag-over"); });
+          row.addEventListener("dragleave", () => row.classList.remove("drag-over"));
+          row.addEventListener("drop", event => { event.preventDefault(); row.classList.remove("drag-over"); moveRankingItem(list, event.dataTransfer.getData("text/plain"), index); });
+          const number = document.createElement("strong"); number.className = "rank-number"; number.textContent = `${["🥇", "🥈", "🥉"][index] || ""} #${index + 1}`;
+          const cover = createPoster(item);
+          const comment = document.createElement("small"); comment.textContent = item.comment || "留一句上榜理由吧。";
           const position = document.createElement("input"); position.type = "number"; position.min = "1";
           position.max = String(list.itemIds.length); position.value = String(index + 1);
           position.setAttribute("aria-label", `${item.title}的名次`);
           const title = collectionButton(`${item.title} · ${item.creator || item.category}`, () => openDetail(id)); title.classList.add("ranking-title");
-          row.append(position, collectionButton("移到", () => moveRankingItem(list, id, Number(position.value) - 1)), title,
+          const actions = document.createElement("div"); actions.className = "ranking-actions";
+          actions.append(position, collectionButton("移到", () => moveRankingItem(list, id, Number(position.value) - 1)),
             collectionButton("↑", () => moveRankingItem(list, id, index - 1), index === 0),
             collectionButton("↓", () => moveRankingItem(list, id, index + 1), index === list.itemIds.length - 1),
             collectionButton("移出", () => { list.itemIds = list.itemIds.filter(value => value !== id); saveRankings(); renderRankingTools(); }));
+          row.append(number, cover, title, comment, actions);
           return row;
         }));
         renderRankingCandidates();
+      }
+
+      async function exportRankingImage() {
+        const list = rankings.find(list => list.id === activeRanking);
+        if (!list?.itemIds.length) return;
+        const entries = list.itemIds.map(id => state.items.find(item => item.id === id)).filter(Boolean);
+        const name = list.name, description = list.description || "";
+        const button = document.querySelector("#shareRanking"); button.disabled = true;
+        showToast("正在生成分享图，无法读取的封面会使用文字卡片");
+        try {
+          const images = new Map(); let cursor = 0;
+          // Bound concurrency and wait time; unavailable/cross-origin covers never block export.
+          await Promise.all(Array.from({length: Math.min(6, entries.length)}, async () => {
+            while (cursor < entries.length) {
+              const item = entries[cursor++]; if (!item.poster) continue;
+              const image = await new Promise(resolve => {
+                const img = new Image(); img.crossOrigin = "anonymous"; img.referrerPolicy = "no-referrer";
+                const timer = setTimeout(() => { img.onload = img.onerror = null; img.src = ""; resolve(null); }, 1500);
+                img.onload = () => { clearTimeout(timer); resolve(img); };
+                img.onerror = () => { clearTimeout(timer); resolve(null); };
+                img.src = item.poster;
+              });
+              if (image) images.set(item.id, image);
+            }
+          }));
+          const canvas = document.createElement("canvas"); canvas.width = 900; canvas.height = 190 + Math.ceil(entries.length / 3) * 310;
+          const ctx = canvas.getContext("2d"); if (!ctx) throw Error("Canvas unavailable");
+          ctx.fillStyle = "#10100e"; ctx.fillRect(0, 0, canvas.width, canvas.height);
+          const text = (value, x, y, width, size, color) => {
+            ctx.font = `${size}px sans-serif`; ctx.fillStyle = color;
+            let line = String(value || ""); while (line.length && ctx.measureText(line).width > width) line = line.slice(0,-1);
+            ctx.fillText(line, x, y);
+          };
+          text(name, 30, 55, 840, 32, "#f0a23a"); text(description, 30, 94, 840, 18, "#d5c8b2");
+          text(`我的 Top ${list.limit} · 已选 ${entries.length} 部`, 30, 130, 840, 18, "#d5c8b2");
+          entries.forEach((item, index) => {
+            const x = 30 + index % 3 * 290, y = 165 + Math.floor(index / 3) * 310;
+            ctx.fillStyle = "#292720"; ctx.fillRect(x, y, 260, 195);
+            const image = images.get(item.id);
+            if (image) { const scale = Math.min(260 / image.naturalWidth,195 / image.naturalHeight); const w=image.naturalWidth*scale,h=image.naturalHeight*scale;ctx.drawImage(image,x+(260-w)/2,y+(195-h)/2,w,h); }
+            else text(item.title,x+12,y+100,236,20,"#f6ead5");
+            text(`#${index+1}  ${item.title}`,x,y+224,260,20,"#f0a23a");
+            text(`${item.creator || item.category} · ${formatRating(item.rating)}`,x,y+250,260,16,"#f6ead5");
+            text(item.comment,x,y+276,260,14,"#b6ad9f");
+          });
+          const blob = await new Promise(resolve => canvas.toBlob(resolve,"image/png"));
+          if (!blob) throw Error("Image export failed");
+          const url = URL.createObjectURL(blob); const link = document.createElement("a");
+          link.href = url; link.download = `${name.replace(/[\\/:*?"<>|]/g,"-")}.png`; link.click();
+          setTimeout(() => URL.revokeObjectURL(url),60000); showToast("分享长图已生成");
+        } catch { showToast("这台设备暂时无法生成长图，可以先截图保存榜单"); }
+        finally { button.disabled = false; }
       }
 
       function renderBulkTools() {
