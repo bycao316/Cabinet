@@ -2883,7 +2883,19 @@
         }));
       }
 
+      function resetDetailVisualState() {
+        const radarCard = document.querySelector(".radar-card");
+        const expandButton = document.querySelector("#expandRadar");
+        radarCard?.classList.remove("radar-expanded");
+        el.detailPoster.classList.remove("cover-expanded");
+        if (expandButton) expandButton.textContent = "放大拖动八维图";
+        document.querySelector(".detail-art")?.scrollTo({ top: 0, behavior: "auto" });
+        el.detailForm?.scrollTo({ top: 0, behavior: "auto" });
+        el.albumViewSummary?.scrollTo({ top: 0, behavior: "auto" });
+      }
+
       function setDetailEditMode(editing) {
+        if (editing) resetDetailVisualState();
         const isAlbum = el.categoryField.value === "专辑";
         el.detailPanel.classList.toggle("album-detail", isAlbum);
         el.detailPanel.classList.toggle("album-view-mode", isAlbum && !editing);
@@ -2893,6 +2905,7 @@
       }
 
       function openDetail(target) {
+        resetDetailVisualState();
         const item =
           (target && typeof target === "object" ? target : state.items.find(entry => entry.id === target)) || {
             id: crypto.randomUUID(),
@@ -2949,9 +2962,7 @@
       }
 
       function closeDetail() {
-        document.querySelector(".radar-card").classList.remove("radar-expanded");
-        el.detailPoster.classList.remove("cover-expanded");
-        document.querySelector("#expandRadar").textContent = "放大拖动八维图";
+        resetDetailVisualState();
         state.editingId = null;
         state.editingSource = null;
         state.editingEvaluationHistory = [];
