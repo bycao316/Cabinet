@@ -483,8 +483,8 @@
 
       .detail-panel {
         display: grid;
-        grid-template-columns: minmax(220px, 330px) minmax(0, 1fr);
-        width: min(1060px, 100%);
+        grid-template-columns: minmax(260px, 430px) minmax(0, 1fr);
+        width: min(1160px, 100%);
         max-height: min(880px, calc(100vh - 48px));
         overflow: hidden;
         border: 1px solid rgba(255, 236, 205, 0.18);
@@ -522,7 +522,7 @@
         background: #171613; overflow: auto; display: flex; flex-direction: column;
         align-items: center; box-shadow: 0 0 0 40px rgba(0,0,0,.7);
       }
-      .radar-expanded .radar-chart { width: min(100%, 720px); height: min(68vh, 720px); min-height: 260px; }
+      .radar-expanded .radar-chart { width: min(100%, 800px); height: min(74vh, 800px); min-height: 260px; }
       .radar-expanded .radar-head { width: 100%; }
       .radar-expanded > small { max-width: 640px; }
 
@@ -2135,7 +2135,7 @@
         return element;
       }
 
-      const RADAR_RADIUS = 120;
+      const RADAR_RADIUS = 132;
 
       function radarPoint(index, value, total, radius = RADAR_RADIUS) {
         const angle = -Math.PI / 2 + (index * Math.PI * 2) / total;
@@ -2183,7 +2183,7 @@
 
         metrics.forEach((metric, index) => {
           const end = radarPoint(index, 10, metrics.length, RADAR_RADIUS);
-          const label = radarPoint(index, 10, metrics.length, 196);
+          const label = radarPoint(index, 10, metrics.length, 210);
           const scoreLabel = radarPoint(index, 10, metrics.length, 92);
           svg.append(
             makeSvgElement("line", {
