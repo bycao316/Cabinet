@@ -1220,18 +1220,18 @@
       }
 
       /* ── Velvet Underground Banana Easter Egg ── */
-      .banana-easter{margin-top:auto;padding:16px 0 2px;text-align:left}
-      .banana-trigger{display:inline-flex;align-items:center;justify-content:center;width:52px;height:60px;border:0;background:transparent;cursor:pointer;opacity:.65;transition:opacity .2s,transform .2s}
-      .banana-trigger img{width:42px;height:48px;object-fit:contain}
-      .banana-trigger:hover,.banana-trigger:focus-visible{opacity:1;transform:rotate(-8deg)}
+      .banana-easter{margin-top:auto;padding:12px 8px 0;text-align:left}
+      .banana-trigger{display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;border:0;background:transparent;cursor:pointer;opacity:.48;filter:saturate(.42);transition:opacity .2s,filter .2s}
+      .banana-trigger canvas{display:block;width:36px;height:36px}
+      .banana-trigger:hover,.banana-trigger:focus-visible{opacity:.88;filter:saturate(.78)}
       .banana-trigger:focus-visible{outline:1px solid var(--orange);border-radius:8px}
       .banana-overlay{position:fixed;inset:0;z-index:9999;display:none;place-items:center;padding:20px;background:rgba(6,6,5,.88);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);overflow:auto}
       .banana-overlay.show{display:grid;animation:bananaEnter .22s ease-out}
-      .banana-card{position:relative;width:min(560px,100%);padding:30px 20px 24px;display:grid;justify-items:center;gap:12px;text-align:center;background:#181713;border:1px solid rgba(242,235,221,.12);border-radius:12px;box-shadow:0 24px 80px #0006}
+      .banana-card{position:relative;width:min(560px,100%);padding:30px 20px 24px;display:grid;justify-items:center;gap:12px;text-align:center;background:#151513;border:1px solid rgba(242,235,221,.045);border-radius:12px;box-shadow:0 16px 60px #0003}
       .banana-close{position:absolute;right:14px;top:12px;width:40px;height:40px;border:0;border-radius:50%;background:transparent;color:#aaa59b;font-size:26px;cursor:pointer;z-index:2}
       .banana-close:hover{color:#f2ebdd;background:#ffffff0a}
       .banana-edition{color:#a19a87;font:10px/1.5 system-ui,sans-serif;letter-spacing:.25em;padding-top:4px}
-      .peel-container{position:relative;width:min(440px,100%);aspect-ratio:1;touch-action:none;cursor:grab;outline-offset:3px}
+      .peel-container{position:relative;width:min(380px,100%);aspect-ratio:1;touch-action:none;cursor:grab;outline-offset:3px}
       .peel-container:active{cursor:grabbing}
       .peel-container canvas{display:block;width:100%;height:100%;pointer-events:none}
       .peel-container:focus-visible{outline:1px solid #d99a45;border-radius:8px}
@@ -1276,7 +1276,7 @@
             </div>
           </section>
 
-          <div class="banana-easter"><button class="banana-trigger" id="bananaTrigger" type="button" aria-label="打开香蕉剥皮彩蛋" title="Peel slowly and see"><img src="attachments/vu-banana-nobg.png" alt="" /></button></div>
+          <div class="banana-easter"><button class="banana-trigger" id="bananaTrigger" type="button" aria-label="打开香蕉剥皮彩蛋" title="Peel slowly and see"><canvas id="bananaIcon" width="144" height="144" aria-hidden="true"></canvas></button></div>
         </aside>
 
         <section class="workspace">
@@ -4003,18 +4003,49 @@
         let ready=false,failed=false,progress=0,frame=0,drag=null,previousFocus=null,previousOverflow="";
         const reduced=window.matchMedia("(prefers-reduced-motion: reduce)").matches;
         const front=document.createElement("canvas"),back=document.createElement("canvas"),base=document.createElement("canvas");
-        [front,back,base].forEach(c=>{c.width=520;c.height=520;});
+        [front,back,base].forEach(c=>{c.width=1040;c.height=1040;});
         const rect={x:92,y:38,w:314,h:378};
         const load=src=>new Promise((resolve,reject)=>{const img=new Image();img.onload=()=>resolve(img);img.onerror=reject;img.src=src;});
-        // Draw existing transparent artwork into the same registration rectangle.
-        // Only the yellow layer deforms; the revealed artwork stays fixed underneath.
-        const assets=Promise.all([load("attachments/vu-banana-nobg.png"),load("attachments/vu-peeled-nobg.png")]).then(([yellow,pink])=>{
-          front.getContext("2d").drawImage(yellow,62,28,370,438,rect.x,rect.y,rect.w,rect.h);
-          base.getContext("2d").drawImage(pink,34,28,132,146,rect.x,rect.y,rect.w,rect.h);
+        // One high-resolution atlas; register both states to one fixed alpha silhouette.
+        // No source pixels or image files are changed: alignment happens at render time.
+        const icon=document.getElementById("bananaIcon");
+        const assets=load("attachments/vu-banana-atlas-v2.png").then(atlas=>{
+          const half=Math.floor(atlas.naturalWidth/2),height=atlas.naturalHeight;
+          const source=document.createElement("canvas");source.width=atlas.naturalWidth;source.height=height;
+          const sc=source.getContext("2d",{willReadFrequently:true});sc.drawImage(atlas,0,0);
+          const pixels=sc.getImageData(0,0,source.width,height).data;
+          function bounds(offset){
+            let l=half,t=height,r=0,b=0;
+            for(let y=0;y<height;y++)for(let x=0;x<half;x++){
+              if(pixels[(y*source.width+x+offset)*4+3]<180)continue;
+              l=Math.min(l,x);r=Math.max(r,x);t=Math.min(t,y);b=Math.max(b,y);
+            }return {x:l+offset,y:t,w:r-l+1,h:b-t+1};
+          }
+          const yellow=bounds(0),pink=bounds(half);
+          const fc=front.getContext("2d",{willReadFrequently:true});
+          fc.drawImage(atlas,yellow.x,yellow.y,yellow.w,yellow.h,rect.x*2,rect.y*2,rect.w*2,rect.h*2);
+          const temp=document.createElement("canvas");temp.width=1040;temp.height=1040;
+          const tc=temp.getContext("2d",{willReadFrequently:true});
+          tc.drawImage(atlas,pink.x,pink.y,pink.w,pink.h,rect.x*2,rect.y*2,rect.w*2,rect.h*2);
+          const fa=fc.getImageData(0,0,1040,1040).data,pa=tc.getImageData(0,0,1040,1040).data;
+          const bc=base.getContext("2d");
+          function span(data,y){
+            let l=1040,r=-1;
+            for(let x=0;x<1040;x++)if(data[(y*1040+x)*4+3]>128){l=Math.min(l,x);r=x;}
+            return r>=l?[l,r-l+1]:null;
+          }
+          // Match every scanline, so even the tips cannot jump between image states.
+          for(let y=0;y<1040;y++){
+            const a=span(fa,y),b=span(pa,y);if(!a)continue;
+            if(b)bc.drawImage(temp,b[0],y,b[1],1,a[0],y,a[1],1);
+            else{bc.fillStyle="#e99078";bc.fillRect(a[0],y,a[1],1);}
+          }
+          bc.globalCompositeOperation="destination-in";bc.drawImage(front,0,0);bc.globalCompositeOperation="source-over";
           const reverse=back.getContext("2d");reverse.drawImage(front,0,0);reverse.globalCompositeOperation="source-atop";
-          reverse.fillStyle="rgba(230,207,135,.94)";reverse.fillRect(0,0,520,520);
+          reverse.fillStyle="rgba(209,190,135,.97)";reverse.fillRect(0,0,1040,1040);
+          icon.getContext("2d").drawImage(front,rect.x*2,rect.y*2,rect.w*2,rect.h*2,24,10,96,116);
           ready=true;draw();setStatus();
-        }).catch(()=>{failed=true;status.textContent="封面暂时没加载出来，关闭后再试一次。";});
+        }).catch(()=>{failed=true;status.textContent="封面暂时没加载出来，请刷新后重试。";});
         function setStatus(){
           status.textContent=!ready?"正在准备唱片封套…":progress>.995?"你发现了封套下面的秘密。":"从香蕉顶部向下拖动 · 也可以轻点剥开";
           stage.setAttribute("aria-label",progress>.995?"香蕉已剥开，点击重新播放":"向下拖动剥开香蕉，或按回车自动播放");
@@ -4024,27 +4055,27 @@
           if(!ready)return;
           ctx.save();ctx.beginPath();ctx.rect(0,0,520,progress>=1?520:rect.y+progress*(rect.h+90));ctx.clip();
           ctx.shadowColor="rgba(0,0,0,.32)";ctx.shadowBlur=18;ctx.shadowOffsetY=10;
-          ctx.drawImage(base,0,0);ctx.restore();
-          if(progress<=0){ctx.drawImage(front,0,0);return;}
+          ctx.drawImage(base,0,0,520,520);ctx.restore();
+          if(progress<=0){ctx.drawImage(front,0,0,520,520);return;}
           if(progress>=1)return;
           const fold=rect.y+progress*(rect.h+90);
           const radius=22+Math.sin(progress*Math.PI)*20;
           // The unpeeled part stays perfectly still below the moving fold line.
-          ctx.save();ctx.beginPath();ctx.rect(0,fold,520,520);ctx.clip();ctx.drawImage(front,0,0);ctx.restore();
+          ctx.save();ctx.beginPath();ctx.rect(0,fold,520,520);ctx.clip();ctx.drawImage(front,0,0,520,520);ctx.restore();
           // A narrow curved return shows the paper underside instead of rotating
           // or fading the entire image. Strips preserve the original silhouette.
           const length=Math.PI*radius;
           const from=Math.max(rect.y,fold-length);
-          ctx.save();ctx.shadowColor="rgba(0,0,0,.32)";ctx.shadowBlur=9;ctx.shadowOffsetY=7;
+          ctx.save();
           for(let y=from;y<Math.min(fold,rect.y+rect.h);y+=1.5){
             const angle=(fold-y)/radius;
             const destY=fold+Math.sin(angle)*radius;
             const depth=1-Math.cos(angle);
-            const scale=1-depth*.045;
-            const dx=(520-520*scale)/2-depth*9;
+            const scale=1;
+            const dx=0;
             const h=Math.max(.65,Math.abs(Math.cos(angle))*1.7);
             ctx.globalAlpha=Math.min(1,(1-progress)*9);
-            ctx.drawImage(angle>Math.PI/2?back:front,0,y,520,1.7,dx,destY,520*scale,h);
+            ctx.drawImage(back,0,y*2,1040,3.4,dx,destY,520*scale,h);
           }
           ctx.restore();
         }
