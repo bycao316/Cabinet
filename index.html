@@ -3,10 +3,10 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Yao Media Cabinet</title>
+    <title>Yao · 私人专辑档案馆</title>
     <meta
       name="description"
-      content="私人作品评分柜：收藏电影、书籍、游戏、漫画、动漫和专辑，记录评分与短评。"
+      content="私人专辑档案馆：收藏专辑、记录评分、八维评价与个人榜单。"
     />
     <link
       rel="icon"
@@ -1124,6 +1124,100 @@
           grid-template-columns: repeat(2, minmax(0, 1fr));
         }
       }
+
+      /* Modern private album archive */
+      .app { padding:18px; }
+      .shell { grid-template-columns:220px minmax(0,1fr); gap:16px; min-height:calc(100vh - 36px); }
+      .sidebar { top:18px; height:calc(100vh - 36px); padding:20px 14px; border:0; border-radius:12px; background:#12110f; box-shadow:0 16px 48px rgba(0,0,0,.22); }
+      .brand { gap:8px; padding:6px 8px 18px; }
+      .brand h1 { font-size:29px; line-height:1.05; }
+      .brand small { color:var(--muted); font-size:10px; letter-spacing:.13em; }
+      .vinyl-mark { position:relative; width:42px; height:42px; margin-bottom:8px; border-radius:50%; background:repeating-radial-gradient(circle, #26231e 0 2px,#12110f 3px 5px); box-shadow:inset 0 0 0 1px rgba(255,255,255,.06); }
+      .vinyl-mark::before { content:""; position:absolute; inset:13px; border-radius:50%; background:var(--orange); }
+      .vinyl-mark span { position:absolute; z-index:1; inset:19px; border-radius:50%; background:#151310; }
+      .sidebar nav { min-height:0; }
+      .sidebar-data { margin-top:auto; }
+      .category-list,.tool-list { gap:4px; }
+      .category-button,.tool-button { min-height:42px; padding:9px 10px; border-color:transparent; background:transparent; color:var(--muted); }
+      .category-button:hover,.tool-button:hover { border-color:transparent; background:rgba(255,255,255,.045); color:var(--text); }
+      .category-button.active { border-color:transparent; background:rgba(211,155,73,.14); color:var(--text); box-shadow:none; }
+      .category-button .count-pill { margin-left:auto; background:transparent; color:var(--soft); }
+      .category-button.rank-link { margin-top:12px; color:var(--orange); }
+      .workspace { display:block; border:0; border-radius:12px; background:#151513; box-shadow:0 16px 48px rgba(0,0,0,.20); overflow:hidden; }
+      .archive-head { padding:34px 28px 18px; border-bottom:1px solid rgba(244,232,211,.07); background:linear-gradient(180deg,rgba(255,255,255,.018),transparent); }
+      .archive-title { display:flex; align-items:end; justify-content:space-between; gap:20px; margin-bottom:24px; }
+      .archive-title p { margin-bottom:9px; color:var(--orange); font-size:10px; font-weight:800; letter-spacing:.18em; }
+      .archive-title h2 { font-family:Georgia,"Noto Serif SC",serif; font-size:clamp(34px,5vw,60px); font-weight:500; line-height:1; }
+      .archive-title span { display:block; margin-top:10px; color:var(--muted); font-size:14px; }
+      .archive-average { display:grid; justify-items:end; gap:4px; }
+      .archive-average strong { color:var(--orange); font-family:Georgia,serif; font-size:34px; font-weight:500; }
+      .archive-average span { margin:0; color:var(--soft); font-size:12px; }
+      .topbar { display:flex; flex-wrap:wrap; gap:8px; padding:0; border:0; }
+      .topbar .search { flex:1 1 270px; }
+      .topbar .control { flex:0 1 auto; }
+      .topbar .control select { min-width:118px; }
+      .search input,.control select { border-color:transparent; background:#0f0f0d; }
+      .search input:focus,.control select:focus { border-color:var(--line-bright); box-shadow:0 0 0 2px rgba(211,155,73,.10); }
+      .primary-button { border-color:rgba(211,155,73,.42); background:var(--orange); color:#17130d; }
+      .primary-button:hover { background:#e0a557; }
+      .view-toggle { border-color:transparent; background:#0f0f0d; }
+      .decade-browser { display:flex; gap:7px; margin-top:16px; overflow:auto; scrollbar-width:none; }
+      .decade-browser::-webkit-scrollbar { display:none; }
+      .decade-button { flex:0 0 auto; min-height:34px; padding:0 12px; border:0; border-radius:999px; background:transparent; color:var(--muted); cursor:pointer; }
+      .decade-button:hover,.decade-button.active { background:rgba(211,155,73,.13); color:var(--orange); }
+      .gallery-wrap { padding:24px 28px 40px; overflow:visible; }
+      .gallery { grid-template-columns:repeat(auto-fill,minmax(190px,1fr)); gap:30px 18px; }
+      .card.album-card .poster { box-shadow:0 10px 28px rgba(0,0,0,.22); }
+      .card.album-card .poster::before { content:"查看专辑"; position:absolute; z-index:3; right:10px; bottom:10px; padding:6px 9px; border-radius:999px; background:rgba(10,9,8,.76); color:#f2ece2; font-size:11px; opacity:0; transform:translateY(5px); transition:opacity .18s ease,transform .18s ease; }
+      .card.album-card:hover .poster::before,.card.album-card:focus-visible .poster::before { opacity:1; transform:none; }
+      .card.album-card h3 { font-size:15px; }
+      .card.album-card .meta { color:#9e998f; }
+      .album-card-markers { display:none; }
+      .rating-badge { top:auto; bottom:8px; background:rgba(8,8,7,.78); }
+      .card.album-card .rating-badge { right:8px; }
+      .card.album-card .poster::after { background:linear-gradient(180deg,transparent 64%,rgba(0,0,0,.34)); }
+      .empty-state { min-height:360px; border:0; background:rgba(255,255,255,.018); }
+      #collectionTools { display:none!important; margin:0!important; padding:0!important; border:0!important; background:transparent!important; }
+      #collectionTools>.rankings-entrance { display:none!important; }
+
+      .detail { align-items:start; overflow:auto; padding:20px; background:rgba(4,4,3,.76); backdrop-filter:blur(8px); }
+      .detail.open { place-items:start center; }
+      .detail-panel { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); grid-template-areas:"head head head head head" "cover cover info info info" "radar radar radar info info" "actions actions actions actions actions"; gap:0 26px; width:min(1220px,100%); max-height:none; overflow:visible; border-color:rgba(244,232,211,.10); border-radius:12px; background:linear-gradient(180deg,color-mix(in srgb,var(--album-tint,#2b261f) 22%,#1e1c18),#151513 34%); }
+      .detail-panel::before { height:360px; opacity:.13!important; background-image:linear-gradient(180deg,rgba(21,21,19,.64),#151513),var(--album-art,none); filter:blur(34px) saturate(.58); }
+      .detail-art,.detail-main { display:contents; }
+      .detail-head { grid-area:head; padding:24px 28px 20px; border-bottom-color:rgba(244,232,211,.08)!important; }
+      .detail-head h2 { font-family:Georgia,"Noto Serif SC",serif; font-weight:500; font-size:clamp(30px,4vw,52px); }
+      .detail-art>.poster { grid-area:cover; align-self:start; width:calc(100% - 28px); max-width:440px!important; margin:28px 0 26px 28px!important; border-radius:10px; box-shadow:0 26px 70px rgba(0,0,0,.36); cursor:zoom-in; }
+      .detail-art>.poster.cover-expanded { position:fixed; z-index:1500; inset:18px; width:auto; max-width:none!important; height:calc(100vh - 36px); margin:auto!important; aspect-ratio:auto; background:rgba(5,5,4,.95); border-radius:10px; cursor:zoom-out; }
+      .detail-art>.poster.cover-expanded img { object-fit:contain; }
+      .detail-art>.poster.cover-expanded>.poster { height:100%; aspect-ratio:auto; background:transparent!important; }
+      .detail-art>.poster.cover-expanded::after,.detail-art>.poster.cover-expanded .rating-badge { display:none; }
+      .radar-jump-bar { display:none; }
+      .radar-card { grid-area:radar; width:calc(100% - 28px); max-width:660px; min-height:520px; margin:0 0 32px 28px; padding:24px; border-color:rgba(244,232,211,.08); border-radius:12px; background:rgba(11,11,10,.42); }
+      .radar-chart { min-height:460px; }
+      .radar-chip { background:rgba(211,155,73,.08); }
+      .album-view-summary { grid-area:info; align-self:start; gap:20px; padding:30px 30px 38px 0; overflow:visible; }
+      .album-archive-code { color:var(--orange); font-size:11px; font-weight:800; letter-spacing:.16em; }
+      .album-view-scoreline { align-items:center; }
+      .album-view-scoreline strong { font-size:clamp(64px,8vw,98px); }
+      .album-view-actions { display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end; }
+      .album-view-actions .preference-toggle { min-width:0; min-height:42px; padding:0 13px; }
+      .album-view-original { color:var(--soft); font-family:Georgia,"Noto Serif SC",serif; font-size:18px; font-style:italic; }
+      .album-note { display:grid; gap:8px; padding-top:18px; border-top:1px solid rgba(244,232,211,.08); }
+      .album-note small { color:var(--orange); font-size:11px; font-weight:800; letter-spacing:.12em; text-transform:uppercase; }
+      .album-note p { color:var(--muted); font-size:15px; line-height:1.8; white-space:pre-wrap; }
+      .album-note .album-view-comment { color:var(--text); font-family:Georgia,"Noto Serif SC",serif; font-size:21px; line-height:1.75; }
+      .detail-form { grid-area:info; align-self:start; padding:30px 30px 38px 0; overflow:visible; }
+      .detail-actions { grid-area:actions; }
+      .aspect-section { background:rgba(11,11,10,.28); }
+      .detail-panel:not(.album-view-mode) .radar-card { opacity:.82; }
+      .library-search-form { grid-template-columns:minmax(0,1fr) auto; }
+
+      @media(max-width:980px){
+        .app{padding:0}.shell{display:block}.sidebar{position:static;width:100%;height:auto;border-radius:0;box-shadow:none}.brand{grid-template-columns:auto 1fr;align-items:center}.brand h1{font-size:25px}.brand small{grid-column:2}.vinyl-mark{grid-row:1/3}.sidebar nav{overflow:auto}.category-list{display:flex;overflow:auto}.category-button{flex:0 0 auto}.sidebar-data{display:block;margin-top:10px}.sidebar-data .section-title{display:none}.sidebar-data .tool-list{display:flex}.sidebar-data .tool-button{flex:1;justify-content:center;font-size:12px}.workspace{border-radius:0;box-shadow:none}.archive-head{padding:26px 18px 16px}.gallery-wrap{padding:20px 18px 36px}.gallery{grid-template-columns:repeat(3,minmax(0,1fr))}.detail{padding:0}.detail-panel{grid-template-columns:1fr;grid-template-areas:"head" "cover" "info" "radar" "actions";width:100%;min-height:100vh;border:0;border-radius:0}.detail-art>.poster{width:min(72vw,360px);margin:24px auto!important}.album-view-summary,.detail-form{padding:24px 18px}.radar-card{width:calc(100% - 36px);margin:0 18px 28px;min-height:0}.radar-chart{min-height:420px}.detail-head{padding:20px 18px}}
+      @media(max-width:620px){
+        .archive-title{align-items:start}.archive-average{display:none}.topbar .search{flex-basis:100%}.topbar .control{flex:1 1 44%}.topbar .control select{width:100%;min-width:0}.topbar .primary-button{flex:1 1 100%}.gallery{grid-template-columns:repeat(2,minmax(0,1fr));gap:24px 12px}.gallery.list{grid-template-columns:1fr}.detail-head h2{font-size:31px}.radar-card{padding:14px}.radar-chart{min-height:330px}.album-view-scoreline{align-items:stretch}.album-view-actions{justify-content:stretch}.album-view-actions>*{flex:1}.detail-art>.poster.cover-expanded{inset:8px;height:calc(100vh - 16px)}
+      }
     </style>
   </head>
   <body>
@@ -1131,41 +1225,27 @@
       <div class="shell">
         <aside class="sidebar">
           <section class="brand">
-            <small>Yao / Media Cabinet</small>
-            <h1>作品柜</h1>
-            <p>电影、书、游戏、漫画、动漫和专辑都放在这里。点开一张封面，直接评分、写短评、改状态。</p>
+            <div class="vinyl-mark" aria-hidden="true"><span></span></div>
+            <small>CABINET / ALBUM ARCHIVE</small>
+            <h1>唱片柜</h1>
           </section>
 
-          <section class="stats" aria-label="统计">
-            <div class="stat">
-              <strong id="totalCount">0</strong>
-              <span>条作品</span>
-            </div>
-            <div class="stat">
-              <strong id="avgRating">-</strong>
-              <span>平均分</span>
-            </div>
-          </section>
-
-          <section>
-            <div class="section-title">分类</div>
+          <nav aria-label="专辑收藏导航">
+            <div class="section-title">收藏</div>
             <div class="category-list" id="categoryList"></div>
-          </section>
+          </nav>
 
-          <section>
-            <div class="section-title">数据</div>
+          <section class="sidebar-data">
+            <div class="section-title">资料</div>
             <div class="tool-list">
               <button class="tool-button" id="exportButton" type="button">
-                <span>导出 JSON</span>
-                <span class="count-pill">备份</span>
+                <span>导出备份</span>
               </button>
               <button class="tool-button" id="importButton" type="button">
-                <span>导入 JSON</span>
-                <span class="count-pill">恢复</span>
+                <span>导入备份</span>
               </button>
               <button class="tool-button" id="resetButton" type="button">
-                <span>清空本机</span>
-                <span class="count-pill">重置</span>
+                <span>设置与清空</span>
               </button>
               <input class="file-input" id="fileInput" type="file" accept="application/json" />
             </div>
@@ -1173,52 +1253,49 @@
         </aside>
 
         <section class="workspace">
-          <header class="topbar">
-            <label class="search" aria-label="搜索作品">
-              <input id="searchInput" type="search" placeholder="搜索标题、作者、标签、短评..." />
+          <header class="archive-head">
+            <div class="archive-title">
+              <div>
+                <p>PERSONAL RECORD ARCHIVE</p>
+                <h2 id="resultTitle">我的专辑</h2>
+                <span id="resultMeta">共收藏 0 张专辑</span>
+              </div>
+              <div class="archive-average"><strong id="avgRating">-</strong><span>平均分</span></div>
+              <strong id="totalCount" hidden>0</strong>
+            </div>
+            <div class="topbar">
+            <label class="search" aria-label="搜索专辑">
+              <input id="searchInput" type="search" placeholder="搜索专辑、艺人、流派或短评" />
             </label>
             <label class="control">
               <select id="statusFilter" aria-label="状态筛选">
                 <option value="all">全部状态</option>
-                <option value="看过">看过</option>
-                <option value="想看">想看</option>
-                <option value="在看">在看</option>
-                <option value="玩过">玩过</option>
-                <option value="在玩">在玩</option>
-                <option value="想玩">想玩</option>
-                <option value="读过">读过</option>
-                <option value="在读">在读</option>
-                <option value="想读">想读</option>
                 <option value="听过">听过</option>
                 <option value="在听">在听</option>
-                <option value="未听">未听（想听／尚未设置）</option>
                 <option value="想听">想听</option>
               </select>
             </label>
-            <button class="primary-button" id="addButton" type="button">搜索添加</button>
-          </header>
-
-          <div class="subbar">
-            <div>
-              <h2 id="resultTitle">全部作品</h2>
-              <p id="resultMeta">按最近更新排列</p>
-            </div>
-            <div class="control">
+            <label class="control"><select id="genreFilter" aria-label="流派筛选"><option value="">全部流派</option></select></label>
+            <label class="control"><select id="yearFilter" aria-label="年份筛选"><option value="">全部年份</option></select></label>
+            <label class="control">
               <select id="sortSelect" aria-label="排序">
                 <option value="updated">最近更新</option>
                 <option value="rating">评分最高</option>
                 <option value="year">年份最新</option>
-                <option value="title">标题 A-Z</option>
+                <option value="title">专辑名 A-Z</option>
               </select>
-              <div class="view-toggle" aria-label="视图">
-                <button class="icon-button active" id="gridView" type="button" title="海报墙">▦</button>
-                <button class="icon-button" id="listView" type="button" title="列表">☰</button>
-              </div>
+            </label>
+            <button class="primary-button" id="addButton" type="button">＋ 添加专辑</button>
+            <div class="view-toggle" aria-label="视图">
+              <button class="icon-button active" id="gridView" type="button" title="封面墙">▦</button>
+              <button class="icon-button" id="listView" type="button" title="列表">☰</button>
             </div>
-          </div>
+            </div>
+            <div class="decade-browser" id="decadeBrowser" aria-label="按年代浏览"></div>
+          </header>
 
           <div class="gallery-wrap">
-            <section id="collectionTools" aria-label="分类与个人榜单"></section>
+            <section id="collectionTools" aria-label="个人专辑榜单"></section>
             <div class="gallery" id="gallery"></div>
           </div>
         </section>
@@ -1229,20 +1306,20 @@
       <div class="library-panel" role="dialog" aria-modal="true" aria-labelledby="libraryTitle">
         <header class="detail-head">
           <div>
-            <h2 id="libraryTitle">搜索资料库</h2>
-            <p>搜到作品后点一下，资料会自动填好。</p>
+            <h2 id="libraryTitle">添加一张专辑</h2>
+            <p>搜索专辑或艺人，封面与发行资料会自动带入。</p>
           </div>
           <button class="close-button" id="libraryCloseButton" type="button" aria-label="关闭">×</button>
         </header>
         <div class="library-body">
           <form class="library-search-form" id="librarySearchForm">
-            <select id="libraryCategory" aria-label="作品分类"></select>
-            <input id="libraryQuery" type="search" placeholder="输入作品名，例如 千与千寻" autocomplete="off" required />
+            <select id="libraryCategory" aria-label="资料类型" hidden></select>
+            <input id="libraryQuery" type="search" placeholder="输入专辑名或艺人名，例如 崔健 新长征路上的摇滚" autocomplete="off" required />
             <button class="primary-button" type="submit">搜索</button>
           </form>
-          <div class="library-message" id="libraryMessage">选择分类，输入名字开始搜索。</div>
+          <div class="library-message" id="libraryMessage">输入专辑名或艺人名开始搜索。</div>
           <div class="library-results" id="libraryResults"></div>
-          <details class="api-settings">
+          <details class="api-settings" hidden>
             <summary>电影与游戏资料库设置（只需一次）</summary>
             <div class="api-key-grid">
               <label>TMDB API Key（电影）<input id="tmdbKey" type="password" autocomplete="off" placeholder="免费申请的 API Key" /><a href="https://www.themoviedb.org/settings/api" target="_blank" rel="noreferrer">申请 TMDB Key</a></label>
@@ -1251,7 +1328,7 @@
           </details>
           <div class="library-foot">
             <small>密钥只保存在当前浏览器，不会上传到作品柜。</small>
-            <button class="ghost-button" id="manualAddButton" type="button">手动添加</button>
+            <button class="ghost-button" id="manualAddButton" type="button">手动录入专辑</button>
           </div>
         </div>
       </div>
@@ -1276,27 +1353,30 @@
         <div class="detail-main">
           <header class="detail-head">
             <div>
-              <h2 id="detailTitle">作品</h2>
+              <h2 id="detailTitle">专辑</h2>
               <p id="detailSubtitle">编辑评分与短评</p>
             </div>
             <button class="close-button" id="closeButton" type="button" aria-label="关闭">×</button>
           </header>
 
           <section class="album-view-summary" id="albumViewSummary" hidden aria-label="专辑评价">
+            <p class="album-archive-code" id="albumViewArchive">CABINET / ALBUM</p>
             <div class="album-view-scoreline">
               <div>
                 <small>MY RATING</small>
                 <strong id="albumViewRating">0.0</strong>
               </div>
-              <button class="ghost-button" id="editAlbumButton" type="button">编辑这张专辑</button>
+              <div class="album-view-actions">
+                <button class="preference-toggle" id="viewFavoriteToggle" type="button">♡ 私人最爱</button>
+                <button class="ghost-button" id="editAlbumButton" type="button">编辑</button>
+              </div>
             </div>
+            <p class="album-view-original" id="albumViewOriginal"></p>
             <p class="album-view-meta" id="albumViewMeta"></p>
             <div class="album-view-flags" id="albumViewFlags"></div>
-            <p class="album-view-comment" id="albumViewComment"></p>
-            <details class="album-view-history" id="albumViewHistory" hidden>
-              <summary id="albumViewHistorySummary">评价历史</summary>
-              <div class="evaluation-timeline" id="albumViewTimeline"></div>
-            </details>
+            <section class="album-note"><small>我的短评</small><p class="album-view-comment" id="albumViewComment"></p></section>
+            <section class="album-note" id="albumTracksSection"><small>喜欢的曲目</small><p id="albumViewTracks"></p></section>
+            <section class="album-note" id="albumTagsSection"><small>标签</small><p id="albumViewTags"></p></section>
           </section>
 
           <form class="detail-form" id="detailForm">
@@ -1308,29 +1388,20 @@
               <label for="originalTitleField">原名 / 英文名</label>
               <input id="originalTitleField" name="originalTitle" />
             </div>
-            <div class="field">
+            <div class="field" hidden>
               <label for="categoryField">分类</label>
               <select id="categoryField" name="category"></select>
             </div>
             <div class="field">
               <label for="statusField">状态</label>
               <select id="statusField" name="status">
-                <option>想看</option>
-                <option>在看</option>
-                <option>看过</option>
-                <option>在玩</option>
-                <option>想玩</option>
-                <option>玩过</option>
-                <option>在读</option>
-                <option>想读</option>
-                <option>读过</option>
                 <option>听过</option>
                 <option>在听</option>
                 <option>想听</option>
               </select>
             </div>
             <div class="field">
-              <label for="creatorField">作者 / 导演 / 制作方</label>
+              <label for="creatorField">艺人 / 乐队</label>
               <input id="creatorField" name="creator" />
             </div>
             <div class="field">
@@ -1360,12 +1431,9 @@
             </div>
             <section class="preference-actions field full" id="preferenceActions">
               <button type="button" class="preference-toggle" id="favoriteToggle">♡ 私人最爱</button>
-              <button type="button" class="preference-toggle" id="revisitToggle">↻ 放入待重听架</button>
+              <button type="button" class="preference-toggle" id="revisitToggle" hidden>待重听</button>
             </section>
-            <details class="evaluation-history field full" id="evaluationHistory">
-              <summary id="evaluationSummary">评价历史 · 每次保存新评价时自动记录</summary>
-              <div class="evaluation-timeline" id="evaluationTimeline"></div>
-            </details>
+            <details class="evaluation-history field full" id="evaluationHistory" hidden><summary id="evaluationSummary">历史</summary><div class="evaluation-timeline" id="evaluationTimeline"></div></details>
             <section class="aspect-section field full" aria-label="维度评分">
               <div class="aspect-heading">
                 <span>八维评分</span>
@@ -1376,6 +1444,10 @@
             <div class="field full">
               <label for="tagsField">标签</label>
               <input id="tagsField" name="tags" placeholder="用逗号分隔，比如 科幻, 孤独, 神作" />
+            </div>
+            <div class="field full">
+              <label for="favoriteTracksField">喜欢的曲目</label>
+              <input id="favoriteTracksField" name="favoriteTracks" placeholder="用逗号分隔，例如：假行僧, 花房姑娘" />
             </div>
             <div class="field full">
               <label for="commentField">短评</label>
@@ -1399,15 +1471,7 @@
     <script>
       const STORAGE_KEY = "yao-media-cabinet-v2";
       const API_SETTINGS_KEY = "yao-media-cabinet-api-settings";
-      const categories = [
-        { id: "all", label: "全部" },
-        { id: "电影", label: "电影" },
-        { id: "书籍", label: "书籍" },
-        { id: "游戏", label: "游戏" },
-        { id: "漫画", label: "漫画" },
-        { id: "动漫", label: "动漫" },
-        { id: "专辑", label: "专辑" }
-      ];
+      const categories = [{ id: "专辑", label: "专辑" }];
       const metricSets = {
         default: [
           { key: "concept", label: "构想" },
@@ -1673,12 +1737,15 @@
         detailSubtitle: document.querySelector("#detailSubtitle"),
         detailPanel: document.querySelector("#detail .detail-panel"),
         albumViewSummary: document.querySelector("#albumViewSummary"),
+        albumViewArchive: document.querySelector("#albumViewArchive"),
         albumViewRating: document.querySelector("#albumViewRating"),
+        albumViewOriginal: document.querySelector("#albumViewOriginal"),
         albumViewMeta: document.querySelector("#albumViewMeta"),
         albumViewFlags: document.querySelector("#albumViewFlags"),
         albumViewComment: document.querySelector("#albumViewComment"),
-        albumViewHistory: document.querySelector("#albumViewHistory"),
-        albumViewTimeline: document.querySelector("#albumViewTimeline"),
+        albumViewTracks: document.querySelector("#albumViewTracks"),
+        albumViewTags: document.querySelector("#albumViewTags"),
+        viewFavoriteToggle: document.querySelector("#viewFavoriteToggle"),
         editAlbumButton: document.querySelector("#editAlbumButton"),
         detailPoster: document.querySelector("#detailPoster"),
         detailRadar: document.querySelector("#detailRadar"),
@@ -1697,6 +1764,7 @@
         aspectHint: document.querySelector("#aspectHint"),
         aspectFields: document.querySelector("#aspectFields"),
         tagsField: document.querySelector("#tagsField"),
+        favoriteTracksField: document.querySelector("#favoriteTracksField"),
         commentField: document.querySelector("#commentField"),
         closeButton: document.querySelector("#closeButton"),
         cancelButton: document.querySelector("#cancelButton"),
@@ -1886,7 +1954,7 @@
       function normalizeLibraryItem(item) {
         return {
           id: crypto.randomUUID(),
-          title: String(item.title || "未命名作品"),
+          title: String(item.title || "未命名专辑"),
           originalTitle: String(item.originalTitle || ""),
           category: item.category,
           status: defaultStatus(item.category),
@@ -2229,7 +2297,7 @@
         );
         closeLibrarySearch();
         if (duplicate) {
-          showToast("作品柜里已经有这条，已打开原记录");
+          showToast("唱片柜里已经有这张专辑，已打开原记录");
           openDetail(duplicate.id);
           return;
         }
@@ -2364,7 +2432,7 @@
         const svg = makeSvgElement("svg", {
           viewBox: "-65 -65 430 430",
           role: interactive ? "group" : "img",
-          "aria-label": `${category || "作品"}八维评分雷达图`
+          "aria-label": "专辑八维评分雷达图"
         });
 
         [0.25, 0.5, 0.75, 1].forEach(scale => {
@@ -2532,10 +2600,10 @@
       function getFilteredItems() {
         const query = normalizeText(state.search);
         return state.items
-          .filter(item => state.specialFilter === "favorite" ? item.favorite : state.specialFilter === "revisit" ? item.category === "专辑" && item.revisit : true)
-          .filter(item => state.selectedCategory === "all" || item.category === state.selectedCategory)
-          .filter(item => state.status === "all" || (state.status === "未听"
-            ? item.category === "专辑" && (!item.status || item.status === "想听" || item.status === "未听")
+          .filter(item => item.category === "专辑")
+          .filter(item => state.specialFilter === "favorite" ? item.favorite : true)
+          .filter(item => state.status === "all" || (state.status === "想听"
+            ? !item.status || item.status === "想听" || item.status === "未听"
             : item.status === state.status))
           .filter(matchesCollectionFilters)
           .filter(item => {
@@ -2546,9 +2614,10 @@
               item.creator,
               item.year,
               item.status,
-              item.category,
               item.comment,
-              ...normalizeEvaluationHistory(item.evaluationHistory?.length ? item.evaluationHistory : item.relistenHistory).map(entry => entry.note),
+              ...(item.genres || []),
+              ...(item.languages || []),
+              ...(item.favoriteTracks || []),
               ...(item.tags || [])
             ]
               .map(normalizeText)
@@ -2563,30 +2632,55 @@
       }
 
       function getCounts() {
-        return categories.reduce((acc, category) => {
-          acc[category.id] =
-            category.id === "all"
-              ? state.items.length
-              : state.items.filter(item => item.category === category.id).length;
-          return acc;
-        }, {});
+        const albums = state.items.filter(item => item.category === "专辑");
+        return {
+          all: albums.length,
+          想听: albums.filter(item => !item.status || item.status === "想听" || item.status === "未听").length,
+          在听: albums.filter(item => item.status === "在听").length,
+          听过: albums.filter(item => item.status === "听过").length,
+          favorite: albums.filter(item => item.favorite).length
+        };
       }
 
       function renderCategoryList() {
         const counts = getCounts();
-        el.categoryList.replaceChildren(
-          ...categories.map(category => {
+        const entries = [
+          { id: "all", label: "全部专辑", count: counts.all },
+          { id: "想听", label: "想听", count: counts.想听 },
+          { id: "在听", label: "在听", count: counts.在听 },
+          { id: "听过", label: "听过", count: counts.听过 },
+          { id: "favorite", label: "私人最爱", count: counts.favorite }
+        ];
+        const buttons = entries.map(entry => {
             const button = document.createElement("button");
             button.type = "button";
-            button.className = `category-button ${state.selectedCategory === category.id ? "active" : ""}`;
-            button.innerHTML = `<span>${category.label}</span><span class="count-pill">${counts[category.id] || 0}</span>`;
+            const active = entry.id === "favorite" ? state.specialFilter === "favorite" : state.specialFilter === "all" && state.status === entry.id;
+            button.className = `category-button ${active ? "active" : ""}`;
+            button.innerHTML = `<span>${entry.label}</span><span class="count-pill">${entry.count}</span>`;
             button.addEventListener("click", () => {
-              state.selectedCategory = category.id;
+              state.specialFilter = entry.id === "favorite" ? "favorite" : "all";
+              state.status = ["想听","在听","听过"].includes(entry.id) ? entry.id : "all";
+              el.statusFilter.value = state.status;
               render();
             });
             return button;
-          })
-        );
+          });
+        const ranking = document.createElement("a"); ranking.href = "#rankings"; ranking.className = "category-button rank-link";
+        ranking.innerHTML = "<span>我的榜单</span><span>↗</span>";
+        el.categoryList.replaceChildren(...buttons, ranking);
+      }
+
+      function sampleCoverColor(url,poster) {
+        if(!url || typeof Image==="undefined")return;
+        const sampler=new Image();sampler.crossOrigin="anonymous";sampler.referrerPolicy="no-referrer";
+        sampler.onload=()=>{try{
+          const canvas=document.createElement("canvas");canvas.width=8;canvas.height=8;
+          const context=canvas.getContext("2d",{willReadFrequently:true});context.drawImage(sampler,0,0,8,8);
+          const pixels=context.getImageData(0,0,8,8).data;let r=0,g=0,b=0,count=0;
+          for(let index=0;index<pixels.length;index+=4){if(pixels[index+3]<180)continue;r+=pixels[index];g+=pixels[index+1];b+=pixels[index+2];count++;}
+          if(!count)return;const muted=`rgb(${Math.round(r/count*.38+30)},${Math.round(g/count*.38+28)},${Math.round(b/count*.38+24)})`;
+          poster.style.backgroundColor=muted;poster.closest(".detail-panel")?.style.setProperty?.("--album-tint",muted);
+        }catch{}};sampler.src=url;
       }
 
       function createPoster(item) {
@@ -2607,10 +2701,13 @@
           image.style.position = "absolute";
           image.style.inset = "0";
           image.alt = `${item.title} 封面`;
-          image.onload = () => { fallback.remove(); image.style.opacity = "1"; };
+          image.onload = () => {
+            fallback.remove(); image.style.opacity = "1";
+            sampleCoverColor(item.poster,poster);
+          };
           image.onerror = () => {
             image.remove();
-            fallback.title = "封面源暂时无法访问，可在作品详情更换封面 URL";
+            fallback.title = "封面源暂时无法访问，可在专辑编辑中更换封面 URL";
           };
           image.src = item.poster;
           poster.append(image);
@@ -2629,13 +2726,13 @@
         if (document.querySelector("#bulkRows")) renderBulkTools();
         const items = getFilteredItems();
         el.gallery.className = `gallery ${state.view}`;
-        el.resultTitle.textContent = state.specialFilter === "favorite" ? "私人最爱" : state.specialFilter === "revisit" ? "待重听架" : state.selectedCategory === "all" ? "全部作品" : state.selectedCategory;
-        el.resultMeta.textContent = `${items.length} 条结果 · ${el.sortSelect.options[el.sortSelect.selectedIndex].text}`;
+        el.resultTitle.textContent = state.specialFilter === "favorite" ? "私人最爱" : state.status === "all" ? "我的专辑" : state.status;
+        el.resultMeta.textContent = `共收藏 ${items.length} 张专辑 · ${el.sortSelect.options[el.sortSelect.selectedIndex].text}`;
 
         if (!items.length) {
           const empty = document.createElement("div");
           empty.className = "empty-state";
-          empty.innerHTML = "<div><strong>这里还没有作品</strong><p>添加第一条作品，开始建立自己的评分柜。</p></div>";
+          empty.innerHTML = "<div><div class='vinyl-mark' aria-hidden='true'><span></span></div><strong>唱片架还是空的</strong><p>放入第一张专辑，开始建立自己的私人档案。</p></div>";
           el.gallery.replaceChildren(empty);
           return;
         }
@@ -2674,11 +2771,12 @@
       }
 
       function renderStats() {
-        const rated = state.items.filter(item => Number(item.rating) > 0);
+        const albums = state.items.filter(item => item.category === "专辑");
+        const rated = albums.filter(item => Number(item.rating) > 0);
         const average = rated.length
           ? rated.reduce((sum, item) => sum + Number(item.rating), 0) / rated.length
           : 0;
-        el.totalCount.textContent = state.items.length;
+        el.totalCount.textContent = albums.length;
         el.avgRating.textContent = rated.length ? average.toFixed(1) : "-";
       }
 
@@ -2695,38 +2793,20 @@
 
       function renderEvaluationHistory() {
         const section=document.querySelector("#evaluationHistory");
-        const isAlbum=el.categoryField.value === "专辑";
-        const entries=normalizeEvaluationHistory(state.editingEvaluationHistory);
-        state.editingEvaluationHistory=entries;
-        section.hidden=!isAlbum || entries.length<2;
-        if(section.hidden)return;
-        document.querySelector("#evaluationSummary").textContent=`评价历史 · ${entries.length} 个保存版本`;
-        const timeline=document.querySelector("#evaluationTimeline");
-        timeline.replaceChildren(...entries.slice().reverse().map(entry=>{
-          const article=document.createElement("article");article.className="evaluation-entry";
-          const time=document.createElement("time");time.dateTime=entry.date;time.textContent=entry.date;
-          const body=document.createElement("div");
-          const heading=document.createElement("strong");heading.textContent=`${entry.score.toFixed(1)} 分`;
-          const note=document.createElement("p");note.textContent=entry.note || "当时没有留下短评。";
-          body.append(heading,note);
-          article.append(time,body);return article;
-        }));
+        section.hidden=true;
       }
 
       function renderPreferenceActions() {
-        const isAlbum=el.categoryField.value === "专辑";
         const favorite=document.querySelector("#favoriteToggle"), revisit=document.querySelector("#revisitToggle");
         favorite.classList.toggle("active",state.editingFavorite);
         favorite.textContent=state.editingFavorite ? "♥ 私人最爱" : "♡ 标为私人最爱";
-        revisit.hidden=!isAlbum;revisit.classList.toggle("active",state.editingRevisit);
-        revisit.textContent=state.editingRevisit ? "✓ 已在待重听架" : "↻ 放入待重听架";
+        revisit.hidden=true;
       }
 
       function persistPreferenceFlags() {
         const existing=state.items.find(item=>item.id===state.editingId);
         if(!existing)return;
         existing.favorite=state.editingFavorite;
-        existing.revisit=existing.category==="专辑" && state.editingRevisit;
         existing.updatedAt=new Date().toISOString();saveItems();render();
       }
 
@@ -2738,28 +2818,26 @@
       }
 
       function renderAlbumView(item) {
+        const albums=state.items.filter(entry=>entry.category==="专辑").slice().reverse();
+        const found=albums.findIndex(entry=>entry.id===item.id);
+        const order=found>=0?found+1:albums.length+1;
+        el.albumViewArchive.textContent=`CABINET / ALBUM / ${item.year || "----"} / ${String(order).padStart(3,"0")}`;
         el.albumViewRating.textContent = Number(item.rating || 0).toFixed(1);
-        el.albumViewMeta.textContent = [item.creator, item.year, splitLabels(item.languages).join(" / "), splitLabels(item.genres).join(" / ")].filter(Boolean).join(" · ") || "还没有补充专辑资料";
+        el.albumViewOriginal.textContent=item.originalTitle || "";
+        el.albumViewMeta.textContent = [item.creator, item.year, splitLabels(item.genres).join(" / "), splitLabels(item.languages).join(" / ")].filter(Boolean).join(" · ") || "还没有补充专辑资料";
         el.albumViewComment.textContent = item.comment || "还没有短评。";
+        el.albumViewTracks.textContent=splitLabels(item.favoriteTracks).join(" · ") || "还没有记录喜欢的曲目。";
+        el.albumViewTags.textContent=splitLabels(item.tags).join(" · ") || "还没有标签。";
+        el.viewFavoriteToggle.classList.toggle("active",Boolean(item.favorite));
+        el.viewFavoriteToggle.textContent=item.favorite ? "♥ 私人最爱" : "♡ 私人最爱";
         const flags = [
-          item.favorite ? "♥ 私人最爱" : "",
-          item.revisit ? "↻ 待重听" : "",
-          item.status || ""
+          item.status || "",
+          item.year ? `${Math.floor(Number(item.year)/10)*10}s` : "",
+          ...splitLabels(item.genres).slice(0,2),
+          ...splitLabels(item.languages).slice(0,1)
         ].filter(Boolean);
         el.albumViewFlags.replaceChildren(...flags.map(label => {
           const badge = document.createElement("span"); badge.textContent = label; return badge;
-        }));
-        const entries = normalizeEvaluationHistory(item.evaluationHistory?.length ? item.evaluationHistory : item.relistenHistory);
-        el.albumViewHistory.hidden = entries.length < 2;
-        el.albumViewHistory.open = false;
-        document.querySelector("#albumViewHistorySummary").textContent = `评价历史 · ${entries.length} 个保存版本`;
-        el.albumViewTimeline.replaceChildren(...entries.slice().reverse().map(entry => {
-          const article = document.createElement("article"); article.className = "evaluation-entry";
-          const time = document.createElement("time"); time.dateTime = entry.date; time.textContent = entry.date;
-          const body = document.createElement("div");
-          const heading = document.createElement("strong"); heading.textContent = `${entry.score.toFixed(1)} 分`;
-          const note = document.createElement("p"); note.textContent = entry.note || "当时没有留下短评。";
-          body.append(heading, note); article.append(time, body); return article;
         }));
       }
 
@@ -2778,8 +2856,8 @@
             id: crypto.randomUUID(),
             title: "",
             originalTitle: "",
-            category: "电影",
-            status: "想看",
+            category: "专辑",
+            status: "想听",
             creator: "",
             year: "",
             rating: 0,
@@ -2796,12 +2874,12 @@
         state.editingRevisit = Boolean(item.revisit);
         state.editingEmotionMode = item.emotionMode === "awe" ? "awe" : "emotion";
         state.editingSource = { source: item.source || "", sourceId: item.sourceId || "", sourceUrl: item.sourceUrl || "" };
-        el.detailTitle.textContent = item.title || "新作品";
-        el.detailSubtitle.textContent = [item.category, item.creator, item.year].filter(Boolean).join(" · ") || "编辑评分与短评";
+        el.detailTitle.textContent = item.title || "新专辑";
+        el.detailSubtitle.textContent = [item.creator, item.year].filter(Boolean).join(" · ") || "编辑专辑档案";
         el.titleField.value = item.title || "";
         el.originalTitleField.value = item.originalTitle || "";
-        el.categoryField.value = item.category || "电影";
-        el.statusField.value = item.status || "想看";
+        el.categoryField.value = "专辑";
+        el.statusField.value = ["想听","在听","听过"].includes(item.status) ? item.status : "想听";
         el.creatorField.value = item.creator || "";
         el.yearField.value = item.year || "";
         document.querySelector("#languagesField").value = splitLabels(item.languages).join(", ");
@@ -2812,9 +2890,10 @@
         document.querySelector("#evaluationHistory").open=false;
         renderEvaluationHistory();renderPreferenceActions();
         const aspectScores = getAspectScores(item);
-        renderAspectControls(item.category || "电影", aspectScores);
+        renderAspectControls("专辑", aspectScores);
         setAspectControls(aspectScores);
         el.tagsField.value = (item.tags || []).join(", ");
+        el.favoriteTracksField.value=splitLabels(item.favoriteTracks).join(", ");
         el.commentField.value = item.comment || "";
         renderAlbumView(item);
         el.detailPoster.replaceChildren(createPoster({ ...item, aspectScores }));
@@ -2829,6 +2908,7 @@
 
       function closeDetail() {
         document.querySelector(".radar-card").classList.remove("radar-expanded");
+        el.detailPoster.classList.remove("cover-expanded");
         document.querySelector("#expandRadar").textContent = "放大拖动八维图";
         state.editingId = null;
         state.editingSource = null;
@@ -2842,9 +2922,9 @@
       function readFormItem() {
         return {
           id: state.editingId || crypto.randomUUID(),
-          title: el.titleField.value.trim() || "未命名作品",
+          title: el.titleField.value.trim() || "未命名专辑",
           originalTitle: el.originalTitleField.value.trim(),
-          category: el.categoryField.value,
+          category: "专辑",
           emotionMode: state.editingEmotionMode === "awe" ? "awe" : "emotion",
           status: el.statusField.value,
           creator: el.creatorField.value.trim(),
@@ -2854,7 +2934,7 @@
           rating: Number(el.ratingField.value || 0),
           evaluationHistory: normalizeEvaluationHistory(state.editingEvaluationHistory),
           favorite: state.editingFavorite,
-          revisit: el.categoryField.value === "专辑" && state.editingRevisit,
+          revisit: state.items.find(item=>item.id===state.editingId)?.revisit || false,
           aspectScores: {
             ...(state.items.find(item => item.id === state.editingId)?.aspectScores || {}),
             ...getCurrentAspectScores()
@@ -2867,6 +2947,7 @@
             .split(/[,，]/)
             .map(tag => tag.trim())
             .filter(Boolean),
+          favoriteTracks: splitLabels(el.favoriteTracksField.value),
           comment: el.commentField.value.trim(),
           updatedAt: new Date().toISOString()
         };
@@ -2874,24 +2955,9 @@
 
       function upsertItem(item) {
         const index = state.items.findIndex(entry => entry.id === item.id);
-        if(item.category === "专辑") {
-          const previous=index>=0 ? state.items[index] : null;
-          const history=normalizeEvaluationHistory(item.evaluationHistory?.length ? item.evaluationHistory : previous?.relistenHistory);
-          const changed=!previous || Number(previous.rating||0)!==Number(item.rating||0) || String(previous.comment||"")!==String(item.comment||"");
-          const meaningful=Number(item.rating)>0 || Boolean(item.comment);
-          if(changed && meaningful) {
-            const now=new Date(), date=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}-${String(now.getDate()).padStart(2,"0")}`;
-            if(previous && !history.length && (Number(previous.rating)>0 || previous.comment)) {
-              const oldDate=/^\d{4}-\d{2}-\d{2}/.test(String(previous.updatedAt||"")) ? String(previous.updatedAt).slice(0,10) : date;
-              history.push({id:crypto.randomUUID(),date:oldDate,score:Math.max(0,Math.min(10,Number(previous.rating)||0)),note:String(previous.comment||""),createdAt:previous.updatedAt||now.toISOString()});
-            }
-            const latest=history.at(-1);
-            if(!latest || latest.score!==Number(item.rating||0) || latest.note!==String(item.comment||""))
-              history.push({id:crypto.randomUUID(),date,score:Math.max(0,Math.min(10,Number(item.rating)||0)),note:String(item.comment||""),createdAt:now.toISOString()});
-          }
-          item.evaluationHistory=normalizeEvaluationHistory(history);
-          delete item.relistenHistory;
-        }
+        const previous=index>=0 ? state.items[index] : null;
+        if(previous?.evaluationHistory && !item.evaluationHistory?.length)item.evaluationHistory=previous.evaluationHistory;
+        if(previous?.relistenHistory && !item.relistenHistory)item.relistenHistory=previous.relistenHistory;
         if (index >= 0) state.items.splice(index, 1, item);
         else state.items.unshift(item);
         saveItems();
@@ -2900,6 +2966,7 @@
 
       function deleteCurrentItem() {
         if (!state.editingId) return;
+        if(!confirm("确定删除这张专辑？此操作无法撤销。"))return;
         state.items = state.items.filter(item => item.id !== state.editingId);
         saveItems();
         closeDetail();
@@ -2908,11 +2975,11 @@
       }
 
       function exportData() {
-        const blob = new Blob([JSON.stringify({ version: 3, items: state.items, rankings }, null, 2)], { type: "application/json" });
+        const blob = new Blob([JSON.stringify({ version: 4, items: state.items, rankings }, null, 2)], { type: "application/json" });
         const url = URL.createObjectURL(blob);
         const link = document.createElement("a");
         link.href = url;
-        link.download = `media-cabinet-${new Date().toISOString().slice(0, 10)}.json`;
+        link.download = `album-cabinet-${new Date().toISOString().slice(0, 10)}.json`;
         link.click();
         URL.revokeObjectURL(url);
       }
@@ -2923,13 +2990,13 @@
         const incoming = Array.isArray(parsed) ? parsed : parsed?.items;
         if (!Array.isArray(incoming) || incoming.some(item => !item || typeof item !== "object")) throw new Error("备份格式无效");
         const incomingRankings = Array.isArray(parsed) ? [] : normalizeRankings(parsed.rankings);
-        if (!confirm("导入会替换当前作品和榜单，建议先导出备份。继续？")) return;
+        if (!confirm("导入会替换当前专辑档案和榜单，建议先导出备份。继续？")) return;
         state.items = incoming.map(item => ({
           id: item.id || crypto.randomUUID(),
-          title: String(item.title || "未命名作品"),
+          title: String(item.title || "未命名专辑"),
           originalTitle: String(item.originalTitle || ""),
-          category: categories.some(category => category.id === item.category) ? item.category : "电影",
-          status: String(item.status || "想看"),
+          category: String(item.category || "专辑"),
+          status: String(item.status || (item.category === "专辑" ? "想听" : "")),
           creator: String(item.creator || ""),
           year: item.year || "",
           rating: Number(item.rating || 0),
@@ -2940,6 +3007,7 @@
           genres: splitLabels(item.genres),
           poster: String(item.poster || ""),
           tags: Array.isArray(item.tags) ? item.tags.map(String) : [],
+          favoriteTracks: splitLabels(item.favoriteTracks),
           aspectScores: getAspectScores(item),
           emotionMode: item.emotionMode === "awe" ? "awe" : "emotion",
           source: String(item.source || ""),
@@ -2953,11 +3021,11 @@
         saveRankings();
         saveItems();
         render();
-        showToast("作品、分类与榜单已导入");
+        showToast("专辑档案与榜单已导入");
       }
 
       function resetData() {
-        if (!confirm("清空本机全部作品和榜单？此操作无法撤销，请先导出备份。")) return;
+        if (!confirm("清空本机全部专辑档案和榜单？此操作无法撤销，请先导出备份。")) return;
         state.items = [];
         rankings = [];
         activeRanking = "";
@@ -3092,15 +3160,7 @@
         style.textContent = style.textContent.replaceAll("#collectionTools", ":is(#collectionTools,#rankingPage)");
         document.head.append(style);
         document.querySelector("#collectionTools").innerHTML = `
-          <div class="quick-shelves"><button type="button" class="quick-shelf" id="favoriteShelf"><span>♥ 私人最爱</span><strong id="favoriteCount">0</strong></button><button type="button" class="quick-shelf" id="revisitShelf"><span>↻ 待重听架</span><strong id="revisitCount">0</strong></button></div>
-          <div class="collection-row">
-            <label>发行年份 <select id="yearFilter"></select></label>
-            <label>语言 <select id="languageFilter"></select></label>
-            <label>音乐类型 <select id="genreFilter"></select></label>
-            <button type="button" class="ghost-button" id="clearCollectionFilters">清除筛选</button>
-          </div>
-          <small>可与上方分类、状态和搜索叠加。语言与类型支持多值；未知资料不会自动猜测。</small>
-          <details id="rankingsPanel"><summary>我的榜单 · Top 10 / 50 / 100</summary>
+          <details id="rankingsPanel"><summary>我的私人榜单 · Top 10 / 50 / 100</summary>
             <div class="collection-row"><input id="newRankingName" placeholder="榜单名称，例如：最爱华语专辑" aria-label="新榜单名称" maxlength="100">
               <select id="newRankingLimit" aria-label="榜单容量"><option value="10">Top 10</option><option value="50">Top 50</option><option value="100">Top 100</option></select>
               <button type="button" class="ghost-button" id="createRanking">新建榜单</button></div>
@@ -3112,36 +3172,16 @@
               <button type="button" class="ghost-button" id="saveRankingSnapshot">保存当前版本</button>
               <button type="button" class="ghost-button" id="shareRanking">保存分享长图</button></div>
             <details id="rankingHistory"><summary id="rankingHistorySummary">排名变化 · 还没有保存版本</summary><div id="rankingSnapshotRows" class="collection-scroll"></div></details>
-            <div class="collection-row"><input id="rankingSearch" placeholder="搜索已导入作品（标题或作者）" aria-label="搜索榜单候选作品">
-              <select id="rankingCandidate" aria-label="选择已有作品"></select>
+            <div class="collection-row"><input id="rankingSearch" placeholder="搜索已收藏专辑（专辑或艺人）" aria-label="搜索榜单候选专辑">
+              <select id="rankingCandidate" aria-label="选择已有专辑"></select>
               <button type="button" class="ghost-button" id="addToRanking">加入榜单</button></div>
             <small id="rankingHint" role="status"></small><div id="rankingRows" class="collection-scroll"></div>
-          </details>
-          <details id="bulkPanel"><summary>批量修改分类与状态</summary>
-            <small>勾选下列当前筛选结果。语言、音乐类型为追加，留空不修改；年份和状态为替换。</small>
-            <div class="collection-row"><button type="button" class="ghost-button" id="selectFiltered">全选当前结果</button>
-              <button type="button" class="ghost-button" id="clearBulk">取消选择</button><span id="bulkCount"></span></div>
-            <div class="collection-row"><input id="bulkLanguages" list="languageSuggestions" placeholder="追加语言：普通话, 粤语" aria-label="批量语言">
-              <input id="bulkGenres" list="genreSuggestions" placeholder="追加音乐类型：摇滚, 嘻哈" aria-label="批量音乐类型">
-              <input id="bulkYear" placeholder="发行年份，例如 2020" inputmode="numeric" aria-label="批量发行年份">
-              <select id="bulkStatus" aria-label="批量收听状态"><option value="">不修改状态</option><option>想听</option><option>在听</option><option>听过</option></select>
-              <button type="button" class="ghost-button" id="applyBulk">应用到所选作品</button></div>
-            <small>音乐类型和收听状态只应用于所选专辑，不改变电影、书籍等作品的状态。</small>
-            <div id="bulkRows" class="collection-scroll"></div>
           </details>`;
-        for (const key of ["year", "language", "genre"]) {
+        for (const key of ["year", "genre"]) {
           document.querySelector(`#${key}Filter`).addEventListener("change", event => {
             collectionFilters[key] = event.target.value; bulkSelection.clear(); render();
           });
         }
-        document.querySelector("#favoriteShelf").onclick=()=>{state.specialFilter=state.specialFilter==="favorite"?"all":"favorite";render();};
-        document.querySelector("#revisitShelf").onclick=()=>{state.specialFilter=state.specialFilter==="revisit"?"all":"revisit";render();};
-        document.querySelector("#clearCollectionFilters").onclick = () => {
-          Object.keys(collectionFilters).forEach(key => { collectionFilters[key] = ""; });
-          state.status = "all"; state.search = ""; state.selectedCategory = "all";
-          state.specialFilter = "all";
-          el.statusFilter.value = "all"; el.searchInput.value = ""; bulkSelection.clear(); render();
-        };
         document.querySelector("#createRanking").onclick = () => {
           const name = document.querySelector("#newRankingName").value.trim();
           if (!name) return showToast("请先给榜单取个名字");
@@ -3156,7 +3196,7 @@
           list.name = name.slice(0, 100); saveRankings(); renderRankingTools();
         };
         document.querySelector("#deleteRanking").onclick = () => {
-          if (!activeRanking || !confirm("删除这个榜单？作品与评分会保留。")) return;
+          if (!activeRanking || !confirm("删除这个榜单？专辑与评分会保留。")) return;
           rankings = rankings.filter(list => list.id !== activeRanking); activeRanking = rankings[0]?.id || "";
           saveRankings(); navigateRanking();
         };
@@ -3171,28 +3211,26 @@
           const list = rankings.find(list => list.id === activeRanking);
           const id = document.querySelector("#rankingCandidate").value;
           if (!list || !id || list.itemIds.includes(id) || !state.items.some(item => item.id === id)) return;
-          if (list.itemIds.length >= list.limit) return showToast(`这个 Top ${list.limit} 已满，请先移出一部作品`);
+          const albumCount=list.itemIds.filter(itemId=>state.items.find(item=>item.id===itemId)?.category==="专辑").length;
+          if (albumCount >= list.limit) return showToast(`这个 Top ${list.limit} 已满，请先移出一张专辑`);
           list.itemIds.push(id); saveRankings(); renderRankingTools();
         };
-        document.querySelector("#selectFiltered").onclick = () => { getFilteredItems().forEach(item => bulkSelection.add(item.id)); renderBulkTools(); };
-        document.querySelector("#clearBulk").onclick = () => { bulkSelection.clear(); renderBulkTools(); };
-        document.querySelector("#applyBulk").onclick = applyBulkMetadata;
       }
 
       function renderCollectionTools() {
         if (!document.querySelector("#yearFilter")) return;
-        document.querySelector("#favoriteCount").textContent=state.items.filter(item=>item.favorite).length;
-        document.querySelector("#revisitCount").textContent=state.items.filter(item=>item.category==="专辑"&&item.revisit).length;
-        document.querySelector("#favoriteShelf").classList.toggle("active",state.specialFilter==="favorite");
-        document.querySelector("#revisitShelf").classList.toggle("active",state.specialFilter==="revisit");
-        const years = [...new Set(state.items.map(item => String(item.year)).filter(year => /^\d{4}$/.test(year)))].sort().reverse();
+        const albums=state.items.filter(item=>item.category==="专辑");
+        const years = [...new Set(albums.map(item => String(item.year)).filter(year => /^\d{4}$/.test(year)))].sort().reverse();
         const decades = [...new Set(years.map(year => Math.floor(Number(year) / 10) * 10))];
         fillSelect(document.querySelector("#yearFilter"), [["", "全部年份"], ["unknown", "年份未知"],
           ...decades.map(year => [`decade:${year}`, `${year} 年代`]), ...years.map(year => [year, year])], collectionFilters.year);
-        for (const [key, field, title] of [["language", "languages", "语言"], ["genre", "genres", "音乐类型"]]) {
-          const values = [...new Set(state.items.filter(item => key !== "genre" || item.category === "专辑").flatMap(item => splitLabels(item[field])))].sort((a,b) => a.localeCompare(b,"zh-CN"));
-          fillSelect(document.querySelector(`#${key}Filter`), [["", `全部${title}`], ["unknown", `${title}未知`], ...values.map(value => [value, value])], collectionFilters[key]);
-        }
+        const genres=[...new Set(albums.flatMap(item=>splitLabels(item.genres)))].sort((a,b)=>a.localeCompare(b,"zh-CN"));
+        fillSelect(document.querySelector("#genreFilter"), [["","全部流派"],["unknown","流派未知"],...genres.map(value=>[value,value])],collectionFilters.genre);
+        const decadeBrowser=document.querySelector("#decadeBrowser");
+        decadeBrowser.replaceChildren(...[["","全部"],["decade:1970","1970s"],["decade:1980","1980s"],["decade:1990","1990s"],["decade:2000","2000s"],["decade:2010","2010s"],["decade:2020","2020s"]].map(([value,label])=>{
+          const button=document.createElement("button");button.type="button";button.className=`decade-button${collectionFilters.year===value?" active":""}`;button.textContent=label;
+          button.onclick=()=>{collectionFilters.year=value;document.querySelector("#yearFilter").value=value;render();};return button;
+        }));
         renderRankingTools();
       }
 
@@ -3201,17 +3239,20 @@
         const query = normalizeText(document.querySelector("#rankingSearch").value);
         const select = document.querySelector("#rankingCandidate");
         const previous = select.value;
-        const candidates = state.items.filter(item => !list?.itemIds.includes(item.id) &&
+        const candidates = state.items.filter(item => item.category === "专辑" && !list?.itemIds.includes(item.id) &&
           normalizeText(`${item.title} ${item.creator} ${item.originalTitle || ""}`).includes(query));
         const choices = candidates.map(item => [item.id, `${item.title} · ${item.creator || item.category}`]);
-        fillSelect(select, choices.length ? choices : [["", "没有可添加的作品"]], candidates.some(item => item.id === previous) ? previous : candidates[0]?.id || "");
-        document.querySelector("#addToRanking").disabled = !list || !candidates.length || list.itemIds.length >= list.limit;
+        fillSelect(select, choices.length ? choices : [["", "没有可添加的专辑"]], candidates.some(item => item.id === previous) ? previous : candidates[0]?.id || "");
+        const albumCount=(list?.itemIds||[]).filter(id=>state.items.find(item=>item.id===id)?.category==="专辑").length;
+        document.querySelector("#addToRanking").disabled = !list || !candidates.length || albumCount >= list.limit;
       }
 
       function moveRankingItem(list, id, target) {
-        const from = list.itemIds.indexOf(id);
-        if (from < 0 || !Number.isInteger(target) || target < 0 || target >= list.itemIds.length) return;
-        list.itemIds.splice(from, 1); list.itemIds.splice(target, 0, id);
+        const albumIds=list.itemIds.filter(itemId=>state.items.find(item=>item.id===itemId)?.category==="专辑");
+        const hiddenIds=list.itemIds.filter(itemId=>!albumIds.includes(itemId));
+        const from = albumIds.indexOf(id);
+        if (from < 0 || !Number.isInteger(target) || target < 0 || target >= albumIds.length) return;
+        albumIds.splice(from, 1); albumIds.splice(target, 0, id); list.itemIds=[...albumIds,...hiddenIds];
         saveRankings(); renderRankingTools();
       }
 
@@ -3227,29 +3268,30 @@
         document.querySelector("#saveRankingDescription").disabled = !list;
         document.querySelector("#saveRankingSnapshot").disabled = !list?.itemIds.length;
         for (const id of ["renameRanking", "deleteRanking"]) document.querySelector(`#${id}`).disabled = !list;
+        const visibleIds=(list?.itemIds||[]).filter(id=>itemMap.get(id)?.category==="专辑");
         document.querySelector("#rankingHint").textContent = list
-          ? `${list.itemIds.length} / ${list.limit} 部 · 电脑可拖动封面调序；手机可上下移动或指定名次。点击标题编辑作品。`
-          : "从已有作品中挑选，自定义顺序。不足 10 / 50 / 100 部也可以保存。";
-        document.querySelector("#rankingRows").replaceChildren(...(list?.itemIds || []).map((id, index) => {
+          ? `${visibleIds.length} / ${list.limit} 张 · 浏览模式只展示榜单，点击“编辑排名”后再调整顺序。`
+          : "从已收藏专辑中挑选，自定义顺序。不足 10 / 50 / 100 张也可以保存。";
+        document.querySelector("#rankingRows").replaceChildren(...visibleIds.map((id, index) => {
           const item = itemMap.get(id); const row = document.createElement("div"); row.className = `ranking-row${index < 3 ? ` podium rank-${index + 1}` : " standard"}`;
           row.draggable = true;
           row.addEventListener("dragstart", event => { event.dataTransfer.setData("text/plain", id); event.dataTransfer.effectAllowed = "move"; });
           row.addEventListener("dragover", event => { event.preventDefault(); row.classList.add("drag-over"); });
           row.addEventListener("dragleave", () => row.classList.remove("drag-over"));
           row.addEventListener("drop", event => { event.preventDefault(); row.classList.remove("drag-over"); moveRankingItem(list, event.dataTransfer.getData("text/plain"), index); });
-          const number = document.createElement("strong"); number.className = "rank-number"; number.textContent = `${["🥇", "🥈", "🥉"][index] || ""} #${index + 1}`;
+          const number = document.createElement("strong"); number.className = "rank-number"; number.textContent = String(index + 1).padStart(2,"0");
           const cover = createPoster(item);
-          const comment = document.createElement("small"); comment.textContent = item.comment || "留一句上榜理由吧。";
+          const meta = document.createElement("small"); meta.className="ranking-meta"; meta.textContent = [item.creator,item.year,`${formatRating(item.rating)} 分`].filter(Boolean).join(" · ");
           const position = document.createElement("input"); position.type = "number"; position.min = "1";
           position.max = String(list.itemIds.length); position.value = String(index + 1);
           position.setAttribute("aria-label", `${item.title}的名次`);
-          const title = collectionButton(`${item.title} · ${item.creator || item.category}`, () => openDetail(id)); title.classList.add("ranking-title");
+          const title = collectionButton(item.title, () => openDetail(id)); title.classList.add("ranking-title");
           const actions = document.createElement("div"); actions.className = "ranking-actions";
           actions.append(position, collectionButton("移到", () => moveRankingItem(list, id, Number(position.value) - 1)),
             collectionButton("↑", () => moveRankingItem(list, id, index - 1), index === 0),
-            collectionButton("↓", () => moveRankingItem(list, id, index + 1), index === list.itemIds.length - 1),
+            collectionButton("↓", () => moveRankingItem(list, id, index + 1), index === visibleIds.length - 1),
             collectionButton("移出", () => { list.itemIds = list.itemIds.filter(value => value !== id); saveRankings(); renderRankingTools(); }));
-          row.append(number, cover, title, comment, actions);
+          row.append(number, cover, title, meta, actions);
           return row;
         }));
         renderRankingCandidates();
@@ -3276,10 +3318,10 @@
         document.querySelector("#rankingSnapshotRows").replaceChildren(...snapshots.slice().reverse().map(snapshot=>{
           const row=document.createElement("div");row.className="ranking-row";
           const when=document.createElement("strong");when.textContent=new Date(snapshot.savedAt).toLocaleString("zh-CN",{year:"numeric",month:"short",day:"numeric",hour:"2-digit",minute:"2-digit"});
-          const works=document.createElement("small");works.textContent=snapshot.itemIds.slice(0,3).map((id,index)=>`${index+1}. ${itemMap.get(id)?.title||"已删除作品"}`).join("　");
+          const works=document.createElement("small");works.textContent=snapshot.itemIds.slice(0,3).map((id,index)=>`${index+1}. ${itemMap.get(id)?.title||"已删除专辑"}`).join("　");
           const restore=collectionButton("恢复为当前排名",()=>{
             const available=snapshot.itemIds.filter(id=>itemMap.has(id));
-            if(!available.length)return showToast("这个版本的作品已经不存在");
+            if(!available.length)return showToast("这个版本的专辑已经不存在");
             if(!confirm("用这个历史版本替换当前排名？当前排名可以先另存一个版本。"))return;
             list.itemIds=available.slice(0,list.limit);saveRankings();renderRankingTools();showToast("已恢复历史排名");
           });
@@ -3351,7 +3393,7 @@
         host.replaceChildren();
         const list=rankings.find(list=>list.id===activeRanking); if(!list)return;
         const makeText=(tag,text)=>{const element=document.createElement(tag);element.textContent=text;return element;};
-        host.append(makeText("p",`从已有作品里选 2–${list.limit} 张专辑，不必先排顺序。随机分组，遇到人数不足会自动轮空；同轮淘汰者再加赛分出名次。`));
+        host.append(makeText("p",`从唱片柜里选 2–${list.limit} 张专辑，不必先排顺序。随机分组，遇到人数不足会自动轮空；同轮淘汰者再加赛分出名次。`));
         if (!list.tournament) {
           const selected=new Set(list.itemIds.filter(id=>state.items.some(item=>item.id===id && item.category==="专辑")));
           const count=makeText("p",""); const options=document.createElement("div"); options.className="tournament-pick-list";
@@ -3374,7 +3416,7 @@
             };
             row.append(check,document.createTextNode(`${item.title} · ${item.creator || "未知艺人"}`));options.append(row);
           });
-          if(!albums.length)host.append(makeText("p","作品柜还没有专辑，先搜索导入几张再来比赛。"));
+          if(!albums.length)host.append(makeText("p","唱片柜还没有专辑，先搜索导入几张再来比赛。"));
           refresh();host.append(search,count,options,start);return;
         }
         const tournament=list.tournament;
@@ -3383,7 +3425,7 @@
           if(!confirm("清除这次比赛进度，重新选择？已保存的榜单顺序会保留。"))return;
           list.tournament=null;saveRankings();renderTournament();
         });
-        if(missing){host.append(makeText("p","参赛作品已被删除，请重新选择。已保存的榜单不受影响。"),restart);return;}
+        if(missing){host.append(makeText("p","参赛专辑已被删除，请重新选择。已保存的榜单不受影响。"),restart);return;}
         const result=evaluateTournament(tournament);
         const toolsRow=document.createElement("div");toolsRow.className="collection-row";
         toolsRow.append(collectionButton("撤回上一场",()=>{tournament.history.pop();saveRankings();renderTournament();},!tournament.history.length),restart,
@@ -3445,10 +3487,10 @@
 
       function initializeRankingPage() {
         const page = document.createElement("section"); page.id = "rankingPage"; page.hidden = true;
-        page.innerHTML = `<nav class="ranking-nav" aria-label="榜单导航"><a href="#">← 返回作品柜</a><a href="#rankings">全部榜单</a><span>MY COLLECTION / SELECTED WORKS</span></nav>
-          <header class="ranking-hero"><p id="rankingEyebrow">THE PERSONAL CHARTS</p><h1 id="rankingPageTitle" tabindex="-1">我的榜单</h1><p id="rankingPageIntro">把最喜欢的作品，郑重地放在这里。</p><p id="rankingPageCount"></p></header>
+        page.innerHTML = `<nav class="ranking-nav" aria-label="榜单导航"><a href="#">← 返回唱片柜</a><a href="#rankings">全部榜单</a><span>CABINET / PERSONAL CHARTS</span></nav>
+          <header class="ranking-hero"><p id="rankingEyebrow">PRIVATE ALBUM CHARTS</p><h1 id="rankingPageTitle" tabindex="-1">我的私人榜单</h1><p id="rankingPageIntro">把真正留下来的专辑，按自己的顺序放好。</p><p id="rankingPageCount"></p></header>
           <section id="rankingIndex" aria-label="全部个人榜单"><div id="rankingShelf"></div><details id="rankingCreate"><summary>＋ 创建一份新榜单</summary><div id="rankingCreateForm"></div></details></section>
-          <section id="rankingExhibition" aria-label="榜单作品"><div class="ranking-toolbar"><a href="#rankings">← 选择其他榜单</a><button type="button" class="ghost-button" id="rankingEditToggle">编辑排名与作品</button><div id="rankingShareSlot"></div></div><details id="tournamentPanel"><summary>🏆 淘汰赛排榜 · 先选专辑，再一场场决胜</summary><div id="tournamentContent"></div></details><div id="rankingDetailHost"></div></section>`;
+          <section id="rankingExhibition" aria-label="榜单专辑"><div class="ranking-toolbar"><a href="#rankings">← 选择其他榜单</a><button type="button" class="ghost-button" id="rankingEditToggle">编辑排名</button><div id="rankingShareSlot"></div></div><details id="tournamentPanel"><summary>淘汰赛排榜 · 次级工具</summary><div id="tournamentContent"></div></details><div id="rankingDetailHost"></div></section>`;
         document.querySelector("main.app").after(page);
         const oldPanel = document.querySelector("#rankingsPanel");
         const panel = document.createElement("section"); panel.id = "rankingsPanel";
@@ -3456,7 +3498,7 @@
         const rows = [...panel.children].filter(child => child.classList.contains("collection-row"));
         if (rows[0]) document.querySelector("#rankingCreateForm").append(rows[0]);
         const editor = document.createElement("details"); editor.id = "rankingEditor";
-        const summary = document.createElement("summary"); summary.textContent = "添加作品、修改介绍与管理榜单"; editor.append(summary);
+        const summary = document.createElement("summary"); summary.textContent = "添加专辑、修改介绍与管理榜单"; editor.append(summary);
         rows.slice(1).forEach(row => editor.append(row));
         panel.querySelector("summary")?.remove(); panel.open = true;
         panel.prepend(editor);
@@ -3477,7 +3519,7 @@
         `; document.head.append(style);
         document.querySelector("#rankingEditToggle").onclick = () => {
           const editing = page.classList.toggle("editing"); editor.open = editing;
-          document.querySelector("#rankingEditToggle").textContent = editing ? "完成，欣赏榜单" : "编辑排名与作品";
+          document.querySelector("#rankingEditToggle").textContent = editing ? "完成，返回浏览" : "编辑排名";
         };
         window.addEventListener("hashchange", routeRankingPage);
         routeRankingPage();
@@ -3506,17 +3548,18 @@
         document.querySelector("#rankingIndex").hidden = !!list;
         document.querySelector("#rankingExhibition").hidden = !list;
         document.querySelector("#rankingEyebrow").textContent = list ? `PERSONAL SELECTION / TOP ${list.limit}` : "THE PERSONAL CHARTS";
-        document.querySelector("#rankingPageTitle").textContent = list?.name || "我的榜单";
-        document.querySelector("#rankingPageIntro").textContent = list ? list.description || "留下来的，都是偏爱。" : "把最喜欢的作品，郑重地放在这里。";
-        document.querySelector("#rankingPageCount").textContent = list ? `${list.itemIds.length} 部作品 · 我的顺序，我的选择` : `${rankings.length} 份私人精选`;
-        document.title = isRanking ? `${list?.name || "我的榜单"} · 作品柜` : "Yao · 作品柜";
+        document.querySelector("#rankingPageTitle").textContent = list?.name || "我的私人榜单";
+        document.querySelector("#rankingPageIntro").textContent = list ? list.description || "留下来的，都是偏爱。" : "把真正留下来的专辑，按自己的顺序放好。";
+        const albumCount=list?.itemIds.filter(id=>state.items.find(item=>item.id===id)?.category==="专辑").length||0;
+        document.querySelector("#rankingPageCount").textContent = list ? `${albumCount} 张专辑 · 我的顺序，我的选择` : `${rankings.length} 份私人精选`;
+        document.title = isRanking ? `${list?.name || "我的私人榜单"} · 唱片柜` : "Yao · 唱片柜";
         const cards = rankings.map(entry => {
           const card = document.createElement("a"); card.href = `#rankings/${encodeURIComponent(entry.id)}`; card.className = "ranking-shelf-card";
           const covers = document.createElement("div"); covers.className = "ranking-shelf-covers";
-          entry.itemIds.slice(0,3).forEach(itemId => { const item = state.items.find(item => item.id === itemId); if (item) covers.append(createPoster(item)); });
+          entry.itemIds.filter(itemId=>state.items.find(item=>item.id===itemId)?.category==="专辑").slice(0,3).forEach(itemId => { const item = state.items.find(item => item.id === itemId); if (item) covers.append(createPoster(item)); });
           if (!covers.children.length) covers.append(createPoster({title:"等待你的第一名"}));
           const heading = document.createElement("h2"); heading.textContent = entry.name;
-          const meta = document.createElement("p"); meta.textContent = `TOP ${entry.limit} · 已选 ${entry.itemIds.length} 部`;
+          const meta = document.createElement("p"); meta.textContent = `TOP ${entry.limit} · 已选 ${entry.itemIds.filter(id=>state.items.find(item=>item.id===id)?.category==="专辑").length} 张`;
           const intro = document.createElement("p"); intro.textContent = entry.description || "打开这份私人精选 →";
           card.append(covers,meta,heading,intro); return card;
         });
@@ -3773,7 +3816,7 @@
       document.querySelector("#jumpToCover").onclick=()=>scrollDetailArtTo("#detailPoster");
       document.querySelector("#expandRadar").onclick = () => {
         const expanded=document.querySelector(".radar-card").classList.toggle("radar-expanded");
-        document.querySelector("#expandRadar").textContent=expanded?"收起，返回作品详情":"放大拖动八维图";
+        document.querySelector("#expandRadar").textContent=expanded?"收起，返回专辑详情":"放大拖动八维图";
       };
       el.searchInput.addEventListener("input", event => {
         state.search = event.target.value;
@@ -3781,7 +3824,8 @@
       });
       el.statusFilter.addEventListener("change", event => {
         state.status = event.target.value;
-        renderGallery();
+        state.specialFilter="all";
+        render();
       });
       el.sortSelect.addEventListener("change", event => {
         state.sort = event.target.value;
@@ -3858,6 +3902,14 @@
       });
       document.querySelector("#favoriteToggle").addEventListener("click",()=>{state.editingFavorite=!state.editingFavorite;renderPreferenceActions();persistPreferenceFlags();});
       document.querySelector("#revisitToggle").addEventListener("click",()=>{state.editingRevisit=!state.editingRevisit;renderPreferenceActions();persistPreferenceFlags();});
+      el.viewFavoriteToggle.addEventListener("click",()=>{
+        state.editingFavorite=!state.editingFavorite;persistPreferenceFlags();
+        const item=state.items.find(entry=>entry.id===state.editingId);if(item)renderAlbumView(item);
+      });
+      el.detailPoster.addEventListener("click",event=>{
+        if(!el.detailPoster.querySelector("img"))return;
+        event.stopPropagation();el.detailPoster.classList.toggle("cover-expanded");
+      });
       el.aspectFields.addEventListener("input", event => {
         const key = event.target?.dataset?.aspectKey;
         if (!key) return;
