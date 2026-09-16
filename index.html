@@ -1218,6 +1218,20 @@
       @media(max-width:620px){
         .archive-title{align-items:start}.archive-average{display:none}.topbar .search{flex-basis:100%}.topbar .control{flex:1 1 44%}.topbar .control select{width:100%;min-width:0}.topbar .primary-button{flex:1 1 100%}.gallery{grid-template-columns:repeat(2,minmax(0,1fr));gap:24px 12px}.gallery.list{grid-template-columns:1fr}.detail-head h2{font-size:31px}.radar-card{padding:14px}.radar-chart{min-height:330px}.album-view-scoreline{align-items:stretch}.album-view-actions{justify-content:stretch}.album-view-actions>*{flex:1}.detail-art>.poster.cover-expanded{inset:8px;height:calc(100vh - 16px)}
       }
+
+      /* ── Velvet Underground Banana Easter Egg ── */
+      .banana-easter{margin-top:auto;padding-top:14px;border-top:1px solid rgba(244,232,211,.07);text-align:center}
+      .banana-trigger{display:inline-block;width:28px;height:28px;cursor:pointer;opacity:.15;transition:opacity .4s,transform .4s;filter:saturate(.5)}
+      .banana-trigger:hover{opacity:.75;transform:rotate(-14deg) scale(1.2);filter:saturate(1)}
+      .banana-overlay{position:fixed;inset:0;z-index:9999;display:none;place-items:center;background:rgba(3,3,2,.92);backdrop-filter:blur(24px);opacity:0;transition:opacity .5s}
+      .banana-overlay.show{display:grid;opacity:1}
+      .banana-card{display:grid;gap:24px;place-items:center;text-align:center;animation:bFloat 3s ease-in-out infinite}
+      @keyframes bFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+      .banana-card .big-banana{width:min(240px,55vw);filter:drop-shadow(0 20px 50px rgba(211,155,73,.3))}
+      .banana-card h2{font-family:Georgia,"Noto Serif SC",serif;font-size:clamp(20px,3.5vw,34px);font-weight:500;color:var(--text)}
+      .banana-card p{color:var(--muted);font-size:14px;line-height:1.7;max-width:360px}
+      .banana-card .dismiss{margin-top:8px;padding:10px 28px;border:1px solid rgba(244,232,211,.1);border-radius:999px;background:0 0;color:rgba(244,232,211,.4);font-size:12px;font-weight:800;letter-spacing:.06em;cursor:pointer;transition:all .2s}
+      .banana-card .dismiss:hover{border-color:var(--orange);color:var(--orange);background:rgba(211,155,73,.08)}
     </style>
   </head>
   <body>
@@ -1250,6 +1264,13 @@
               <input class="file-input" id="fileInput" type="file" accept="application/json" />
             </div>
           </section>
+
+          <div class="banana-easter" aria-hidden="true">
+            <svg class="banana-trigger" id="bananaTrigger" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+              <path d="M78 18c-8-6-20-4-32 6-14 12-22 30-20 42 1 6 4 10 8 10s10-4 14-14c4-10 8-22 14-28 6-6 12-8 16-4s4 12-2 20c-4 5-2 10 2 12s10-2 14-10c6-12 8-28 2-40z" fill="#f0d060" stroke="#c8a830" stroke-width="2"/>
+              <path d="M38 70c2-6 8-18 16-28" fill="none" stroke="#c8a830" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/>
+            </svg>
+          </div>
         </aside>
 
         <section class="workspace">
@@ -1333,6 +1354,18 @@
         </div>
       </div>
     </section>
+
+    <div class="banana-overlay" id="bananaOverlay">
+      <div class="banana-card">
+        <svg class="big-banana" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+          <path d="M78 18c-8-6-20-4-32 6-14 12-22 30-20 42 1 6 4 10 8 10s10-4 14-14c4-10 8-22 14-28 6-6 12-8 16-4s4 12-2 20c-4 5-2 10 2 12s10-2 14-10c6-12 8-28 2-40z" fill="#f0d060" stroke="#c8a830" stroke-width="1.5"/>
+          <path d="M38 70c2-6 8-18 16-28" fill="none" stroke="#c8a830" stroke-width="1.2" stroke-linecap="round" opacity="0.45"/>
+        </svg>
+        <h2>The Velvet Underground & Nico</h2>
+        <p>"I'm waiting for my man…"<br/>Andy Warhol 画的那根香蕉，1967。</p>
+        <button class="dismiss" id="bananaDismiss" type="button">peel it away</button>
+      </div>
+    </div>
 
     <section class="detail" id="detail" aria-hidden="true">
       <div class="detail-panel" role="dialog" aria-modal="true" aria-labelledby="detailTitle">
@@ -3953,6 +3986,16 @@
       initializeRankingPage();
       render();
       registerWebMcpTools();
+
+      /* ── Velvet Underground Banana Easter Egg ── */
+      const bananaTrigger = document.getElementById("bananaTrigger");
+      const bananaOverlay = document.getElementById("bananaOverlay");
+      const bananaDismiss = document.getElementById("bananaDismiss");
+      if (bananaTrigger && bananaOverlay) {
+        bananaTrigger.addEventListener("click", () => bananaOverlay.classList.add("show"));
+        bananaDismiss?.addEventListener("click", () => bananaOverlay.classList.remove("show"));
+        bananaOverlay.addEventListener("click", e => { if (e.target === bananaOverlay) bananaOverlay.classList.remove("show"); });
+      }
     </script>
   </body>
 </html>
