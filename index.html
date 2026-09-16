@@ -1180,26 +1180,89 @@
       #collectionTools { display:none!important; margin:0!important; padding:0!important; border:0!important; background:transparent!important; }
       #collectionTools>.rankings-entrance { display:none!important; }
 
-      .detail { align-items:start; overflow:auto; padding:20px; background:rgba(4,4,3,.76); backdrop-filter:blur(8px); }
-      .detail.open { place-items:start center; }
-      .detail-panel { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); grid-template-areas:"head head head head head" "cover cover info info info" "radar radar radar info info" "actions actions actions actions actions"; gap:0 26px; width:min(1220px,100%); max-height:none; overflow:visible; border-color:rgba(244,232,211,.10); border-radius:12px; background:linear-gradient(180deg,color-mix(in srgb,var(--album-tint,#2b261f) 22%,#1e1c18),#151513 34%); }
+      .detail { padding:24px; background:rgba(4,4,3,.76); backdrop-filter:blur(8px); }
+      .detail.open { display:grid; place-items:center; }
+      .detail-panel {
+        display:grid;
+        grid-template-columns:minmax(300px,420px) minmax(0,1fr);
+        width:min(1180px,100%);
+        height:min(880px,calc(100vh - 48px));
+        max-height:calc(100vh - 48px);
+        overflow:hidden;
+        border:1px solid rgba(244,232,211,.10);
+        border-radius:12px;
+        background:linear-gradient(180deg,color-mix(in srgb,var(--album-tint,#2b261f) 18%,#1e1c18),#151513 34%);
+      }
       .detail-panel::before { height:360px; opacity:.13!important; background-image:linear-gradient(180deg,rgba(21,21,19,.64),#151513),var(--album-art,none); filter:blur(34px) saturate(.58); }
-      .detail-art,.detail-main { display:contents; }
-      .detail-head { grid-area:head; padding:24px 28px 20px; border-bottom-color:rgba(244,232,211,.08)!important; }
-      .detail-head h2 { font-family:Georgia,"Noto Serif SC",serif; font-weight:500; font-size:clamp(30px,4vw,52px); }
-      .detail-art>.poster { grid-area:cover; align-self:start; width:calc(100% - 28px); max-width:440px!important; margin:28px 0 26px 28px!important; border-radius:10px; box-shadow:0 26px 70px rgba(0,0,0,.36); cursor:zoom-in; }
-      .detail-art>.poster.cover-expanded { position:fixed; z-index:1500; inset:18px; width:auto; max-width:none!important; height:calc(100vh - 36px); margin:auto!important; aspect-ratio:auto; background:rgba(5,5,4,.95); border-radius:10px; cursor:zoom-out; }
-      .detail-art>.poster.cover-expanded img { object-fit:contain; }
-      .detail-art>.poster.cover-expanded>.poster { height:100%; aspect-ratio:auto; background:transparent!important; }
-      .detail-art>.poster.cover-expanded::after,.detail-art>.poster.cover-expanded .rating-badge { display:none; }
+      .detail-art {
+        display:block;
+        min-width:0;
+        min-height:0;
+        max-height:none;
+        padding:22px;
+        overflow:auto;
+        border-right:1px solid rgba(244,232,211,.08);
+        scrollbar-gutter:stable;
+      }
+      .detail-main {
+        display:grid;
+        grid-template-rows:auto minmax(0,1fr) auto;
+        min-width:0;
+        min-height:0;
+        max-height:none;
+        overflow:hidden;
+      }
+      .detail-head {
+        position:relative;
+        z-index:4;
+        padding:22px 24px 18px;
+        border-bottom:1px solid rgba(244,232,211,.08)!important;
+        background:rgba(21,21,19,.88);
+      }
+      .detail-head h2 { font-family:Georgia,"Noto Serif SC",serif; font-weight:500; font-size:clamp(30px,4vw,48px); }
+      .close-button { position:relative; z-index:5; flex:0 0 auto; }
+      .detail-art>.poster {
+        width:100%;
+        max-width:380px!important;
+        margin:0 auto 20px!important;
+        aspect-ratio:1;
+        border-radius:10px;
+        box-shadow:0 20px 54px rgba(0,0,0,.34);
+        cursor:default;
+      }
+      .detail-art>.poster.cover-expanded {
+        position:relative;
+        inset:auto;
+        z-index:auto;
+        width:100%;
+        height:auto;
+        max-width:380px!important;
+        margin:0 auto 20px!important;
+        background:#171512;
+      }
       .radar-jump-bar { display:none; }
-      .radar-card { grid-area:radar; width:calc(100% - 28px); max-width:660px; min-height:520px; margin:0 0 32px 28px; padding:24px; border-color:rgba(244,232,211,.08); border-radius:12px; background:rgba(11,11,10,.42); }
-      .radar-chart { min-height:460px; }
+      .radar-card {
+        width:100%;
+        max-width:none;
+        min-height:0;
+        margin:0;
+        padding:18px;
+        border-color:rgba(244,232,211,.08);
+        border-radius:12px;
+        background:rgba(11,11,10,.42);
+      }
+      .radar-chart { min-height:360px; }
       .radar-chip { background:rgba(211,155,73,.08); }
-      .album-view-summary { grid-area:info; align-self:start; gap:20px; padding:30px 30px 38px 0; overflow:visible; }
+      .album-view-summary,.detail-form {
+        min-width:0;
+        min-height:0;
+        padding:24px;
+        overflow:auto;
+      }
+      .album-view-summary { align-content:start; gap:20px; }
       .album-archive-code { color:var(--orange); font-size:11px; font-weight:800; letter-spacing:.16em; }
       .album-view-scoreline { align-items:center; }
-      .album-view-scoreline strong { font-size:clamp(64px,8vw,98px); }
+      .album-view-scoreline strong { font-size:clamp(64px,8vw,90px); }
       .album-view-actions { display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end; }
       .album-view-actions .preference-toggle { min-width:0; min-height:42px; padding:0 13px; }
       .album-view-original { color:var(--soft); font-family:Georgia,"Noto Serif SC",serif; font-size:18px; font-style:italic; }
@@ -1207,16 +1270,23 @@
       .album-note small { color:var(--orange); font-size:11px; font-weight:800; letter-spacing:.12em; text-transform:uppercase; }
       .album-note p { color:var(--muted); font-size:15px; line-height:1.8; white-space:pre-wrap; }
       .album-note .album-view-comment { color:var(--text); font-family:Georgia,"Noto Serif SC",serif; font-size:21px; line-height:1.75; }
-      .detail-form { grid-area:info; align-self:start; padding:30px 30px 38px 0; overflow:visible; }
-      .detail-actions { grid-area:actions; }
+      .detail-actions {
+        position:relative;
+        z-index:4;
+        padding:14px 20px;
+        border-top:1px solid rgba(244,232,211,.08);
+        background:#171613;
+      }
       .aspect-section { background:rgba(11,11,10,.28); }
-      .detail-panel:not(.album-view-mode) .radar-card { opacity:.82; }
+      .detail-panel:not(.album-view-mode) .radar-card { opacity:1; }
       .library-search-form { grid-template-columns:minmax(0,1fr) auto; }
 
       @media(max-width:980px){
-        .app{padding:0}.shell{display:block}.sidebar{position:static;width:100%;height:auto;border-radius:0;box-shadow:none}.brand{grid-template-columns:auto 1fr;align-items:center}.brand h1{font-size:25px}.brand small{grid-column:2}.vinyl-mark{grid-row:1/3}.sidebar nav{overflow:auto}.category-list{display:flex;overflow:auto}.category-button{flex:0 0 auto}.sidebar-data{display:block;margin-top:10px}.sidebar-data .section-title{display:none}.sidebar-data .tool-list{display:flex}.sidebar-data .tool-button{flex:1;justify-content:center;font-size:12px}.workspace{border-radius:0;box-shadow:none}.archive-head{padding:26px 18px 16px}.gallery-wrap{padding:20px 18px 36px}.gallery{grid-template-columns:repeat(3,minmax(0,1fr))}.detail{padding:0}.detail-panel{grid-template-columns:1fr;grid-template-areas:"head" "cover" "info" "radar" "actions";width:100%;min-height:100vh;border:0;border-radius:0}.detail-art>.poster{width:min(72vw,360px);margin:24px auto!important}.album-view-summary,.detail-form{padding:24px 18px}.radar-card{width:calc(100% - 36px);margin:0 18px 28px;min-height:0}.radar-chart{min-height:420px}.detail-head{padding:20px 18px}}
+        .app{padding:0}.shell{display:block}.sidebar{position:static;width:100%;height:auto;border-radius:0;box-shadow:none}.brand{grid-template-columns:auto 1fr;align-items:center}.brand h1{font-size:25px}.brand small{grid-column:2}.vinyl-mark{grid-row:1/3}.sidebar nav{overflow:auto}.category-list{display:flex;overflow:auto}.category-button{flex:0 0 auto}.sidebar-data{display:block;margin-top:10px}.sidebar-data .section-title{display:none}.sidebar-data .tool-list{display:flex}.sidebar-data .tool-button{flex:1;justify-content:center;font-size:12px}.workspace{border-radius:0;box-shadow:none}.archive-head{padding:26px 18px 16px}.gallery-wrap{padding:20px 18px 36px}.gallery{grid-template-columns:repeat(3,minmax(0,1fr))}
+        .detail{padding:0}.detail.open{display:block}.detail-panel{display:block;width:100%;height:auto;min-height:100vh;max-height:none;border:0;border-radius:0;overflow:visible}.detail-art{max-height:none;padding:20px 18px;border-right:0;border-bottom:1px solid rgba(244,232,211,.08);overflow:visible}.detail-art>.poster,.detail-art>.poster.cover-expanded{width:min(72vw,360px);margin:0 auto 20px!important}.radar-card{width:100%;margin:0;min-height:0}.radar-chart{min-height:400px}.detail-main{display:block;overflow:visible}.detail-head{position:sticky;top:0}.album-view-summary,.detail-form{padding:24px 18px;overflow:visible}.detail-actions{position:sticky;bottom:0}.detail-panel.album-view-mode .detail-actions{display:none}
+      }
       @media(max-width:620px){
-        .archive-title{align-items:start}.archive-average{display:none}.topbar .search{flex-basis:100%}.topbar .control{flex:1 1 44%}.topbar .control select{width:100%;min-width:0}.topbar .primary-button{flex:1 1 100%}.gallery{grid-template-columns:repeat(2,minmax(0,1fr));gap:24px 12px}.gallery.list{grid-template-columns:1fr}.detail-head h2{font-size:31px}.radar-card{padding:14px}.radar-chart{min-height:330px}.album-view-scoreline{align-items:stretch}.album-view-actions{justify-content:stretch}.album-view-actions>*{flex:1}.detail-art>.poster.cover-expanded{inset:8px;height:calc(100vh - 16px)}
+        .archive-title{align-items:start}.archive-average{display:none}.topbar .search{flex-basis:100%}.topbar .control{flex:1 1 44%}.topbar .control select{width:100%;min-width:0}.topbar .primary-button{flex:1 1 100%}.gallery{grid-template-columns:repeat(2,minmax(0,1fr));gap:24px 12px}.gallery.list{grid-template-columns:1fr}.detail-head h2{font-size:31px}.radar-card{padding:14px}.radar-chart{min-height:330px}.album-view-scoreline{align-items:stretch}.album-view-actions{justify-content:stretch}.album-view-actions>*{flex:1}
       }
 
       /* ── Velvet Underground Banana Easter Egg ── */
@@ -3959,9 +4029,9 @@
         state.editingFavorite=!state.editingFavorite;persistPreferenceFlags();
         const item=state.items.find(entry=>entry.id===state.editingId);if(item)renderAlbumView(item);
       });
-      el.detailPoster.addEventListener("click",event=>{
-        if(!el.detailPoster.querySelector("img"))return;
-        event.stopPropagation();el.detailPoster.classList.toggle("cover-expanded");
+      el.detailPoster.addEventListener("click", event => {
+        // Keep the cover inside its column so it can never block close/save controls.
+        event.stopPropagation();
       });
       el.aspectFields.addEventListener("input", event => {
         const key = event.target?.dataset?.aspectKey;
