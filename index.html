@@ -6,7 +6,7 @@
     <title>Yao · 私人专辑档案馆</title>
     <meta
       name="description"
-      content="私人专辑档案馆：收藏专辑、记录评分、八维评价与个人榜单。"
+      content="私人专辑档案馆：收藏专辑、记录评分、九维评价与个人榜单。"
     />
     <link
       rel="icon"
@@ -1315,6 +1315,18 @@
       @keyframes bananaEnter{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
       @media(max-height:720px){.banana-card{padding:16px;gap:8px}.peel-container{width:min(350px,58vh,100%)}}
       @media(prefers-reduced-motion:reduce){.banana-overlay.show{animation:none}.banana-trigger canvas{transition:none}}
+      .radar-tabs{display:flex;gap:6px}
+      .radar-tabs button{flex:1;min-height:42px;border:0;border-radius:8px;background:transparent;color:var(--muted);cursor:pointer}
+      .radar-tabs button[aria-selected="true"]{background:#d39b4920;color:#d39b49}
+      .emotion-radar .radar-tabs button[aria-selected="true"]{background:#9984b126;color:#baa5d0}
+      .radar-mode-note{font-size:12px;line-height:1.6;color:var(--muted)}
+      .aspect-field[hidden]{display:none!important}
+      .emotion-radar .radar-chart svg polygon{stroke:#9984b1}
+      .emotion-radar .radar-chart svg polygon:last-of-type{fill:#9984b133}
+      .emotion-radar .radar-score-label{fill:#baa5d0}
+      .emotion-radar .radar-chart svg circle{fill:#9984b1}
+      .emotion-radar .break-fill,.emotion-radar .break-thumb{background:#9984b1}
+      .radar-chart{min-height:0!important;aspect-ratio:1;width:100%}
     </style>
   </head>
   <body>
@@ -1449,15 +1461,17 @@
     <section class="detail" id="detail" aria-hidden="true">
       <div class="detail-panel" role="dialog" aria-modal="true" aria-labelledby="detailTitle">
         <aside class="detail-art">
-          <div class="radar-jump-bar"><button type="button" class="ghost-button" id="jumpToRadar">↑ 上移看八维图</button><button type="button" class="ghost-button" id="jumpToCover">返回封面</button></div>
+          <div class="radar-jump-bar"><button type="button" class="ghost-button" id="jumpToRadar">↑ 上移看九维图</button><button type="button" class="ghost-button" id="jumpToCover">返回封面</button></div>
           <div class="poster" id="detailPoster"></div>
-          <article class="radar-card" aria-label="评分雷达图">
+          <article class="radar-card" aria-label="专辑九维图">
+            <div class="radar-tabs" role="tablist" aria-label="九维图类型"><button type="button" role="tab" data-radar-tab="work" aria-selected="true">作品评价</button><button type="button" role="tab" data-radar-tab="feelings" aria-selected="false" tabindex="-1">情绪画像</button></div>
+            <p id="radarModeNote" class="radar-mode-note"></p>
             <div class="radar-head">
-              <span>八维评分雷达</span>
+              <span id="radarModeTitle">作品评价 · 九维评分</span>
               <strong id="radarAverage">0.0</strong>
             </div>
             <div class="radar-chart" id="detailRadar"></div>
-            <button type="button" class="ghost-button" id="expandRadar">放大拖动八维图</button>
+            <button type="button" class="ghost-button" id="expandRadar">放大拖动九维图</button>
             <div class="radar-summary" id="radarSummary"></div>
             <small>10 分就是满分。还不够？拖动圆点冲出金色边界，破例多给一点。虚点待评，拖动后才记分；总评分仍为 10 分制。</small>
           </article>
@@ -1548,7 +1562,7 @@
             <details class="evaluation-history field full" id="evaluationHistory" hidden><summary id="evaluationSummary">历史</summary><div class="evaluation-timeline" id="evaluationTimeline"></div></details>
             <section class="aspect-section field full" aria-label="维度评分">
               <div class="aspect-heading">
-                <span>八维评分</span>
+                <span>九维评分</span>
                 <small id="aspectHint">会画成左侧雷达图</small>
               </div>
               <div class="aspect-grid" id="aspectFields"></div>
@@ -1646,16 +1660,44 @@
           { key: "voice", label: "配音" }
         ],
         专辑: [
-          { key: "songwriting", label: "词曲" },
-          { key: "concept", label: "概念" },
-          { key: "distinctiveness", label: "独特" },
-          { key: "emotion", label: "感动" },
-          { key: "artistry", label: "艺术" },
-          { key: "innovation", label: "开创" },
-          { key: "arrangement", label: "编曲" },
-          { key: "production", label: "制作" }
+          {key:"songwriting",label:"词曲",help:"作曲、旋律与歌词"},
+          {key:"arrangement",label:"编曲",help:"乐器安排、层次和结构变化"},
+          {key:"performance",label:"演绎",help:"演唱、演奏和表现力"},
+          {key:"production",label:"制作",help:"录音、混音、音色与声音质感"},
+          {key:"cohesion",label:"完整度",help:"曲序、衔接与整体统一性"},
+          {key:"trackQuality",label:"曲目质量",help:"平均水准与是否存在明显弱曲"},
+          {key:"distinctiveness",label:"独特性",help:"鲜明、容易辨认的声音"},
+          {key:"impact",label:"感染力",help:"作品打动或影响你的强度"},
+          {key:"replayability",label:"耐听度",help:"反复聆听后是否依然成立"}
         ]
       };
+      const emotionMetrics = [
+        {key:"gemsWonder",label:"惊奇",help:"惊叹、着迷与新鲜感"},
+        {key:"gemsTranscendence",label:"超越",help:"超脱、升华与超越日常的感受"},
+        {key:"gemsTenderness",label:"温柔",help:"柔情、亲近与温暖"},
+        {key:"gemsNostalgia",label:"怀旧",help:"回忆、思念与留恋"},
+        {key:"gemsPeacefulness",label:"平静",help:"安宁、放松与舒缓"},
+        {key:"gemsPower",label:"力量",help:"强大、坚定与充满能量"},
+        {key:"gemsJoy",label:"愉悦",help:"快乐、轻盈与想随之舞动"},
+        {key:"gemsTension",label:"紧张",help:"不安、悬念与压迫"},
+        {key:"gemsSadness",label:"悲伤",help:"哀伤、低落与伤感"}
+      ];
+      let radarMode = "work";
+      function allAlbumMetrics(){return [...metricSets["专辑"],...emotionMetrics];}
+      function syncRadarTabs(){
+        document.querySelectorAll("[data-radar-tab]").forEach(button=>{
+          const active=button.dataset.radarTab===radarMode;
+          button.setAttribute("aria-selected",String(active));
+          button.tabIndex=active?0:-1;
+        });
+        document.querySelector(".radar-card").classList.toggle("emotion-radar",radarMode==="feelings");
+        el.aspectFields.classList.toggle("emotion-radar",radarMode==="feelings");
+        el.aspectFields.querySelectorAll(".aspect-field").forEach(row=>{
+          row.hidden=(row.dataset.group==="feelings")!==(radarMode==="feelings");
+        });
+        document.querySelector("#radarModeTitle").textContent=radarMode==="feelings"?"情绪画像 · 感受强度":"作品评价 · 九维评分";
+        document.querySelector("#radarModeNote").textContent=radarMode==="feelings"?"GEMS 九类音乐情绪的个人记录；这里使用自定义 0–15 强度，不是原版心理量表。悲伤、紧张高不代表专辑差。":"评价它为什么好。新增维度保持待评，旧版无法直接对应的评分仍保留在备份里。";
+      }
       const categoryHelp = Object.fromEntries(
         Object.entries(metricSets).map(([category, metrics]) =>
           [category, metrics.map(metric => metric.label).join(" / ")])
@@ -1902,23 +1944,23 @@
       el.tmdbKey.value = apiSettings.tmdb || "";
       el.rawgKey.value = apiSettings.rawg || "";
 
-      function getMetrics(category, emotionMode = "emotion") {
-        const metrics = metricSets[category] || metricSets.default;
-        return category === "专辑" && emotionMode === "awe"
-          ? metrics.map(metric => metric.key === "emotion" ? {...metric,label:"震撼"} : metric) : metrics;
+      function getMetrics(category) {
+        return category==="专辑" ? (radarMode==="feelings"?emotionMetrics:metricSets["专辑"]) : (metricSets[category]||metricSets.default);
       }
 
       function renderAspectControls(category, scores = {}) {
-        const metrics = getMetrics(category, state.editingEmotionMode);
+        const metrics = category==="专辑"?allAlbumMetrics():getMetrics(category);
         el.aspectHint.textContent = "10 分满分。到顶不松手，继续向右拉，可突破边界。";
         el.aspectFields.replaceChildren();
         metrics.forEach(metric => {
           const row = document.createElement("div");
           row.className = "aspect-field";
+          row.dataset.group=metric.key.startsWith("gems")?"feelings":"work";
 
           const label = document.createElement("label");
           label.htmlFor = `aspect-${metric.key}`;
           label.textContent = metric.label;
+          label.title=metric.help || metric.label;
 
           const input = document.createElement("input");
           input.id = `aspect-${metric.key}`;
@@ -1939,22 +1981,10 @@
           output.textContent = formatBreakScore(scores[metric.key]);
 
           const slider=createBreakSlider(input);
-          if (category === "专辑" && metric.key === "emotion") {
-            const choice=document.createElement("select");choice.className="emotion-choice";
-            choice.setAttribute("aria-label","这个维度评价感动还是震撼");
-            for(const [value,text] of [["emotion","感动"],["awe","震撼"]]) {
-              const option=document.createElement("option");option.value=value;option.textContent=text;choice.append(option);
-            }
-            choice.value=state.editingEmotionMode === "awe" ? "awe" : "emotion";
-            choice.addEventListener("change",()=>{
-              state.editingEmotionMode=choice.value;
-              input.setAttribute("aria-label",choice.value === "awe" ? "震撼" : "感动");
-              renderRadar({category,aspectScores:getCurrentAspectScores()});
-            });
-            row.append(choice,output,slider);
-          } else row.append(label, output, slider);
+          row.append(label, output, slider);
           el.aspectFields.append(row);
         });
+        syncRadarTabs();
       }
 
       function formatBreakScore(value) {
@@ -2471,9 +2501,9 @@
           item.aspectScores && typeof item.aspectScores === "object" && !Array.isArray(item.aspectScores)
             ? item.aspectScores
             : {};
-        const metrics = getMetrics(item.category);
+        const metrics = item.category==="专辑"?allAlbumMetrics():getMetrics(item.category);
         return metrics.reduce((scores, metric) => {
-          const saved = source[metric.key];
+          const saved = source[metric.key] ?? (metric.key==="impact" ? source.emotion : null);
           scores[metric.key] = saved != null && saved !== "" && Number.isFinite(Number(saved))
             ? clampScore(saved)
             : null;
@@ -2542,9 +2572,9 @@
       function createRadarSvg(scores, category, interactive = false, emotionMode = "emotion") {
         const metrics = getMetrics(category, emotionMode);
         const svg = makeSvgElement("svg", {
-          viewBox: "-65 -65 430 430",
+          viewBox: "-100 -100 500 500",
           role: interactive ? "group" : "img",
-          "aria-label": "专辑八维评分雷达图"
+          "aria-label": radarMode==="feelings"?"情绪九维画像":"作品九维评分"
         });
 
         [0.25, 0.5, 0.75, 1].forEach(scale => {
@@ -2688,16 +2718,10 @@
       }
 
       function renderRadarSummary(scores, category) {
-        const metrics = getMetrics(category, state.editingEmotionMode);
-        el.radarAverage.textContent = formatAspectScore(averageAspectScores(scores, category));
-        el.radarSummary.replaceChildren(
-          ...metrics.map(metric => {
-            const chip = document.createElement("span");
-            chip.className = "radar-chip";
-            chip.textContent = `${metric.label} ${formatAspectScore(scores[metric.key])}`;
-            return chip;
-          })
-        );
+        const metrics=getMetrics(category);
+        el.radarAverage.textContent=radarMode==="feelings"?"强度":formatAspectScore(averageAspectScores(scores,category));
+        const top=metrics.filter(m=>scores[m.key]!=null).sort((a,b)=>scores[b.key]-scores[a.key]).slice(0,3);
+        el.radarSummary.textContent=(radarMode==="feelings"?"主要感受：":"作品优势：")+(top.length?top.map(m=>m.label+" "+formatAspectScore(scores[m.key])).join(" · "):"待评");
       }
 
       function formatRating(value) {
@@ -2958,7 +2982,7 @@
         const expandButton = document.querySelector("#expandRadar");
         radarCard?.classList.remove("radar-expanded");
         el.detailPoster.classList.remove("cover-expanded");
-        if (expandButton) expandButton.textContent = "放大拖动八维图";
+        if (expandButton) expandButton.textContent = "放大拖动九维图";
         document.querySelector(".detail-art")?.scrollTo({ top: 0, behavior: "auto" });
         el.detailForm?.scrollTo({ top: 0, behavior: "auto" });
         el.albumViewSummary?.scrollTo({ top: 0, behavior: "auto" });
@@ -2975,6 +2999,7 @@
       }
 
       function openDetail(target) {
+        radarMode="work";
         resetDetailVisualState();
         const item =
           (target && typeof target === "object" ? target : state.items.find(entry => entry.id === target)) || {
@@ -3098,7 +3123,7 @@
       }
 
       function exportData() {
-        const blob = new Blob([JSON.stringify({ version: 4, items: state.items, rankings }, null, 2)], { type: "application/json" });
+        const blob = new Blob([JSON.stringify({ version: 5, items: state.items, rankings }, null, 2)], { type: "application/json" });
         const url = URL.createObjectURL(blob);
         const link = document.createElement("a");
         link.href = url;
@@ -3939,7 +3964,7 @@
       document.querySelector("#jumpToCover").onclick=()=>scrollDetailArtTo("#detailPoster");
       document.querySelector("#expandRadar").onclick = () => {
         const expanded=document.querySelector(".radar-card").classList.toggle("radar-expanded");
-        document.querySelector("#expandRadar").textContent=expanded?"收起，返回专辑详情":"放大拖动八维图";
+        document.querySelector("#expandRadar").textContent=expanded?"收起，返回专辑详情":"放大拖动九维图";
       };
       el.searchInput.addEventListener("input", event => {
         state.search = event.target.value;
@@ -4072,6 +4097,16 @@
         }
       });
 
+      document.querySelectorAll("[data-radar-tab]").forEach(button=>{
+        const switchTab=()=>{radarMode=button.dataset.radarTab;syncRadarTabs();renderRadar({category:"专辑",aspectScores:getCurrentAspectScores()});};
+        button.addEventListener("click",switchTab);
+        button.addEventListener("keydown",event=>{
+          if(!["ArrowLeft","ArrowRight","Home","End"].includes(event.key))return;
+          event.preventDefault();
+          const mode=event.key==="Home"?"work":event.key==="End"?"feelings":radarMode==="work"?"feelings":"work";
+          const next=document.querySelector('[data-radar-tab="'+mode+'"]');next.click();next.focus();
+        });
+      });
       initializeCollectionTools();
       initializeRankingPage();
       render();
