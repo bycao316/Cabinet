@@ -1220,27 +1220,29 @@
       }
 
       /* ── Velvet Underground Banana Easter Egg ── */
-      .banana-easter{margin-top:auto;padding-top:14px;border-top:1px solid rgba(244,232,211,.07);text-align:center}
-      .banana-trigger{display:inline-block;width:28px;height:28px;object-fit:contain;cursor:pointer;opacity:.15;transition:opacity .4s,transform .4s;border-radius:4px;background:0 0}
-      .banana-trigger:hover{opacity:.75;transform:rotate(-14deg) scale(1.2)}
-      .banana-overlay{position:fixed;inset:0;z-index:9999;display:none;place-items:center;background:rgba(3,3,2,.92);backdrop-filter:blur(24px);opacity:0;transition:opacity .5s}
-      .banana-overlay.show{display:grid;opacity:1}
-      .banana-card{display:grid;gap:20px;place-items:center;text-align:center}
-      /* ── Peel Container ── */
-      .peel-container{position:relative;width:min(360px,65vw);height:min(360px,65vw);cursor:pointer;perspective:1000px}
-      .peel-layer,.peel-base{position:absolute;inset:0;display:grid;place-items:center;overflow:visible}
-      .peel-layer{z-index:2;transform-origin:20% 50%;transition:transform 1.4s cubic-bezier(.25,.46,.45,.94),opacity 1s ease .3s}
-      .peel-layer.peeled{transform:rotateY(-130deg) translateX(-40%) scale(.7);opacity:0;pointer-events:none}
-      .peel-layer img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 16px 40px rgba(0,0,0,.35));transition:filter .4s}
-      .peel-layer .peel-hint{position:absolute;bottom:6%;left:50%;transform:translateX(-50%);padding:8px 20px;border-radius:999px;background:rgba(211,155,73,.15);border:1px solid rgba(211,155,73,.3);color:var(--orange);font-size:12px;font-weight:800;letter-spacing:.12em;white-space:nowrap;cursor:pointer;transition:all .3s;animation:hintPulse 2.5s ease-in-out infinite}
-      .peel-layer .peel-hint:hover{background:rgba(211,155,73,.3);border-color:var(--orange);transform:translateX(-50%) scale(1.05)}
-      .peel-layer.peeled .peel-hint{opacity:0;pointer-events:none}
-      @keyframes hintPulse{0%,100%{box-shadow:0 0 0 0 rgba(211,155,73,0)}50%{box-shadow:0 0 0 8px rgba(211,155,73,.12)}}
-      .peel-base{z-index:1;opacity:0;transition:opacity .6s ease .6s}
-      .peel-base.revealed{opacity:1}
-      .peel-base img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 12px 30px rgba(0,0,0,.3));animation:none}
-      .banana-card h2{font-family:Georgia,"Noto Serif SC",serif;font-size:clamp(20px,3.5vw,34px);font-weight:500;color:var(--text)}
-      .banana-card p{color:var(--muted);font-size:14px;line-height:1.7;max-width:360px}
+      .banana-easter{margin-top:auto;padding:16px 0 2px;text-align:left}
+      .banana-trigger{display:inline-flex;align-items:center;justify-content:center;width:52px;height:60px;border:0;background:transparent;cursor:pointer;opacity:.65;transition:opacity .2s,transform .2s}
+      .banana-trigger img{width:42px;height:48px;object-fit:contain}
+      .banana-trigger:hover,.banana-trigger:focus-visible{opacity:1;transform:rotate(-8deg)}
+      .banana-trigger:focus-visible{outline:1px solid var(--orange);border-radius:8px}
+      .banana-overlay{position:fixed;inset:0;z-index:9999;display:none;place-items:center;padding:20px;background:rgba(6,6,5,.88);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);overflow:auto}
+      .banana-overlay.show{display:grid;animation:bananaEnter .22s ease-out}
+      .banana-card{position:relative;width:min(560px,100%);padding:30px 20px 24px;display:grid;justify-items:center;gap:12px;text-align:center;background:#181713;border:1px solid rgba(242,235,221,.12);border-radius:12px;box-shadow:0 24px 80px #0006}
+      .banana-close{position:absolute;right:14px;top:12px;width:40px;height:40px;border:0;border-radius:50%;background:transparent;color:#aaa59b;font-size:26px;cursor:pointer;z-index:2}
+      .banana-close:hover{color:#f2ebdd;background:#ffffff0a}
+      .banana-edition{color:#a19a87;font:10px/1.5 system-ui,sans-serif;letter-spacing:.25em;padding-top:4px}
+      .peel-container{position:relative;width:min(440px,100%);aspect-ratio:1;touch-action:none;cursor:grab;outline-offset:3px}
+      .peel-container:active{cursor:grabbing}
+      .peel-container canvas{display:block;width:100%;height:100%;pointer-events:none}
+      .peel-container:focus-visible{outline:1px solid #d99a45;border-radius:8px}
+      .banana-card h2{font-family:Georgia,serif;font-size:clamp(21px,4vw,30px);font-weight:400;color:#f2ebdd;line-height:1.2}
+      .banana-card p{margin:0;color:#a49e91;font:13px/1.7 system-ui,sans-serif}
+      .banana-replay{border:1px solid #ffffff18;border-radius:999px;padding:9px 18px;background:transparent;color:#d9c6a6;font:12px system-ui,sans-serif;cursor:pointer;min-height:40px}
+      .banana-replay:hover{background:#ffffff08}
+      .banana-status{min-height:22px}
+      @keyframes bananaEnter{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+      @media(max-height:720px){.banana-card{padding:16px;gap:8px}.peel-container{width:min(350px,58vh,100%)}}
+      @media(prefers-reduced-motion:reduce){.banana-overlay.show{animation:none}.banana-trigger{transition:none}}
     </style>
   </head>
   <body>
@@ -1274,9 +1276,7 @@
             </div>
           </section>
 
-          <div class="banana-easter" aria-hidden="true">
-            <img class="banana-trigger" id="bananaTrigger" src="attachments/vu-banana-nobg.png" alt="🍌" />
-          </div>
+          <div class="banana-easter"><button class="banana-trigger" id="bananaTrigger" type="button" aria-label="打开香蕉剥皮彩蛋" title="Peel slowly and see"><img src="attachments/vu-banana-nobg.png" alt="" /></button></div>
         </aside>
 
         <section class="workspace">
@@ -1361,19 +1361,16 @@
       </div>
     </section>
 
-    <div class="banana-overlay" id="bananaOverlay">
+    <div class="banana-overlay" id="bananaOverlay" role="dialog" aria-modal="true" aria-labelledby="bananaTitle" aria-hidden="true">
       <div class="banana-card">
-        <div class="peel-container" id="peelContainer">
-          <div class="peel-layer" id="peelLayer">
-            <img src="attachments/vu-banana-nobg.png" alt="Yellow banana (peel me)" draggable="false" />
-            <span class="peel-hint" id="peelHint">◀ PEEL SLOWLY AND SEE</span>
-          </div>
-          <div class="peel-base" id="peelBase">
-            <img src="attachments/vu-peeled-nobg.png" alt="Pink banana revealed" draggable="false" />
-          </div>
+        <button class="banana-close" id="bananaClose" type="button" aria-label="关闭彩蛋">×</button>
+        <span class="banana-edition">CABINET · HIDDEN SLEEVE / 1967</span>
+        <div class="peel-container" id="peelContainer" role="button" tabindex="0" aria-label="向下拖动剥开香蕉，或按回车自动播放">
+          <canvas id="bananaCanvas" width="1040" height="1040" aria-hidden="true"></canvas>
         </div>
-        <h2>The Velvet Underground & Nico</h2>
-        <p>"I'm waiting for my man…"<br/>Andy Warhol, 1967</p>
+        <h2 id="bananaTitle">The Velvet Underground &amp; Nico</h2>
+        <p class="banana-status" id="bananaStatus" role="status">正在准备唱片封套…</p>
+        <button class="banana-replay" id="bananaReplay" type="button">重新剥一次</button>
       </div>
     </div>
 
@@ -3998,42 +3995,109 @@
       registerWebMcpTools();
 
       /* ── Velvet Underground Banana Easter Egg ── */
-      const bananaTrigger = document.getElementById("bananaTrigger");
-      const bananaOverlay = document.getElementById("bananaOverlay");
-      const peelLayer = document.getElementById("peelLayer");
-      const peelBase = document.getElementById("peelBase");
-      const peelHint = document.getElementById("peelHint");
-      let peeled = false;
-
-      function resetPeel() {
-        peeled = false;
-        peelLayer?.classList.remove("peeled");
-        peelBase?.classList.remove("revealed");
-      }
-
-      function doPeel() {
-        if (peeled) return;
-        peeled = true;
-        peelBase?.classList.add("revealed");
-        peelLayer?.classList.add("peeled");
-      }
-
-      function openBanana() {
-        resetPeel();
-        bananaOverlay.classList.add("show");
-      }
-
-      function closeBanana() {
-        bananaOverlay.classList.remove("show");
-        setTimeout(resetPeel, 800);
-      }
-
-      if (bananaTrigger && bananaOverlay) {
-        bananaTrigger.addEventListener("click", openBanana);
-        bananaOverlay.addEventListener("click", e => { if (e.target === bananaOverlay) closeBanana(); });
-        peelHint?.addEventListener("click", e => { e.stopPropagation(); doPeel(); });
-        peelLayer?.addEventListener("click", e => { e.stopPropagation(); doPeel(); });
-      }
+      (() => {
+        const trigger=document.getElementById("bananaTrigger"),overlay=document.getElementById("bananaOverlay");
+        const stage=document.getElementById("peelContainer"),canvas=document.getElementById("bananaCanvas");
+        const status=document.getElementById("bananaStatus"),close=document.getElementById("bananaClose"),replay=document.getElementById("bananaReplay");
+        const ctx=canvas.getContext("2d");
+        let ready=false,failed=false,progress=0,frame=0,drag=null,previousFocus=null,previousOverflow="";
+        const reduced=window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        const front=document.createElement("canvas"),back=document.createElement("canvas"),base=document.createElement("canvas");
+        [front,back,base].forEach(c=>{c.width=520;c.height=520;});
+        const rect={x:92,y:38,w:314,h:378};
+        const load=src=>new Promise((resolve,reject)=>{const img=new Image();img.onload=()=>resolve(img);img.onerror=reject;img.src=src;});
+        // Draw existing transparent artwork into the same registration rectangle.
+        // Only the yellow layer deforms; the revealed artwork stays fixed underneath.
+        const assets=Promise.all([load("attachments/vu-banana-nobg.png"),load("attachments/vu-peeled-nobg.png")]).then(([yellow,pink])=>{
+          front.getContext("2d").drawImage(yellow,62,28,370,438,rect.x,rect.y,rect.w,rect.h);
+          base.getContext("2d").drawImage(pink,34,28,132,146,rect.x,rect.y,rect.w,rect.h);
+          const reverse=back.getContext("2d");reverse.drawImage(front,0,0);reverse.globalCompositeOperation="source-atop";
+          reverse.fillStyle="rgba(230,207,135,.94)";reverse.fillRect(0,0,520,520);
+          ready=true;draw();setStatus();
+        }).catch(()=>{failed=true;status.textContent="封面暂时没加载出来，关闭后再试一次。";});
+        function setStatus(){
+          status.textContent=!ready?"正在准备唱片封套…":progress>.995?"你发现了封套下面的秘密。":"从香蕉顶部向下拖动 · 也可以轻点剥开";
+          stage.setAttribute("aria-label",progress>.995?"香蕉已剥开，点击重新播放":"向下拖动剥开香蕉，或按回车自动播放");
+        }
+        function draw(){
+          ctx.setTransform(2,0,0,2,0,0);ctx.clearRect(0,0,520,520);
+          if(!ready)return;
+          ctx.save();ctx.beginPath();ctx.rect(0,0,520,progress>=1?520:rect.y+progress*(rect.h+90));ctx.clip();
+          ctx.shadowColor="rgba(0,0,0,.32)";ctx.shadowBlur=18;ctx.shadowOffsetY=10;
+          ctx.drawImage(base,0,0);ctx.restore();
+          if(progress<=0){ctx.drawImage(front,0,0);return;}
+          if(progress>=1)return;
+          const fold=rect.y+progress*(rect.h+90);
+          const radius=22+Math.sin(progress*Math.PI)*20;
+          // The unpeeled part stays perfectly still below the moving fold line.
+          ctx.save();ctx.beginPath();ctx.rect(0,fold,520,520);ctx.clip();ctx.drawImage(front,0,0);ctx.restore();
+          // A narrow curved return shows the paper underside instead of rotating
+          // or fading the entire image. Strips preserve the original silhouette.
+          const length=Math.PI*radius;
+          const from=Math.max(rect.y,fold-length);
+          ctx.save();ctx.shadowColor="rgba(0,0,0,.32)";ctx.shadowBlur=9;ctx.shadowOffsetY=7;
+          for(let y=from;y<Math.min(fold,rect.y+rect.h);y+=1.5){
+            const angle=(fold-y)/radius;
+            const destY=fold+Math.sin(angle)*radius;
+            const depth=1-Math.cos(angle);
+            const scale=1-depth*.045;
+            const dx=(520-520*scale)/2-depth*9;
+            const h=Math.max(.65,Math.abs(Math.cos(angle))*1.7);
+            ctx.globalAlpha=Math.min(1,(1-progress)*9);
+            ctx.drawImage(angle>Math.PI/2?back:front,0,y,520,1.7,dx,destY,520*scale,h);
+          }
+          ctx.restore();
+        }
+        function animate(target){
+          cancelAnimationFrame(frame);drag=null;
+          const start=progress,duration=reduced?0:Math.max(350,Math.abs(target-start)*1700),began=performance.now();
+          function tick(now){const t=duration?Math.min(1,(now-began)/duration):1;
+            const eased=t*t*(3-2*t);progress=start+(target-start)*eased;draw();
+            if(t<1)frame=requestAnimationFrame(tick);else{frame=0;setStatus();}
+          }frame=requestAnimationFrame(tick);
+        }
+        function play(){if(!ready)return;if(progress>.995){progress=0;draw();}animate(1);}
+        function open(){
+          previousFocus=document.activeElement;previousOverflow=document.body.style.overflow;
+          overlay.classList.add("show");overlay.setAttribute("aria-hidden","false");document.body.style.overflow="hidden";
+          cancelAnimationFrame(frame);progress=0;draw();setStatus();stage.focus();
+          if(failed){status.textContent="封面暂时无法加载，请刷新页面后重试。";}
+        }
+        function dismiss(){
+          if(!overlay.classList.contains("show"))return;
+          cancelAnimationFrame(frame);drag=null;overlay.classList.remove("show");overlay.setAttribute("aria-hidden","true");
+          document.body.style.overflow=previousOverflow;previousFocus?.focus();
+        }
+        trigger.addEventListener("click",open);close.addEventListener("click",dismiss);
+        overlay.addEventListener("click",event=>{if(event.target===overlay)dismiss();});
+        replay.addEventListener("click",()=>{if(!ready)return;progress=0;draw();animate(1);});
+        stage.addEventListener("pointerdown",event=>{
+          if(!ready||event.button>0)return;event.preventDefault();cancelAnimationFrame(frame);
+          stage.setPointerCapture(event.pointerId);drag={id:event.pointerId,y:event.clientY,start:progress,moved:false};
+        });
+        stage.addEventListener("pointermove",event=>{
+          if(!drag||event.pointerId!==drag.id)return;
+          const delta=event.clientY-drag.y;if(Math.abs(delta)>5)drag.moved=true;
+          if(!drag.moved)return;
+          progress=Math.max(0,Math.min(1,drag.start+delta/(stage.getBoundingClientRect().height*.7)));draw();
+        });
+        stage.addEventListener("pointerup",event=>{
+          if(!drag||event.pointerId!==drag.id)return;
+          const moved=drag.moved;drag=null;if(stage.hasPointerCapture(event.pointerId))stage.releasePointerCapture(event.pointerId);
+          if(!moved)play();else animate(progress>.28?1:0);
+        });
+        stage.addEventListener("pointercancel",()=>{drag=null;animate(progress>.5?1:0);});
+        stage.addEventListener("lostpointercapture",()=>{if(drag){drag=null;animate(progress>.5?1:0);}});
+        stage.addEventListener("keydown",event=>{if(event.key==="Enter"||event.key===" "){event.preventDefault();play();}});
+        document.addEventListener("keydown",event=>{
+          if(!overlay.classList.contains("show"))return;
+          if(event.key==="Escape"){event.preventDefault();dismiss();}
+          if(event.key==="Tab"){
+            const focusable=[close,stage,replay],i=focusable.indexOf(document.activeElement);
+            event.preventDefault();focusable[(i+(event.shiftKey?-1:1)+3)%3].focus();
+          }
+        },true);
+      })();
     </script>
   </body>
 </html>
