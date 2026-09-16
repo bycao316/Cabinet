@@ -1220,11 +1220,13 @@
       }
 
       /* ── Velvet Underground Banana Easter Egg ── */
-      .banana-easter{margin-top:auto;padding:12px 8px 0;text-align:left}
-      .banana-trigger{display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;border:0;background:transparent;cursor:pointer;opacity:.48;filter:saturate(.42);transition:opacity .2s,filter .2s}
-      .banana-trigger canvas{display:block;width:36px;height:36px}
-      .banana-trigger:hover,.banana-trigger:focus-visible{opacity:.88;filter:saturate(.78)}
-      .banana-trigger:focus-visible{outline:1px solid var(--orange);border-radius:8px}
+      .banana-easter{margin-top:auto;padding:6px 8px 0;display:flex;justify-content:flex-end}
+      .banana-trigger{position:relative;display:block;width:44px;height:44px;padding:0;overflow:hidden;border:0;border-radius:0;background:transparent;cursor:pointer;isolation:isolate}
+      .banana-trigger::after{content:"";position:absolute;left:3px;right:3px;bottom:0;height:1px;background:rgba(242,235,221,.09)}
+      .banana-trigger canvas{display:block;width:36px;height:36px;margin:4px;transform:translateY(25px) rotate(-12deg);opacity:.32;filter:saturate(.35);transition:transform .24s ease,opacity .24s ease,filter .24s ease}
+      .banana-trigger.is-peeking canvas,.banana-trigger:focus-visible canvas{transform:translateY(2px) rotate(-12deg);opacity:.78;filter:saturate(.65)}
+      @media(hover:hover){.banana-trigger:hover canvas{transform:translateY(2px) rotate(-12deg);opacity:.78;filter:saturate(.65)}}
+      .banana-trigger:focus-visible{outline:1px solid var(--orange);outline-offset:3px;border-radius:8px}
       .banana-overlay{position:fixed;inset:0;z-index:9999;display:none;place-items:center;padding:20px;background:rgba(6,6,5,.88);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);overflow:auto}
       .banana-overlay.show{display:grid;animation:bananaEnter .22s ease-out}
       .banana-card{position:relative;width:min(560px,100%);padding:30px 20px 24px;display:grid;justify-items:center;gap:12px;text-align:center;background:#151513;border:1px solid rgba(242,235,221,.045);border-radius:12px;box-shadow:0 16px 60px #0003}
@@ -1242,7 +1244,7 @@
       .banana-status{min-height:22px}
       @keyframes bananaEnter{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
       @media(max-height:720px){.banana-card{padding:16px;gap:8px}.peel-container{width:min(350px,58vh,100%)}}
-      @media(prefers-reduced-motion:reduce){.banana-overlay.show{animation:none}.banana-trigger{transition:none}}
+      @media(prefers-reduced-motion:reduce){.banana-overlay.show{animation:none}.banana-trigger canvas{transition:none}}
     </style>
   </head>
   <body>
@@ -1276,7 +1278,7 @@
             </div>
           </section>
 
-          <div class="banana-easter"><button class="banana-trigger" id="bananaTrigger" type="button" aria-label="打开香蕉剥皮彩蛋" title="Peel slowly and see"><canvas id="bananaIcon" width="144" height="144" aria-hidden="true"></canvas></button></div>
+          <div class="banana-easter"><button class="banana-trigger" id="bananaTrigger" type="button" aria-label="打开香蕉剥皮彩蛋"><canvas id="bananaIcon" width="144" height="144" aria-hidden="true"></canvas></button></div>
         </aside>
 
         <section class="workspace">
@@ -4099,7 +4101,16 @@
           cancelAnimationFrame(frame);drag=null;overlay.classList.remove("show");overlay.setAttribute("aria-hidden","true");
           document.body.style.overflow=previousOverflow;previousFocus?.focus();
         }
-        trigger.addEventListener("click",open);close.addEventListener("click",dismiss);
+        let peekTimer=0;
+        const hidePeek=()=>{clearTimeout(peekTimer);trigger.classList.remove("is-peeking");};
+        trigger.addEventListener("click",event=>{
+          if(event.detail!==0&&window.matchMedia("(hover: none)").matches&&!trigger.classList.contains("is-peeking")){
+            trigger.classList.add("is-peeking");clearTimeout(peekTimer);peekTimer=setTimeout(hidePeek,4500);return;
+          }
+          hidePeek();open();
+        });
+        trigger.addEventListener("blur",hidePeek);
+        close.addEventListener("click",dismiss);
         overlay.addEventListener("click",event=>{if(event.target===overlay)dismiss();});
         replay.addEventListener("click",()=>{if(!ready)return;progress=0;draw();animate(1);});
         stage.addEventListener("pointerdown",event=>{
