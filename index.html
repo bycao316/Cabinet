@@ -16,19 +16,19 @@
     <style>
       :root {
         color-scheme: dark;
-        --bg: #070706;
-        --panel: rgba(18, 18, 17, 0.84);
-        --panel-strong: rgba(26, 24, 22, 0.94);
-        --line: rgba(255, 236, 205, 0.13);
-        --line-bright: rgba(255, 170, 70, 0.42);
-        --text: #f6ead5;
-        --muted: rgba(246, 234, 213, 0.66);
-        --soft: rgba(246, 234, 213, 0.42);
-        --orange: #f0a23a;
-        --blue: #76d7d0;
-        --red: #e84b6a;
-        --green: #61d394;
-        --shadow: 0 24px 90px rgba(0, 0, 0, 0.48);
+        --bg: #0d0c0a;
+        --panel: rgba(23, 22, 19, 0.92);
+        --panel-strong: rgba(30, 28, 24, 0.97);
+        --line: rgba(244, 232, 211, 0.10);
+        --line-bright: rgba(211, 155, 73, 0.42);
+        --text: #f2ece2;
+        --muted: rgba(242, 236, 226, 0.64);
+        --soft: rgba(242, 236, 226, 0.40);
+        --orange: #d39b49;
+        --blue: #c8aa73;
+        --red: #cb6e58;
+        --green: #a5a078;
+        --shadow: 0 22px 70px rgba(0, 0, 0, 0.38);
       }
 
       * {
@@ -39,9 +39,8 @@
         margin: 0;
         min-width: 320px;
         background:
-          radial-gradient(circle at 15% 0%, rgba(240, 162, 58, 0.16), transparent 28rem),
-          radial-gradient(circle at 82% 8%, rgba(118, 215, 208, 0.11), transparent 24rem),
-          linear-gradient(180deg, #0b0a08 0%, #070706 46%, #030303 100%);
+          radial-gradient(circle at 14% 0%, rgba(211, 155, 73, 0.11), transparent 30rem),
+          linear-gradient(180deg, #12100d 0%, #0d0c0a 48%, #080706 100%);
         color: var(--text);
         font-family:
           Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
@@ -76,7 +75,7 @@
       .sidebar,
       .workspace {
         border: 1px solid var(--line);
-        border-radius: 8px;
+        border-radius: 14px;
         background: var(--panel);
         box-shadow: var(--shadow);
         backdrop-filter: blur(18px);
@@ -276,8 +275,8 @@
       .field input:focus,
       .field select:focus,
       .field textarea:focus {
-        border-color: rgba(118, 215, 208, 0.68);
-        box-shadow: 0 0 0 3px rgba(118, 215, 208, 0.13);
+        border-color: rgba(211, 155, 73, 0.72);
+        box-shadow: 0 0 0 3px rgba(211, 155, 73, 0.13);
       }
 
       .control {
@@ -339,7 +338,7 @@
       }
 
       .icon-button.active {
-        background: rgba(118, 215, 208, 0.16);
+        background: rgba(211, 155, 73, 0.16);
         color: var(--blue);
       }
 
@@ -350,8 +349,8 @@
 
       .gallery {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
-        gap: 16px;
+        grid-template-columns: repeat(auto-fill, minmax(178px, 1fr));
+        gap: 24px 18px;
         align-items: start;
       }
 
@@ -361,11 +360,11 @@
 
       .card {
         display: grid;
-        gap: 10px;
-        padding: 10px;
-        border: 1px solid var(--line);
-        border-radius: 8px;
-        background: rgba(255, 255, 255, 0.036);
+        gap: 12px;
+        padding: 0;
+        border: 1px solid transparent;
+        border-radius: 12px;
+        background: transparent;
         text-align: left;
         cursor: pointer;
         overflow: hidden;
@@ -373,8 +372,8 @@
       }
 
       .card:hover {
-        border-color: var(--line-bright);
-        background: rgba(255, 255, 255, 0.060);
+        border-color: transparent;
+        background: transparent;
         transform: translateY(-2px);
       }
 
@@ -386,7 +385,7 @@
         border-radius: 6px;
         background:
           linear-gradient(145deg, rgba(240, 162, 58, 0.28), transparent),
-          radial-gradient(circle at 70% 25%, rgba(118, 215, 208, 0.25), transparent 38%),
+          radial-gradient(circle at 70% 25%, rgba(211, 155, 73, 0.18), transparent 38%),
           #171411;
       }
 
@@ -395,6 +394,68 @@
         height: 100%;
         object-fit: cover;
         display: block;
+      }
+
+      .card .poster {
+        transition: transform 180ms ease, box-shadow 180ms ease, filter 180ms ease;
+      }
+
+      .card:hover .poster {
+        transform: translateY(-2px);
+        box-shadow: 0 16px 34px rgba(0, 0, 0, 0.38);
+        filter: brightness(1.04);
+      }
+
+      .card.album-card .poster {
+        aspect-ratio: 1;
+        border-radius: 10px;
+        background: #171512;
+      }
+
+      .card.album-card .poster img {
+        object-fit: contain;
+      }
+
+      .card.album-card .poster::after {
+        background: linear-gradient(180deg, transparent 68%, rgba(0, 0, 0, 0.42));
+      }
+
+      .card.album-card .card-body {
+        padding: 0 3px 8px;
+      }
+
+      .card.album-card h3 {
+        margin-top: 0;
+        font-size: 16px;
+        line-height: 1.35;
+      }
+
+      .card.album-card .meta {
+        margin-top: 4px;
+        color: var(--muted);
+      }
+
+      .album-card-markers {
+        display: flex;
+        min-height: 18px;
+        gap: 8px;
+        margin-top: 8px;
+        color: var(--orange);
+        font-size: 12px;
+        font-weight: 800;
+      }
+
+      .gallery.list .card.album-card {
+        grid-template-columns: 82px minmax(0, 1fr);
+        align-items: center;
+        padding: 8px 0;
+        border-bottom-color: var(--line);
+        border-radius: 0;
+      }
+
+      .gallery.list .card.album-card .poster {
+        width: 82px;
+        aspect-ratio: 1;
       }
 
       .poster-fallback {
@@ -500,12 +561,31 @@
         max-height: min(880px, calc(100vh - 48px));
         overflow: hidden;
         border: 1px solid rgba(255, 236, 205, 0.18);
-        border-radius: 8px;
+        position: relative;
+        isolation: isolate;
+        border-radius: 16px;
         background:
           radial-gradient(circle at 10% 0%, rgba(240, 162, 58, 0.12), transparent 22rem),
           var(--panel-strong);
         box-shadow: 0 30px 120px rgba(0, 0, 0, 0.72);
       }
+
+      .detail-panel::before {
+        content: "";
+        position: absolute;
+        z-index: -2;
+        inset: -44px -44px auto;
+        height: 430px;
+        background-image: linear-gradient(180deg, rgba(22, 20, 17, 0.60), var(--panel-strong)), var(--album-art, none);
+        background-position: center;
+        background-size: cover;
+        filter: blur(30px) saturate(.72);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 240ms ease;
+      }
+
+      .detail-panel.album-view-mode::before { opacity: .30; }
 
       .detail-art {
         padding: 18px;
@@ -524,6 +604,13 @@
         box-shadow: 0 18px 54px rgba(0, 0, 0, 0.46);
       }
 
+      .detail-panel.album-detail .detail-art > .poster {
+        aspect-ratio: 1;
+        background: #171512;
+      }
+
+      .detail-panel.album-detail .detail-art > .poster img { object-fit: contain; }
+
       .radar-card {
         display: grid;
         gap: 12px;
@@ -532,7 +619,7 @@
         border: 1px solid var(--line);
         border-radius: 8px;
         background:
-          radial-gradient(circle at 50% 32%, rgba(118, 215, 208, 0.10), transparent 62%),
+          radial-gradient(circle at 50% 32%, rgba(211, 155, 73, 0.10), transparent 62%),
           rgba(255, 255, 255, 0.035);
       }
 
@@ -599,7 +686,7 @@
       .radar-chip {
         border-radius: 999px;
         padding: 4px 7px;
-        background: rgba(118, 215, 208, 0.10);
+        background: rgba(211, 155, 73, 0.10);
         color: rgba(246, 234, 213, 0.78);
         font-size: 12px;
         font-weight: 800;
@@ -648,6 +735,56 @@
         padding: 18px;
         overflow: auto;
       }
+
+      .detail-form[hidden] { display: none; }
+
+      .album-view-summary {
+        display: grid;
+        align-content: start;
+        gap: 22px;
+        padding: 28px 22px 32px;
+        overflow: auto;
+      }
+
+      .album-view-summary[hidden] { display: none; }
+
+      .album-view-scoreline {
+        display: flex;
+        align-items: end;
+        justify-content: space-between;
+        gap: 18px;
+        padding-bottom: 22px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .album-view-scoreline small {
+        display: block;
+        margin-bottom: 7px;
+        color: var(--soft);
+        font-size: 12px;
+        font-weight: 800;
+        letter-spacing: .12em;
+      }
+
+      .album-view-scoreline strong {
+        color: var(--orange);
+        font-family: Georgia, "Noto Serif SC", serif;
+        font-size: clamp(52px, 8vw, 92px);
+        font-weight: 500;
+        line-height: .82;
+      }
+
+      .album-view-meta { color: var(--muted); font-size: 15px; line-height: 1.8; }
+      .album-view-comment { color: var(--text); font-family: Georgia, "Noto Serif SC", serif; font-size: clamp(18px, 2vw, 25px); line-height: 1.75; white-space: pre-wrap; }
+      .album-view-flags { display:flex; flex-wrap:wrap; gap:8px; }
+      .album-view-flags span { padding:6px 9px; border-radius:999px; background:rgba(211,155,73,.12); color:var(--orange); font-size:12px; font-weight:800; }
+      .album-view-history { border-top:1px solid var(--line); padding-top:18px; }
+      .album-view-history summary { cursor:pointer; color:var(--muted); font-weight:800; }
+      .album-view-history .evaluation-timeline { margin-top:16px; }
+
+      .detail-panel.album-view-mode .detail-actions { display: none; }
+      .detail-panel.album-view-mode .detail-head { border-bottom-color: transparent; }
+      .detail-panel.album-view-mode .radar-jump-bar { background: rgba(24, 22, 18, .88); }
 
       .field {
         display: grid;
@@ -962,7 +1099,7 @@
 
         .gallery {
           grid-template-columns: repeat(auto-fill, minmax(138px, 1fr));
-          gap: 12px;
+          gap: 20px 12px;
         }
 
         .detail {
@@ -972,6 +1109,11 @@
         .detail-actions {
           flex-direction: column-reverse;
         }
+
+        .album-view-summary { padding: 22px 16px 30px; }
+        .album-view-scoreline { align-items: stretch; flex-direction: column; }
+        .album-view-scoreline .ghost-button { width: 100%; }
+        .album-view-comment { font-size: 18px; }
 
         .library-search-form,
         .api-key-grid {
@@ -1139,6 +1281,23 @@
             </div>
             <button class="close-button" id="closeButton" type="button" aria-label="关闭">×</button>
           </header>
+
+          <section class="album-view-summary" id="albumViewSummary" hidden aria-label="专辑评价">
+            <div class="album-view-scoreline">
+              <div>
+                <small>MY RATING</small>
+                <strong id="albumViewRating">0.0</strong>
+              </div>
+              <button class="ghost-button" id="editAlbumButton" type="button">编辑这张专辑</button>
+            </div>
+            <p class="album-view-meta" id="albumViewMeta"></p>
+            <div class="album-view-flags" id="albumViewFlags"></div>
+            <p class="album-view-comment" id="albumViewComment"></p>
+            <details class="album-view-history" id="albumViewHistory" hidden>
+              <summary id="albumViewHistorySummary">评价历史</summary>
+              <div class="evaluation-timeline" id="albumViewTimeline"></div>
+            </details>
+          </section>
 
           <form class="detail-form" id="detailForm">
             <div class="field">
@@ -1512,6 +1671,15 @@
         detail: document.querySelector("#detail"),
         detailTitle: document.querySelector("#detailTitle"),
         detailSubtitle: document.querySelector("#detailSubtitle"),
+        detailPanel: document.querySelector("#detail .detail-panel"),
+        albumViewSummary: document.querySelector("#albumViewSummary"),
+        albumViewRating: document.querySelector("#albumViewRating"),
+        albumViewMeta: document.querySelector("#albumViewMeta"),
+        albumViewFlags: document.querySelector("#albumViewFlags"),
+        albumViewComment: document.querySelector("#albumViewComment"),
+        albumViewHistory: document.querySelector("#albumViewHistory"),
+        albumViewTimeline: document.querySelector("#albumViewTimeline"),
+        editAlbumButton: document.querySelector("#editAlbumButton"),
         detailPoster: document.querySelector("#detailPoster"),
         detailRadar: document.querySelector("#detailRadar"),
         radarAverage: document.querySelector("#radarAverage"),
@@ -2255,8 +2423,8 @@
 
         const shape = makeSvgElement("polygon", {
             points: radarPoints(scores, metrics, RADAR_RADIUS),
-            fill: "rgba(118,215,208,0.22)",
-            stroke: "rgba(118,215,208,0.92)",
+            fill: "rgba(211,155,73,0.22)",
+            stroke: "rgba(211,155,73,0.92)",
             "stroke-width": "2.2"
           });
         svg.append(shape);
@@ -2476,16 +2644,23 @@
           ...items.map(item => {
             const card = document.createElement("button");
             card.type = "button";
-            card.className = "card";
+            const isAlbum = item.category === "专辑";
+            card.className = `card${isAlbum ? " album-card" : ""}`;
             card.append(createPoster(item));
             const body = document.createElement("div");
             body.className = "card-body";
-            body.innerHTML = `
+            body.innerHTML = isAlbum ? `
+              <h3>${escapeHtml(item.title)}</h3>
+              <p class="meta">${escapeHtml([item.creator, item.year].filter(Boolean).join(" · "))}</p>
+              <div class="album-card-markers">
+                ${item.favorite ? '<span>♥ 私人最爱</span>' : ''}
+                ${item.revisit ? '<span>↻ 待重听</span>' : ''}
+              </div>
+            ` : `
               <div class="card-foot">
                 <span class="type-pill">${item.category}</span>
                 <span class="status-pill">${item.status || "未设置"}</span>
                 ${item.favorite ? '<span class="utility-badge">♥ 私人最爱</span>' : ''}
-                ${item.category === "专辑" && item.revisit ? '<span class="utility-badge">↻ 待重听</span>' : ''}
               </div>
               <h3>${escapeHtml(item.title)}</h3>
               <p class="meta">${escapeHtml([item.creator, item.year].filter(Boolean).join(" · "))}</p>
@@ -2562,6 +2737,41 @@
         renderGallery();
       }
 
+      function renderAlbumView(item) {
+        el.albumViewRating.textContent = Number(item.rating || 0).toFixed(1);
+        el.albumViewMeta.textContent = [item.creator, item.year, splitLabels(item.languages).join(" / "), splitLabels(item.genres).join(" / ")].filter(Boolean).join(" · ") || "还没有补充专辑资料";
+        el.albumViewComment.textContent = item.comment || "还没有短评。";
+        const flags = [
+          item.favorite ? "♥ 私人最爱" : "",
+          item.revisit ? "↻ 待重听" : "",
+          item.status || ""
+        ].filter(Boolean);
+        el.albumViewFlags.replaceChildren(...flags.map(label => {
+          const badge = document.createElement("span"); badge.textContent = label; return badge;
+        }));
+        const entries = normalizeEvaluationHistory(item.evaluationHistory?.length ? item.evaluationHistory : item.relistenHistory);
+        el.albumViewHistory.hidden = entries.length < 2;
+        el.albumViewHistory.open = false;
+        document.querySelector("#albumViewHistorySummary").textContent = `评价历史 · ${entries.length} 个保存版本`;
+        el.albumViewTimeline.replaceChildren(...entries.slice().reverse().map(entry => {
+          const article = document.createElement("article"); article.className = "evaluation-entry";
+          const time = document.createElement("time"); time.dateTime = entry.date; time.textContent = entry.date;
+          const body = document.createElement("div");
+          const heading = document.createElement("strong"); heading.textContent = `${entry.score.toFixed(1)} 分`;
+          const note = document.createElement("p"); note.textContent = entry.note || "当时没有留下短评。";
+          body.append(heading, note); article.append(time, body); return article;
+        }));
+      }
+
+      function setDetailEditMode(editing) {
+        const isAlbum = el.categoryField.value === "专辑";
+        el.detailPanel.classList.toggle("album-detail", isAlbum);
+        el.detailPanel.classList.toggle("album-view-mode", isAlbum && !editing);
+        el.albumViewSummary.hidden = !isAlbum || editing;
+        el.detailForm.hidden = isAlbum && !editing;
+        if (isAlbum && !editing) el.detailSubtitle.textContent = [el.creatorField.value, el.yearField.value].filter(Boolean).join(" · ") || "私人唱片收藏";
+      }
+
       function openDetail(target) {
         const item =
           (target && typeof target === "object" ? target : state.items.find(entry => entry.id === target)) || {
@@ -2579,6 +2789,7 @@
             aspectScores: {},
             updatedAt: new Date().toISOString()
           };
+        const isPersisted = state.items.some(entry => entry.id === item.id);
         state.editingId = item.id;
         state.editingEvaluationHistory = normalizeEvaluationHistory(item.evaluationHistory?.length ? item.evaluationHistory : item.relistenHistory);
         state.editingFavorite = Boolean(item.favorite);
@@ -2605,12 +2816,15 @@
         setAspectControls(aspectScores);
         el.tagsField.value = (item.tags || []).join(", ");
         el.commentField.value = item.comment || "";
+        renderAlbumView(item);
         el.detailPoster.replaceChildren(createPoster({ ...item, aspectScores }));
         renderRadar({ ...item, aspectScores });
-        el.deleteButton.style.visibility = state.items.some(entry => entry.id === item.id) ? "visible" : "hidden";
+        el.detailPanel.style.setProperty?.("--album-art", item.poster ? `url(${JSON.stringify(item.poster)})` : "none");
+        el.deleteButton.style.visibility = isPersisted ? "visible" : "hidden";
+        setDetailEditMode(!(item.category === "专辑" && isPersisted));
         el.detail.classList.add("open");
         el.detail.setAttribute("aria-hidden", "false");
-        setTimeout(() => el.titleField.focus(), 0);
+        setTimeout(() => (item.category === "专辑" && isPersisted ? el.editAlbumButton : el.titleField).focus(), 0);
       }
 
       function closeDetail() {
@@ -2619,6 +2833,8 @@
         state.editingId = null;
         state.editingSource = null;
         state.editingEvaluationHistory = [];
+        el.detailPanel.classList.remove("album-detail", "album-view-mode");
+        el.detailForm.hidden = false;
         el.detail.classList.remove("open");
         el.detail.setAttribute("aria-hidden", "true");
       }
@@ -3015,7 +3231,7 @@
           ? `${list.itemIds.length} / ${list.limit} 部 · 电脑可拖动封面调序；手机可上下移动或指定名次。点击标题编辑作品。`
           : "从已有作品中挑选，自定义顺序。不足 10 / 50 / 100 部也可以保存。";
         document.querySelector("#rankingRows").replaceChildren(...(list?.itemIds || []).map((id, index) => {
-          const item = itemMap.get(id); const row = document.createElement("div"); row.className = `ranking-row${index < 3 ? " podium" : ""}`;
+          const item = itemMap.get(id); const row = document.createElement("div"); row.className = `ranking-row${index < 3 ? ` podium rank-${index + 1}` : " standard"}`;
           row.draggable = true;
           row.addEventListener("dragstart", event => { event.dataTransfer.setData("text/plain", id); event.dataTransfer.effectAllowed = "move"; });
           row.addEventListener("dragover", event => { event.preventDefault(); row.classList.add("drag-over"); });
@@ -3254,8 +3470,9 @@
           .ranking-nav{display:flex;gap:24px;align-items:center;border-bottom:1px solid var(--line);padding-bottom:24px;font-size:14px}.ranking-nav span{margin-left:auto;letter-spacing:2px;color:var(--soft);font-size:10px}
           .ranking-hero{text-align:center;padding:76px 0 60px;max-width:900px;margin:auto}.ranking-hero>p:first-child{letter-spacing:5px;color:var(--orange);font-size:12px}.ranking-hero h1{font-size:clamp(38px,7vw,78px);font-weight:850;line-height:1.12;letter-spacing:-2px;margin:22px 0;overflow-wrap:anywhere}.ranking-hero #rankingPageIntro{color:var(--muted);line-height:1.9;white-space:pre-wrap}.ranking-hero #rankingPageCount{font-size:12px;color:var(--soft);margin-top:24px;letter-spacing:2px}
           #rankingShelf{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px}.ranking-shelf-card{display:block;padding:20px;border:1px solid var(--line);border-radius:14px;background:var(--panel-strong);transition:transform .2s}.ranking-shelf-card:hover{transform:translateY(-4px);border-color:var(--orange)}.ranking-shelf-covers{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-bottom:20px}.ranking-shelf-covers .poster{aspect-ratio:1}.ranking-shelf-covers .rating-badge{display:none}.ranking-shelf-card h2{color:var(--text);font-size:22px;overflow-wrap:anywhere}.ranking-shelf-card p{color:var(--muted);font-size:13px;line-height:1.7}
-          .ranking-toolbar{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:24px}#rankingPage #rankingsPanel{border:0;padding:0;margin:0}#rankingPage #rankingsPanel>summary{display:none}#rankingPage #rankingEditor{margin:0 0 32px;padding:20px;border:1px solid var(--line);border-radius:12px}#rankingPage #rankingRows{gap:26px;margin-top:30px}#rankingPage .ranking-row{padding:18px;border-color:transparent;background:transparent}#rankingPage .ranking-row.podium{border-color:var(--line-bright)}#rankingPage .ranking-row:not(.podium) .poster{max-height:230px}#rankingPage .rank-number{font-size:32px}#rankingPage .ranking-title{font-size:18px;white-space:normal;height:auto;padding:10px 0}#rankingPage .ranking-row small{line-height:1.8;white-space:pre-wrap}#rankingPage:not(.editing) .ranking-actions{display:none}#rankingPage #rankingCreate{padding:24px;margin-top:30px;border:1px dashed var(--line-bright);border-radius:12px}#rankingPage .poster img{pointer-events:none}
-          @media(max-width:700px){#rankingPage{padding:20px 16px 70px!important}.ranking-nav{gap:18px}.ranking-nav span{display:none}.ranking-hero{padding:50px 0 36px}#rankingShelf{grid-template-columns:1fr}#rankingPage #rankingRows{gap:12px}#rankingPage .ranking-row{padding:10px}#rankingPage .ranking-row:first-child .poster{max-width:340px}#rankingPage .ranking-title{font-size:15px}}
+          .ranking-toolbar{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:24px}#rankingPage #rankingsPanel{border:0;padding:0;margin:0}#rankingPage #rankingsPanel>summary{display:none}#rankingPage #rankingEditor{margin:0 0 32px;padding:20px;border:1px solid var(--line);border-radius:12px}#rankingPage #rankingRows{gap:18px;margin-top:30px}#rankingPage .ranking-row{padding:18px;border-color:transparent;background:transparent}#rankingPage .ranking-row.podium{border-color:var(--line-bright);background:linear-gradient(160deg,rgba(211,155,73,.11),rgba(20,19,16,.78));box-shadow:0 18px 50px rgba(0,0,0,.18)}#rankingPage .ranking-row.rank-1{transform:translateY(-10px)}#rankingPage .rank-number{font-family:Georgia,"Noto Serif SC",serif;font-size:30px;color:var(--orange)}#rankingPage .ranking-title{font-size:18px;white-space:normal;height:auto;padding:10px 0}#rankingPage .ranking-row small{line-height:1.8;white-space:pre-wrap}#rankingPage:not(.editing) .ranking-actions{display:none}#rankingPage #rankingCreate{padding:24px;margin-top:30px;border:1px dashed var(--line-bright);border-radius:12px}#rankingPage .poster img{pointer-events:none}
+          #rankingPage .ranking-row.standard{grid-column:1/-1;display:grid;grid-template-columns:64px 76px minmax(180px,1fr) minmax(220px,1.4fr) auto;gap:18px;align-items:center;padding:12px 4px;border:0;border-bottom:1px solid var(--line);border-radius:0}#rankingPage .ranking-row.standard .poster{width:76px;height:76px;aspect-ratio:1;border-radius:8px}#rankingPage .ranking-row.standard .poster img{object-fit:contain;background:#171512}#rankingPage .ranking-row.standard .rank-number{font-size:22px}#rankingPage .ranking-row.standard .ranking-title{padding:0;text-align:left}#rankingPage .ranking-row.standard small{color:var(--muted);max-height:3.6em;overflow:hidden}#rankingPage .ranking-row.standard .ranking-actions{justify-content:flex-end}
+          @media(max-width:700px){#rankingPage{padding:20px 16px 70px!important}.ranking-nav{gap:18px}.ranking-nav span{display:none}.ranking-hero{padding:50px 0 36px}#rankingShelf{grid-template-columns:1fr}#rankingPage #rankingRows{gap:12px}#rankingPage .ranking-row{padding:10px}#rankingPage .ranking-row.rank-1{transform:none}#rankingPage .ranking-row:first-child .poster{max-width:340px}#rankingPage .ranking-title{font-size:15px}#rankingPage .ranking-row.standard{grid-template-columns:42px 58px minmax(0,1fr);gap:10px;padding:10px 0}#rankingPage .ranking-row.standard .poster{width:58px;height:58px}#rankingPage .ranking-row.standard small{display:none}#rankingPage .ranking-row.standard .ranking-actions{grid-column:1/-1}}
           #tournamentPanel{border:1px solid var(--line-bright);border-radius:14px;padding:20px;margin:24px 0 36px;background:var(--panel)}#tournamentContent>p{color:var(--muted);line-height:1.8}#tournamentContent h3{margin:24px 0 16px}#tournamentContent details{margin:20px 0}.tournament-pick-list{max-height:360px;overflow:auto;margin:16px 0}.tournament-versus{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;max-width:600px;margin:20px auto}.tournament-choice{display:flex;flex-direction:column;gap:10px;padding:14px;background:var(--bg);border:1px solid var(--line-bright);border-radius:14px;text-align:left;cursor:pointer;color:var(--text)}.tournament-choice:hover{border-color:var(--blue)}.tournament-choice .poster{aspect-ratio:1}.tournament-choice strong{overflow-wrap:anywhere}.tournament-choice span{color:var(--orange)}.tournament-scroll{overflow:auto;max-height:650px;padding-bottom:12px}.tournament-board{position:relative;margin:15px 0}.tournament-lines{position:absolute;inset:0;pointer-events:none}.tournament-round-title{position:absolute;top:0;color:var(--orange)}.tournament-match{position:absolute;width:210px;height:86px;padding:5px;border:1px solid var(--line);border-radius:7px;background:#191814;display:grid;grid-template-rows:1fr 1fr;gap:3px}#rankingPage .tournament-match button{min-height:30px;padding:4px 8px;font-size:12px;text-align:left;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}#rankingPage .tournament-match button:disabled{opacity:.75}#rankingPage .tournament-match .match-winner{color:var(--orange);border-color:var(--orange)}.tournament-result{line-height:2;max-height:360px;overflow:auto}.radar-chart circle[role=slider]:focus{outline:none;stroke:#fff;stroke-width:3px}.radar-chart svg{max-height:none!important;width:100%}
         `; document.head.append(style);
         document.querySelector("#rankingEditToggle").onclick = () => {
@@ -3604,7 +3821,16 @@
         openDetail();
       });
       el.closeButton.addEventListener("click", closeDetail);
-      el.cancelButton.addEventListener("click", closeDetail);
+      el.cancelButton.addEventListener("click", () => {
+        const existing = state.items.find(item => item.id === state.editingId);
+        if (existing?.category === "专辑") openDetail(existing.id);
+        else closeDetail();
+      });
+      el.editAlbumButton.addEventListener("click", () => {
+        setDetailEditMode(true);
+        el.detailSubtitle.textContent = "编辑资料、评分与短评";
+        setTimeout(() => el.titleField.focus(), 0);
+      });
       el.detail.addEventListener("click", event => {
         if (event.target === el.detail) closeDetail();
       });
@@ -3648,8 +3874,10 @@
       });
       el.detailForm.addEventListener("submit", event => {
         event.preventDefault();
-        upsertItem(readFormItem());
-        closeDetail();
+        const item = readFormItem();
+        upsertItem(item);
+        if (item.category === "专辑") openDetail(item.id);
+        else closeDetail();
         showToast("已保存");
       });
       el.deleteButton.addEventListener("click", deleteCurrentItem);
