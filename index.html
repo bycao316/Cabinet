@@ -253,6 +253,25 @@
         outline: none;
       }
 
+      .relisten-section { border:1px solid var(--line-bright); border-radius:10px; padding:14px; background:rgba(240,162,58,.045); }
+      .relisten-section[hidden] { display:none; }
+      .relisten-section summary { cursor:pointer; list-style:none; display:grid; gap:5px; padding:2px; }
+      .relisten-section summary::-webkit-details-marker { display:none; }
+      .relisten-section summary strong { color:var(--orange); }
+      .relisten-latest { color:var(--muted); font-size:13px; line-height:1.55; overflow-wrap:anywhere; }
+      .relisten-form { display:grid; grid-template-columns:150px minmax(0,1fr) auto; gap:10px; align-items:end; margin:16px 0; padding-top:14px; border-top:1px solid var(--line); }
+      .relisten-form label { display:grid; gap:6px; color:var(--muted); font-size:12px; font-weight:800; }
+      .relisten-form textarea { grid-column:1/-1; min-height:80px; }
+      .relisten-score-line { display:flex; align-items:center; gap:8px; }
+      .relisten-score-line input[type=range] { min-width:120px; padding:0; }
+      .relisten-score-line output { min-width:34px; color:var(--orange); font-weight:900; }
+      .relisten-timeline { display:grid; gap:10px; margin-top:14px; }
+      .relisten-entry { display:grid; grid-template-columns:auto 1fr auto; gap:12px; padding:12px; border-left:2px solid var(--orange); background:rgba(255,255,255,.035); border-radius:0 8px 8px 0; }
+      .relisten-entry time { color:var(--soft); font-size:12px; white-space:nowrap; }
+      .relisten-entry p { margin:4px 0 0; color:var(--muted); line-height:1.6; white-space:pre-wrap; overflow-wrap:anywhere; }
+      .relisten-entry .ghost-button { min-height:34px; padding:5px 9px; }
+      @media(max-width:620px){.relisten-form{grid-template-columns:1fr}.relisten-form textarea{grid-column:auto}.relisten-entry{grid-template-columns:1fr auto}.relisten-entry time{grid-column:1/-1}}
+
       .search input {
         height: 46px;
         padding: 0 15px;
@@ -1187,6 +1206,16 @@
                 <strong class="rating-value" id="ratingValue">0.0</strong>
               </div>
             </div>
+            <details class="relisten-section field full" id="relistenSection">
+              <summary><strong>复听记录</strong><span class="relisten-latest" id="relistenLatest">还没有记录。展开写下这一次的感受。</span></summary>
+              <div class="relisten-form">
+                <label>收听日期<input id="relistenDate" type="date" /></label>
+                <label>当时评分<div class="relisten-score-line"><input id="relistenScore" type="range" min="0" max="10" step="0.1" /><output id="relistenScoreValue">0.0</output></div></label>
+                <button type="button" class="primary-button" id="addRelisten">记录这次收听</button>
+                <label>这次的想法<textarea id="relistenNote" placeholder="例如：开始喜欢后半张。"></textarea></label>
+              </div>
+              <div class="relisten-timeline" id="relistenTimeline"></div>
+            </details>
             <section class="aspect-section field full" aria-label="维度评分">
               <div class="aspect-heading">
                 <span>八维评分</span>
@@ -1372,6 +1401,7 @@
           creator: "Denis Villeneuve",
           year: 2024,
           rating: 0,
+          relistenHistory: [],
           poster: "https://image.tmdb.org/t/p/w500/1pdfLvkbY9ohJlCjQH2CZjjYVvJ.jpg",
           tags: ["科幻", "史诗"],
           comment: "先放进想看，等看完再补评分。",
@@ -1458,6 +1488,7 @@
         view: "grid",
         editingId: null,
         editingSource: null,
+        editingRelistens: [],
         libraryBusy: false
       };
 
@@ -1700,6 +1731,7 @@
           creator: String(item.creator || ""),
           year: item.year || "",
           rating: 0,
+          relistenHistory: [],
           languages: splitLabels(item.languages),
           genres: splitLabels(item.genres),
           poster: String(item.poster || ""),
@@ -2353,6 +2385,7 @@
               item.status,
               item.category,
               item.comment,
+              ...normalizeRelistens(item.relistenHistory).map(entry => entry.note),
               ...(item.tags || [])
             ]
               .map(normalizeText)
@@ -2477,6 +2510,72 @@
         el.avgRating.textContent = rated.length ? average.toFixed(1) : "-";
       }
 
+      function normalizeRelistens(value) {
+        if (!Array.isArray(value)) return [];
+        return value.filter(entry => entry && typeof entry === "object").map(entry => ({
+          id: String(entry.id || crypto.randomUUID()),
+          date: /^\d{4}-\d{2}-\d{2}$/.test(String(entry.date || "")) ? String(entry.date) : String(entry.createdAt || "").slice(0,10),
+          score: Math.max(0,Math.min(10,Number(entry.score) || 0)),
+          note: String(entry.note || "").slice(0,2000),
+          createdAt: entry.createdAt || new Date().toISOString()
+        })).filter(entry => entry.date).sort((a,b) => String(a.date).localeCompare(String(b.date)) || String(a.createdAt).localeCompare(String(b.createdAt)));
+      }
+
+      function renderRelistens() {
+        const section=document.querySelector("#relistenSection");
+        const isAlbum=el.categoryField.value === "专辑";
+        section.hidden=!isAlbum;
+        if(!isAlbum)return;
+        const entries=normalizeRelistens(state.editingRelistens);
+        state.editingRelistens=entries;
+        const latest=entries.at(-1);
+        document.querySelector("#relistenLatest").textContent=latest
+          ? `最新 · ${latest.date} · ${latest.score.toFixed(1)} 分${latest.note ? ` · ${latest.note}` : ""}`
+          : "还没有记录。展开写下这一次的感受。";
+        const timeline=document.querySelector("#relistenTimeline");
+        timeline.replaceChildren(...entries.slice().reverse().map((entry,reverseIndex)=>{
+          const index=entries.length-reverseIndex;
+          const article=document.createElement("article");article.className="relisten-entry";
+          const time=document.createElement("time");time.dateTime=entry.date;time.textContent=entry.date;
+          const body=document.createElement("div");
+          const heading=document.createElement("strong");heading.textContent=`${index===1?"首听":`第 ${index} 次`} · ${entry.score.toFixed(1)} 分`;
+          const note=document.createElement("p");note.textContent=entry.note || "这次没有留下文字。";
+          body.append(heading,note);
+          const remove=collectionButton("删除",()=>{
+            if(!confirm("删除这条复听记录？"))return;
+            state.editingRelistens=state.editingRelistens.filter(item=>item.id!==entry.id);
+            persistRelistenDraft();renderRelistens();showToast("复听记录已删除");
+          });
+          article.append(time,body,remove);return article;
+        }));
+      }
+
+      function persistRelistenDraft() {
+        const existing=state.items.find(item=>item.id===state.editingId);
+        if(!existing){upsertItem(readFormItem());return;}
+        existing.relistenHistory=normalizeRelistens(state.editingRelistens);
+        const latest=existing.relistenHistory.at(-1);
+        if(latest){existing.rating=latest.score;existing.comment=latest.note || existing.comment;existing.updatedAt=new Date().toISOString();}
+        saveItems();render();
+      }
+
+      function addRelistenEntry() {
+        if(el.categoryField.value!=="专辑")return;
+        const date=document.querySelector("#relistenDate").value;
+        const score=Number(document.querySelector("#relistenScore").value);
+        const note=document.querySelector("#relistenNote").value.trim();
+        if(!date)return showToast("请选择这次收听的日期");
+        if(!note && !confirm("这次没有写想法，只记录评分？"))return;
+        state.editingRelistens.push({id:crypto.randomUUID(),date,score,note,createdAt:new Date().toISOString()});
+        state.editingRelistens=normalizeRelistens(state.editingRelistens);
+        el.ratingField.value=score;el.ratingValue.textContent=score.toFixed(1);
+        if(note)el.commentField.value=note;
+        persistRelistenDraft();renderRelistens();
+        document.querySelector("#relistenNote").value="";
+        document.querySelector("#relistenSection").open=false;
+        showToast("已记录这次收听，最新评价已更新");
+      }
+
       function render() {
         renderCategoryList();
         renderStats();
@@ -2502,6 +2601,7 @@
             updatedAt: new Date().toISOString()
           };
         state.editingId = item.id;
+        state.editingRelistens = normalizeRelistens(item.relistenHistory);
         state.editingEmotionMode = item.emotionMode === "awe" ? "awe" : "emotion";
         state.editingSource = { source: item.source || "", sourceId: item.sourceId || "", sourceUrl: item.sourceUrl || "" };
         el.detailTitle.textContent = item.title || "新作品";
@@ -2517,6 +2617,12 @@
         el.posterField.value = item.poster || "";
         el.ratingField.value = Number(item.rating || 0);
         el.ratingValue.textContent = Number(item.rating || 0).toFixed(1);
+        document.querySelector("#relistenDate").value=new Date().toISOString().slice(0,10);
+        document.querySelector("#relistenScore").value=Number(item.rating || 0);
+        document.querySelector("#relistenScoreValue").textContent=Number(item.rating || 0).toFixed(1);
+        document.querySelector("#relistenNote").value="";
+        document.querySelector("#relistenSection").open=false;
+        renderRelistens();
         const aspectScores = getAspectScores(item);
         renderAspectControls(item.category || "电影", aspectScores);
         setAspectControls(aspectScores);
@@ -2535,6 +2641,7 @@
         document.querySelector("#expandRadar").textContent = "放大拖动八维图";
         state.editingId = null;
         state.editingSource = null;
+        state.editingRelistens = [];
         el.detail.classList.remove("open");
         el.detail.setAttribute("aria-hidden", "true");
       }
@@ -2552,6 +2659,7 @@
           languages: splitLabels(document.querySelector("#languagesField").value),
           genres: splitLabels(document.querySelector("#genresField").value),
           rating: Number(el.ratingField.value || 0),
+          relistenHistory: normalizeRelistens(state.editingRelistens),
           aspectScores: {
             ...(state.items.find(item => item.id === state.editingId)?.aspectScores || {}),
             ...getCurrentAspectScores()
@@ -2612,6 +2720,7 @@
           creator: String(item.creator || ""),
           year: item.year || "",
           rating: Number(item.rating || 0),
+          relistenHistory: normalizeRelistens(item.relistenHistory),
           languages: splitLabels(item.languages),
           genres: splitLabels(item.genres),
           poster: String(item.poster || ""),
@@ -3465,7 +3574,12 @@
           rating: Number(el.ratingField.value || 0),
           aspectScores: getCurrentAspectScores()
         });
+        renderRelistens();
       });
+      document.querySelector("#relistenScore").addEventListener("input",event=>{
+        document.querySelector("#relistenScoreValue").textContent=Number(event.target.value).toFixed(1);
+      });
+      document.querySelector("#addRelisten").addEventListener("click",addRelistenEntry);
       el.aspectFields.addEventListener("input", event => {
         const key = event.target?.dataset?.aspectKey;
         if (!key) return;
