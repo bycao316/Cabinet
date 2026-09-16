@@ -1523,7 +1523,7 @@
             <div class="radar-chart" id="detailRadar"></div>
             <button type="button" class="ghost-button" id="expandRadar">放大拖动九维图</button>
             <div class="radar-summary" id="radarSummary"></div>
-            <details class="grade-key"><summary>等级与刻度说明</summary><p>D ＜4 · C 4–5.9 · B 6–7.9 · A 8–8.9 · S 9–10 · S+ ＞10–12.9 · S++ 13–15。情绪等级仅表示强度。</p><p>网格依次为 4、6、8、9、10 分。高分段间距轻微递增：9–10 分约比均匀刻度宽 7%，14–15 分约宽 12%。10 分仍为满格，面积不代表总分。</p></details>
+            <details class="grade-key"><summary>等级与刻度说明</summary><p>D ＜4 · C 4–5.9 · B 6–7.9 · A 8–8.9 · S 9–10 · S+ ＞10–12.9 · S++ 13–15。情绪等级仅表示强度。</p><p>网格依次为 4、6、8、9、10 分。高分段间距轻微递增：9–10 分约比均匀刻度宽 9%，14–15 分约宽 13%。10 分仍为满格，面积不代表总分。</p></details>
             <small>10 分就是满分。还不够？拖动圆点冲出金色边界，破例多给一点。虚点待评，拖动后才记分；总评分仍为 10 分制。</small>
           </article>
         </aside>
@@ -2611,8 +2611,8 @@
         return value==null||value===""||!Number.isFinite(Number(value))?null:Math.max(0,Math.min(10,Number(value)));
       }
       // Gentle continuous scale: intervals near 10 grow about 8%; near 15 about 12%.
-      function scoreDistance(value){const n=clampScore(value);if(n<=10){const t=n/10;return .92*t+.08*t*t;}const d=n-10;return 1+.108*d+.0004*d*d;}
-      function distanceScore(ratio){const r=Math.max(0,ratio);return clampScore(r<=1?20*r/(.92+Math.sqrt(.8464+.32*r)):10+2*(r-1)/(.108+Math.sqrt(.011664+.0016*(r-1))));}
+      function scoreDistance(value){const n=clampScore(value);if(n<=10){const t=n/10;return .90*t+.10*t*t;}const d=n-10;return 1+.109625*d+.000375*d*d;}
+      function distanceScore(ratio){const r=Math.max(0,ratio);return clampScore(r<=1?20*r/(.90+Math.sqrt(.81+.40*r)):10+2*(r-1)/(.109625+Math.sqrt(.012017640625+.0015*(r-1))));}
       const RADAR_RADIUS = 132;
 
       function radarPoint(index, value, total, radius = RADAR_RADIUS) {
