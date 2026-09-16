@@ -253,24 +253,17 @@
         outline: none;
       }
 
-      .relisten-section { border:1px solid var(--line-bright); border-radius:10px; padding:14px; background:rgba(240,162,58,.045); }
-      .relisten-section[hidden] { display:none; }
-      .relisten-section summary { cursor:pointer; list-style:none; display:grid; gap:5px; padding:2px; }
-      .relisten-section summary::-webkit-details-marker { display:none; }
-      .relisten-section summary strong { color:var(--orange); }
-      .relisten-latest { color:var(--muted); font-size:13px; line-height:1.55; overflow-wrap:anywhere; }
-      .relisten-form { display:grid; grid-template-columns:150px minmax(0,1fr) auto; gap:10px; align-items:end; margin:16px 0; padding-top:14px; border-top:1px solid var(--line); }
-      .relisten-form label { display:grid; gap:6px; color:var(--muted); font-size:12px; font-weight:800; }
-      .relisten-form textarea { grid-column:1/-1; min-height:80px; }
-      .relisten-score-line { display:flex; align-items:center; gap:8px; }
-      .relisten-score-line input[type=range] { min-width:120px; padding:0; }
-      .relisten-score-line output { min-width:34px; color:var(--orange); font-weight:900; }
-      .relisten-timeline { display:grid; gap:10px; margin-top:14px; }
-      .relisten-entry { display:grid; grid-template-columns:auto 1fr auto; gap:12px; padding:12px; border-left:2px solid var(--orange); background:rgba(255,255,255,.035); border-radius:0 8px 8px 0; }
-      .relisten-entry time { color:var(--soft); font-size:12px; white-space:nowrap; }
-      .relisten-entry p { margin:4px 0 0; color:var(--muted); line-height:1.6; white-space:pre-wrap; overflow-wrap:anywhere; }
-      .relisten-entry .ghost-button { min-height:34px; padding:5px 9px; }
-      @media(max-width:620px){.relisten-form{grid-template-columns:1fr}.relisten-form textarea{grid-column:auto}.relisten-entry{grid-template-columns:1fr auto}.relisten-entry time{grid-column:1/-1}}
+      .preference-actions { display:flex; gap:10px; flex-wrap:wrap; }
+      .preference-toggle { flex:1; min-width:160px; min-height:46px; border:1px solid var(--line); border-radius:9px; background:rgba(255,255,255,.035); color:var(--muted); font-weight:900; cursor:pointer; }
+      .preference-toggle.active { color:#17130d; border-color:var(--orange); background:var(--orange); }
+      .evaluation-history { border:1px solid var(--line); border-radius:9px; padding:12px; background:rgba(255,255,255,.025); }
+      .evaluation-history[hidden] { display:none; }
+      .evaluation-history summary { cursor:pointer; color:var(--soft); font-size:12px; }
+      .evaluation-timeline { display:grid; gap:10px; margin-top:12px; }
+      .evaluation-entry { display:grid; grid-template-columns:auto 1fr; gap:12px; padding:11px; border-left:2px solid var(--line-bright); background:rgba(255,255,255,.025); }
+      .evaluation-entry time { color:var(--soft); font-size:12px; white-space:nowrap; }
+      .evaluation-entry p { margin:4px 0 0; color:var(--muted); line-height:1.55; white-space:pre-wrap; overflow-wrap:anywhere; }
+      .utility-badge { color:var(--orange); font-weight:900; }
 
       .search input {
         height: 46px;
@@ -1206,15 +1199,13 @@
                 <strong class="rating-value" id="ratingValue">0.0</strong>
               </div>
             </div>
-            <details class="relisten-section field full" id="relistenSection">
-              <summary><strong>复听记录</strong><span class="relisten-latest" id="relistenLatest">还没有记录。展开写下这一次的感受。</span></summary>
-              <div class="relisten-form">
-                <label>收听日期<input id="relistenDate" type="date" /></label>
-                <label>当时评分<div class="relisten-score-line"><input id="relistenScore" type="range" min="0" max="10" step="0.1" /><output id="relistenScoreValue">0.0</output></div></label>
-                <button type="button" class="primary-button" id="addRelisten">记录这次收听</button>
-                <label>这次的想法<textarea id="relistenNote" placeholder="例如：开始喜欢后半张。"></textarea></label>
-              </div>
-              <div class="relisten-timeline" id="relistenTimeline"></div>
+            <section class="preference-actions field full" id="preferenceActions">
+              <button type="button" class="preference-toggle" id="favoriteToggle">♡ 私人最爱</button>
+              <button type="button" class="preference-toggle" id="revisitToggle">↻ 放入待重听架</button>
+            </section>
+            <details class="evaluation-history field full" id="evaluationHistory">
+              <summary id="evaluationSummary">评价历史 · 每次保存新评价时自动记录</summary>
+              <div class="evaluation-timeline" id="evaluationTimeline"></div>
             </details>
             <section class="aspect-section field full" aria-label="维度评分">
               <div class="aspect-heading">
@@ -1401,7 +1392,7 @@
           creator: "Denis Villeneuve",
           year: 2024,
           rating: 0,
-          relistenHistory: [],
+          evaluationHistory: [],
           poster: "https://image.tmdb.org/t/p/w500/1pdfLvkbY9ohJlCjQH2CZjjYVvJ.jpg",
           tags: ["科幻", "史诗"],
           comment: "先放进想看，等看完再补评分。",
@@ -1488,7 +1479,10 @@
         view: "grid",
         editingId: null,
         editingSource: null,
-        editingRelistens: [],
+        editingEvaluationHistory: [],
+        editingFavorite: false,
+        editingRevisit: false,
+        specialFilter: "all",
         libraryBusy: false
       };
 
@@ -1731,7 +1725,7 @@
           creator: String(item.creator || ""),
           year: item.year || "",
           rating: 0,
-          relistenHistory: [],
+          evaluationHistory: [],
           languages: splitLabels(item.languages),
           genres: splitLabels(item.genres),
           poster: String(item.poster || ""),
@@ -2370,6 +2364,7 @@
       function getFilteredItems() {
         const query = normalizeText(state.search);
         return state.items
+          .filter(item => state.specialFilter === "favorite" ? item.favorite : state.specialFilter === "revisit" ? item.category === "专辑" && item.revisit : true)
           .filter(item => state.selectedCategory === "all" || item.category === state.selectedCategory)
           .filter(item => state.status === "all" || (state.status === "未听"
             ? item.category === "专辑" && (!item.status || item.status === "想听" || item.status === "未听")
@@ -2385,7 +2380,7 @@
               item.status,
               item.category,
               item.comment,
-              ...normalizeRelistens(item.relistenHistory).map(entry => entry.note),
+              ...normalizeEvaluationHistory(item.evaluationHistory?.length ? item.evaluationHistory : item.relistenHistory).map(entry => entry.note),
               ...(item.tags || [])
             ]
               .map(normalizeText)
@@ -2466,7 +2461,7 @@
         if (document.querySelector("#bulkRows")) renderBulkTools();
         const items = getFilteredItems();
         el.gallery.className = `gallery ${state.view}`;
-        el.resultTitle.textContent = state.selectedCategory === "all" ? "全部作品" : state.selectedCategory;
+        el.resultTitle.textContent = state.specialFilter === "favorite" ? "私人最爱" : state.specialFilter === "revisit" ? "待重听架" : state.selectedCategory === "all" ? "全部作品" : state.selectedCategory;
         el.resultMeta.textContent = `${items.length} 条结果 · ${el.sortSelect.options[el.sortSelect.selectedIndex].text}`;
 
         if (!items.length) {
@@ -2489,6 +2484,8 @@
               <div class="card-foot">
                 <span class="type-pill">${item.category}</span>
                 <span class="status-pill">${item.status || "未设置"}</span>
+                ${item.favorite ? '<span class="utility-badge">♥ 私人最爱</span>' : ''}
+                ${item.category === "专辑" && item.revisit ? '<span class="utility-badge">↻ 待重听</span>' : ''}
               </div>
               <h3>${escapeHtml(item.title)}</h3>
               <p class="meta">${escapeHtml([item.creator, item.year].filter(Boolean).join(" · "))}</p>
@@ -2510,7 +2507,7 @@
         el.avgRating.textContent = rated.length ? average.toFixed(1) : "-";
       }
 
-      function normalizeRelistens(value) {
+      function normalizeEvaluationHistory(value) {
         if (!Array.isArray(value)) return [];
         return value.filter(entry => entry && typeof entry === "object").map(entry => ({
           id: String(entry.id || crypto.randomUUID()),
@@ -2521,59 +2518,41 @@
         })).filter(entry => entry.date).sort((a,b) => String(a.date).localeCompare(String(b.date)) || String(a.createdAt).localeCompare(String(b.createdAt)));
       }
 
-      function renderRelistens() {
-        const section=document.querySelector("#relistenSection");
+      function renderEvaluationHistory() {
+        const section=document.querySelector("#evaluationHistory");
         const isAlbum=el.categoryField.value === "专辑";
-        section.hidden=!isAlbum;
-        if(!isAlbum)return;
-        const entries=normalizeRelistens(state.editingRelistens);
-        state.editingRelistens=entries;
-        const latest=entries.at(-1);
-        document.querySelector("#relistenLatest").textContent=latest
-          ? `最新 · ${latest.date} · ${latest.score.toFixed(1)} 分${latest.note ? ` · ${latest.note}` : ""}`
-          : "还没有记录。展开写下这一次的感受。";
-        const timeline=document.querySelector("#relistenTimeline");
-        timeline.replaceChildren(...entries.slice().reverse().map((entry,reverseIndex)=>{
-          const index=entries.length-reverseIndex;
-          const article=document.createElement("article");article.className="relisten-entry";
+        const entries=normalizeEvaluationHistory(state.editingEvaluationHistory);
+        state.editingEvaluationHistory=entries;
+        section.hidden=!isAlbum || entries.length<2;
+        if(section.hidden)return;
+        document.querySelector("#evaluationSummary").textContent=`评价历史 · ${entries.length} 个保存版本`;
+        const timeline=document.querySelector("#evaluationTimeline");
+        timeline.replaceChildren(...entries.slice().reverse().map(entry=>{
+          const article=document.createElement("article");article.className="evaluation-entry";
           const time=document.createElement("time");time.dateTime=entry.date;time.textContent=entry.date;
           const body=document.createElement("div");
-          const heading=document.createElement("strong");heading.textContent=`${index===1?"首听":`第 ${index} 次`} · ${entry.score.toFixed(1)} 分`;
-          const note=document.createElement("p");note.textContent=entry.note || "这次没有留下文字。";
+          const heading=document.createElement("strong");heading.textContent=`${entry.score.toFixed(1)} 分`;
+          const note=document.createElement("p");note.textContent=entry.note || "当时没有留下短评。";
           body.append(heading,note);
-          const remove=collectionButton("删除",()=>{
-            if(!confirm("删除这条复听记录？"))return;
-            state.editingRelistens=state.editingRelistens.filter(item=>item.id!==entry.id);
-            persistRelistenDraft();renderRelistens();showToast("复听记录已删除");
-          });
-          article.append(time,body,remove);return article;
+          article.append(time,body);return article;
         }));
       }
 
-      function persistRelistenDraft() {
-        const existing=state.items.find(item=>item.id===state.editingId);
-        if(!existing){upsertItem(readFormItem());return;}
-        existing.relistenHistory=normalizeRelistens(state.editingRelistens);
-        const latest=existing.relistenHistory.at(-1);
-        if(latest){existing.rating=latest.score;existing.comment=latest.note || existing.comment;existing.updatedAt=new Date().toISOString();}
-        saveItems();render();
+      function renderPreferenceActions() {
+        const isAlbum=el.categoryField.value === "专辑";
+        const favorite=document.querySelector("#favoriteToggle"), revisit=document.querySelector("#revisitToggle");
+        favorite.classList.toggle("active",state.editingFavorite);
+        favorite.textContent=state.editingFavorite ? "♥ 私人最爱" : "♡ 标为私人最爱";
+        revisit.hidden=!isAlbum;revisit.classList.toggle("active",state.editingRevisit);
+        revisit.textContent=state.editingRevisit ? "✓ 已在待重听架" : "↻ 放入待重听架";
       }
 
-      function addRelistenEntry() {
-        if(el.categoryField.value!=="专辑")return;
-        const date=document.querySelector("#relistenDate").value;
-        const score=Number(document.querySelector("#relistenScore").value);
-        const note=document.querySelector("#relistenNote").value.trim();
-        if(!date)return showToast("请选择这次收听的日期");
-        if(!note && !confirm("这次没有写想法，只记录评分？"))return;
-        state.editingRelistens.push({id:crypto.randomUUID(),date,score,note,createdAt:new Date().toISOString()});
-        state.editingRelistens=normalizeRelistens(state.editingRelistens);
-        el.ratingField.value=score;el.ratingValue.textContent=score.toFixed(1);
-        if(note)el.commentField.value=note;
-        persistRelistenDraft();renderRelistens();
-        document.querySelector("#relistenNote").value="";
-        document.querySelector("#relistenSection").open=false;
-        showToast("已记录这次收听，最新评价已更新");
+      function persistPreferenceFlags() {
+        const existing=state.items.find(item=>item.id===state.editingId);
+        if(!existing)return;
+        existing.favorite=state.editingFavorite;
+        existing.revisit=existing.category==="专辑" && state.editingRevisit;
+        existing.updatedAt=new Date().toISOString();saveItems();render();
       }
 
       function render() {
@@ -2601,7 +2580,9 @@
             updatedAt: new Date().toISOString()
           };
         state.editingId = item.id;
-        state.editingRelistens = normalizeRelistens(item.relistenHistory);
+        state.editingEvaluationHistory = normalizeEvaluationHistory(item.evaluationHistory?.length ? item.evaluationHistory : item.relistenHistory);
+        state.editingFavorite = Boolean(item.favorite);
+        state.editingRevisit = Boolean(item.revisit);
         state.editingEmotionMode = item.emotionMode === "awe" ? "awe" : "emotion";
         state.editingSource = { source: item.source || "", sourceId: item.sourceId || "", sourceUrl: item.sourceUrl || "" };
         el.detailTitle.textContent = item.title || "新作品";
@@ -2617,12 +2598,8 @@
         el.posterField.value = item.poster || "";
         el.ratingField.value = Number(item.rating || 0);
         el.ratingValue.textContent = Number(item.rating || 0).toFixed(1);
-        document.querySelector("#relistenDate").value=new Date().toISOString().slice(0,10);
-        document.querySelector("#relistenScore").value=Number(item.rating || 0);
-        document.querySelector("#relistenScoreValue").textContent=Number(item.rating || 0).toFixed(1);
-        document.querySelector("#relistenNote").value="";
-        document.querySelector("#relistenSection").open=false;
-        renderRelistens();
+        document.querySelector("#evaluationHistory").open=false;
+        renderEvaluationHistory();renderPreferenceActions();
         const aspectScores = getAspectScores(item);
         renderAspectControls(item.category || "电影", aspectScores);
         setAspectControls(aspectScores);
@@ -2641,7 +2618,7 @@
         document.querySelector("#expandRadar").textContent = "放大拖动八维图";
         state.editingId = null;
         state.editingSource = null;
-        state.editingRelistens = [];
+        state.editingEvaluationHistory = [];
         el.detail.classList.remove("open");
         el.detail.setAttribute("aria-hidden", "true");
       }
@@ -2659,7 +2636,9 @@
           languages: splitLabels(document.querySelector("#languagesField").value),
           genres: splitLabels(document.querySelector("#genresField").value),
           rating: Number(el.ratingField.value || 0),
-          relistenHistory: normalizeRelistens(state.editingRelistens),
+          evaluationHistory: normalizeEvaluationHistory(state.editingEvaluationHistory),
+          favorite: state.editingFavorite,
+          revisit: el.categoryField.value === "专辑" && state.editingRevisit,
           aspectScores: {
             ...(state.items.find(item => item.id === state.editingId)?.aspectScores || {}),
             ...getCurrentAspectScores()
@@ -2679,6 +2658,24 @@
 
       function upsertItem(item) {
         const index = state.items.findIndex(entry => entry.id === item.id);
+        if(item.category === "专辑") {
+          const previous=index>=0 ? state.items[index] : null;
+          const history=normalizeEvaluationHistory(item.evaluationHistory?.length ? item.evaluationHistory : previous?.relistenHistory);
+          const changed=!previous || Number(previous.rating||0)!==Number(item.rating||0) || String(previous.comment||"")!==String(item.comment||"");
+          const meaningful=Number(item.rating)>0 || Boolean(item.comment);
+          if(changed && meaningful) {
+            const now=new Date(), date=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}-${String(now.getDate()).padStart(2,"0")}`;
+            if(previous && !history.length && (Number(previous.rating)>0 || previous.comment)) {
+              const oldDate=/^\d{4}-\d{2}-\d{2}/.test(String(previous.updatedAt||"")) ? String(previous.updatedAt).slice(0,10) : date;
+              history.push({id:crypto.randomUUID(),date:oldDate,score:Math.max(0,Math.min(10,Number(previous.rating)||0)),note:String(previous.comment||""),createdAt:previous.updatedAt||now.toISOString()});
+            }
+            const latest=history.at(-1);
+            if(!latest || latest.score!==Number(item.rating||0) || latest.note!==String(item.comment||""))
+              history.push({id:crypto.randomUUID(),date,score:Math.max(0,Math.min(10,Number(item.rating)||0)),note:String(item.comment||""),createdAt:now.toISOString()});
+          }
+          item.evaluationHistory=normalizeEvaluationHistory(history);
+          delete item.relistenHistory;
+        }
         if (index >= 0) state.items.splice(index, 1, item);
         else state.items.unshift(item);
         saveItems();
@@ -2720,7 +2717,9 @@
           creator: String(item.creator || ""),
           year: item.year || "",
           rating: Number(item.rating || 0),
-          relistenHistory: normalizeRelistens(item.relistenHistory),
+          evaluationHistory: normalizeEvaluationHistory(item.evaluationHistory?.length ? item.evaluationHistory : item.relistenHistory),
+          favorite: Boolean(item.favorite),
+          revisit: item.category === "专辑" && Boolean(item.revisit),
           languages: splitLabels(item.languages),
           genres: splitLabels(item.genres),
           poster: String(item.poster || ""),
@@ -2775,6 +2774,14 @@
       let activeRanking = rankings[0]?.id || "";
       const bulkSelection = new Set();
 
+      function normalizeRankingSnapshots(value, limit) {
+        if(!Array.isArray(value))return [];
+        return value.filter(entry=>entry&&typeof entry==="object").slice(-100).map(entry=>({
+          id:String(entry.id||crypto.randomUUID()),savedAt:entry.savedAt||new Date().toISOString(),
+          itemIds:[...new Set((Array.isArray(entry.itemIds)?entry.itemIds:[]).map(String))].slice(0,limit)
+        })).filter(entry=>entry.itemIds.length);
+      }
+
       function splitLabels(value) {
         const list = Array.isArray(value) ? value : String(value || "").split(/[,，;；]/);
         return [...new Set(list.map(value => String(value).trim()).filter(Boolean))];
@@ -2790,6 +2797,7 @@
           const limit = [10, 50, 100].includes(Number(entry.limit)) ? Number(entry.limit) : 10;
           return { id, name: String(entry.name || "我的榜单").slice(0, 100), description: String(entry.description || "").slice(0, 300), limit,
             tournament: normalizeTournament(entry.tournament, limit),
+            snapshots: normalizeRankingSnapshots(entry.snapshots,limit),
             itemIds: [...new Set((Array.isArray(entry.itemIds) ? entry.itemIds : []).map(String))].slice(0, limit) };
         });
       }
@@ -2860,11 +2868,15 @@
           #collectionTools .ranking-actions button{min-height:36px;padding:5px 9px}
           #collectionTools .ranking-row.drag-over{outline:2px solid var(--blue)}
           #collectionTools #rankingDescription{width:100%}
+          #collectionTools .quick-shelves{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-bottom:16px}
+          #collectionTools .quick-shelf{display:flex;justify-content:space-between;align-items:center;padding:15px 18px;border:1px solid var(--line-bright);border-radius:10px;background:rgba(240,162,58,.055);font-weight:900;cursor:pointer}
+          #collectionTools .quick-shelf.active{color:#17130d;background:var(--orange)}
           @media(max-width:600px){#collectionTools #rankingRows{grid-template-columns:repeat(2,minmax(0,1fr))}#collectionTools .ranking-row:first-child{grid-column:1/-1}#collectionTools .ranking-row:first-child .poster{max-width:280px;align-self:center}}
           @media(max-width:600px){#collectionTools{padding:12px}#collectionTools .collection-row>input,#collectionTools .collection-row>select{width:100%}#collectionTools .ghost-button{padding:8px}}`;
         style.textContent = style.textContent.replaceAll("#collectionTools", ":is(#collectionTools,#rankingPage)");
         document.head.append(style);
         document.querySelector("#collectionTools").innerHTML = `
+          <div class="quick-shelves"><button type="button" class="quick-shelf" id="favoriteShelf"><span>♥ 私人最爱</span><strong id="favoriteCount">0</strong></button><button type="button" class="quick-shelf" id="revisitShelf"><span>↻ 待重听架</span><strong id="revisitCount">0</strong></button></div>
           <div class="collection-row">
             <label>发行年份 <select id="yearFilter"></select></label>
             <label>语言 <select id="languageFilter"></select></label>
@@ -2881,7 +2893,9 @@
               <button type="button" class="ghost-button" id="deleteRanking">删除榜单</button></div>
             <div class="collection-row"><input id="rankingDescription" maxlength="300" placeholder="写一句榜单介绍，例如：反复听到现在的十张" aria-label="榜单介绍">
               <button type="button" class="ghost-button" id="saveRankingDescription">保存介绍</button>
+              <button type="button" class="ghost-button" id="saveRankingSnapshot">保存当前版本</button>
               <button type="button" class="ghost-button" id="shareRanking">保存分享长图</button></div>
+            <details id="rankingHistory"><summary id="rankingHistorySummary">排名变化 · 还没有保存版本</summary><div id="rankingSnapshotRows" class="collection-scroll"></div></details>
             <div class="collection-row"><input id="rankingSearch" placeholder="搜索已导入作品（标题或作者）" aria-label="搜索榜单候选作品">
               <select id="rankingCandidate" aria-label="选择已有作品"></select>
               <button type="button" class="ghost-button" id="addToRanking">加入榜单</button></div>
@@ -2904,15 +2918,18 @@
             collectionFilters[key] = event.target.value; bulkSelection.clear(); render();
           });
         }
+        document.querySelector("#favoriteShelf").onclick=()=>{state.specialFilter=state.specialFilter==="favorite"?"all":"favorite";render();};
+        document.querySelector("#revisitShelf").onclick=()=>{state.specialFilter=state.specialFilter==="revisit"?"all":"revisit";render();};
         document.querySelector("#clearCollectionFilters").onclick = () => {
           Object.keys(collectionFilters).forEach(key => { collectionFilters[key] = ""; });
           state.status = "all"; state.search = ""; state.selectedCategory = "all";
+          state.specialFilter = "all";
           el.statusFilter.value = "all"; el.searchInput.value = ""; bulkSelection.clear(); render();
         };
         document.querySelector("#createRanking").onclick = () => {
           const name = document.querySelector("#newRankingName").value.trim();
           if (!name) return showToast("请先给榜单取个名字");
-          const list = { id: crypto.randomUUID(), name, description: "", tournament: null, limit: Number(document.querySelector("#newRankingLimit").value), itemIds: [] };
+          const list = { id: crypto.randomUUID(), name, description: "", tournament: null, snapshots: [], limit: Number(document.querySelector("#newRankingLimit").value), itemIds: [] };
           rankings.push(list); activeRanking = list.id; saveRankings();
           document.querySelector("#newRankingName").value = ""; navigateRanking(list.id);
         };
@@ -2933,6 +2950,7 @@
           list.description = document.querySelector("#rankingDescription").value.trim(); saveRankings(); refreshRankingPage(); showToast("榜单介绍已保存");
         };
         document.querySelector("#shareRanking").onclick = exportRankingImage;
+        document.querySelector("#saveRankingSnapshot").onclick = saveRankingSnapshot;
         document.querySelector("#addToRanking").onclick = () => {
           const list = rankings.find(list => list.id === activeRanking);
           const id = document.querySelector("#rankingCandidate").value;
@@ -2947,6 +2965,10 @@
 
       function renderCollectionTools() {
         if (!document.querySelector("#yearFilter")) return;
+        document.querySelector("#favoriteCount").textContent=state.items.filter(item=>item.favorite).length;
+        document.querySelector("#revisitCount").textContent=state.items.filter(item=>item.category==="专辑"&&item.revisit).length;
+        document.querySelector("#favoriteShelf").classList.toggle("active",state.specialFilter==="favorite");
+        document.querySelector("#revisitShelf").classList.toggle("active",state.specialFilter==="revisit");
         const years = [...new Set(state.items.map(item => String(item.year)).filter(year => /^\d{4}$/.test(year)))].sort().reverse();
         const decades = [...new Set(years.map(year => Math.floor(Number(year) / 10) * 10))];
         fillSelect(document.querySelector("#yearFilter"), [["", "全部年份"], ["unknown", "年份未知"],
@@ -2987,6 +3009,7 @@
         document.querySelector("#rankingDescription").value = list?.description || "";
         document.querySelector("#shareRanking").disabled = !list?.itemIds.length;
         document.querySelector("#saveRankingDescription").disabled = !list;
+        document.querySelector("#saveRankingSnapshot").disabled = !list?.itemIds.length;
         for (const id of ["renameRanking", "deleteRanking"]) document.querySelector(`#${id}`).disabled = !list;
         document.querySelector("#rankingHint").textContent = list
           ? `${list.itemIds.length} / ${list.limit} 部 · 电脑可拖动封面调序；手机可上下移动或指定名次。点击标题编辑作品。`
@@ -3014,8 +3037,39 @@
           return row;
         }));
         renderRankingCandidates();
+        renderRankingSnapshots();
         renderTournament();
         refreshRankingPage();
+      }
+
+      function saveRankingSnapshot() {
+        const list=rankings.find(list=>list.id===activeRanking);if(!list?.itemIds.length)return;
+        list.snapshots=normalizeRankingSnapshots(list.snapshots,list.limit);
+        const last=list.snapshots.at(-1);
+        if(last && JSON.stringify(last.itemIds)===JSON.stringify(list.itemIds))return showToast("当前排名已经保存过了");
+        list.snapshots.push({id:crypto.randomUUID(),savedAt:new Date().toISOString(),itemIds:list.itemIds.slice()});
+        saveRankings();renderRankingSnapshots();showToast("当前排名版本已保存");
+      }
+
+      function renderRankingSnapshots() {
+        const list=rankings.find(list=>list.id===activeRanking);
+        const snapshots=normalizeRankingSnapshots(list?.snapshots,list?.limit||10);
+        if(list)list.snapshots=snapshots;
+        document.querySelector("#rankingHistorySummary").textContent=snapshots.length?`排名变化 · ${snapshots.length} 个版本`:"排名变化 · 还没有保存版本";
+        const itemMap=new Map(state.items.map(item=>[item.id,item]));
+        document.querySelector("#rankingSnapshotRows").replaceChildren(...snapshots.slice().reverse().map(snapshot=>{
+          const row=document.createElement("div");row.className="ranking-row";
+          const when=document.createElement("strong");when.textContent=new Date(snapshot.savedAt).toLocaleString("zh-CN",{year:"numeric",month:"short",day:"numeric",hour:"2-digit",minute:"2-digit"});
+          const works=document.createElement("small");works.textContent=snapshot.itemIds.slice(0,3).map((id,index)=>`${index+1}. ${itemMap.get(id)?.title||"已删除作品"}`).join("　");
+          const restore=collectionButton("恢复为当前排名",()=>{
+            const available=snapshot.itemIds.filter(id=>itemMap.has(id));
+            if(!available.length)return showToast("这个版本的作品已经不存在");
+            if(!confirm("用这个历史版本替换当前排名？当前排名可以先另存一个版本。"))return;
+            list.itemIds=available.slice(0,list.limit);saveRankings();renderRankingTools();showToast("已恢复历史排名");
+          });
+          const remove=collectionButton("删除版本",()=>{if(!confirm("删除这个排名版本？"))return;list.snapshots=list.snapshots.filter(item=>item.id!==snapshot.id);saveRankings();renderRankingSnapshots();});
+          row.append(when,works,restore,remove);return row;
+        }));
       }
 
       function normalizeTournament(value, limit) {
@@ -3574,12 +3628,10 @@
           rating: Number(el.ratingField.value || 0),
           aspectScores: getCurrentAspectScores()
         });
-        renderRelistens();
+        renderEvaluationHistory();renderPreferenceActions();
       });
-      document.querySelector("#relistenScore").addEventListener("input",event=>{
-        document.querySelector("#relistenScoreValue").textContent=Number(event.target.value).toFixed(1);
-      });
-      document.querySelector("#addRelisten").addEventListener("click",addRelistenEntry);
+      document.querySelector("#favoriteToggle").addEventListener("click",()=>{state.editingFavorite=!state.editingFavorite;renderPreferenceActions();persistPreferenceFlags();});
+      document.querySelector("#revisitToggle").addEventListener("click",()=>{state.editingRevisit=!state.editingRevisit;renderPreferenceActions();persistPreferenceFlags();});
       el.aspectFields.addEventListener("input", event => {
         const key = event.target?.dataset?.aspectKey;
         if (!key) return;
