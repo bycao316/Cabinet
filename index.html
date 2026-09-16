@@ -517,6 +517,15 @@
           rgba(255, 255, 255, 0.035);
       }
 
+      .radar-card.radar-expanded {
+        position: fixed; inset: 16px; z-index: 1200; margin: 0;
+        background: #171613; overflow: auto; display: flex; flex-direction: column;
+        align-items: center; box-shadow: 0 0 0 40px rgba(0,0,0,.7);
+      }
+      .radar-expanded .radar-chart { width: min(100%, 640px); height: min(62vh, 640px); min-height: 260px; }
+      .radar-expanded .radar-head { width: 100%; }
+      .radar-expanded > small { max-width: 640px; }
+
       .radar-head {
         display: flex;
         align-items: center;
@@ -1079,8 +1088,9 @@
               <strong id="radarAverage">0.0</strong>
             </div>
             <div class="radar-chart" id="detailRadar"></div>
+            <button type="button" class="ghost-button" id="expandRadar">放大拖动八维图</button>
             <div class="radar-summary" id="radarSummary"></div>
-            <small>待评项暂置中心，不计入维度均分。</small>
+            <small>直接拖动圆点评分，支持 0–15 分。金色外圈为 10 分，超过后会冲出边界。虚点待评，拖动后才记分；总评分仍为 10 分制。</small>
           </article>
         </aside>
         <div class="detail-main">
@@ -1513,7 +1523,7 @@
           input.id = `aspect-${metric.key}`;
           input.type = "range";
           input.min = "0";
-          input.max = "10";
+          input.max = "15";
           input.step = "0.1";
           input.dataset.aspectKey = metric.key;
           input.dataset.unscored = String(scores[metric.key] == null);
@@ -1964,7 +1974,7 @@
       function clampScore(value, fallback = 0) {
         const number = Number(value);
         if (!Number.isFinite(number)) return fallback;
-        return Math.max(0, Math.min(10, number));
+        return Math.max(0, Math.min(15, number));
       }
 
       function getAspectScores(item = {}) {
@@ -2040,11 +2050,11 @@
           .join(" ");
       }
 
-      function createRadarSvg(scores, category) {
+      function createRadarSvg(scores, category, interactive = false) {
         const metrics = getMetrics(category);
         const svg = makeSvgElement("svg", {
-          viewBox: "-12 -12 324 324",
-          role: "img",
+          viewBox: "-65 -65 430 430",
+          role: interactive ? "group" : "img",
           "aria-label": `${category || "作品"}八维评分雷达图`
         });
 
@@ -2060,7 +2070,7 @@
                 92
               ),
               fill: "none",
-              stroke: "rgba(246,234,213,0.12)",
+              stroke: scale === 1 ? "rgba(240,162,58,0.75)" : "rgba(246,234,213,0.12)",
               "stroke-width": scale === 1 ? "1.4" : "1"
             })
           );
@@ -2068,7 +2078,7 @@
 
         metrics.forEach((metric, index) => {
           const end = radarPoint(index, 10, metrics.length, 92);
-          const label = radarPoint(index, 10, metrics.length, 112);
+          const label = radarPoint(index, 10, metrics.length, 155);
           const scoreLabel = radarPoint(index, 10, metrics.length, 72);
           svg.append(
             makeSvgElement("line", {
@@ -2098,41 +2108,99 @@
             class: "radar-score-label"
           });
           scoreText.textContent = formatAspectScore(scores[metric.key]);
+          scoreText.dataset.radarScore = metric.key;
           svg.append(scoreText);
         });
 
-        svg.append(
-          makeSvgElement("polygon", {
+        const shape = makeSvgElement("polygon", {
             points: radarPoints(scores, metrics, 92),
             fill: "rgba(118,215,208,0.22)",
             stroke: "rgba(118,215,208,0.92)",
             "stroke-width": "2.2"
-          })
-        );
+          });
+        svg.append(shape);
 
         metrics.forEach((metric, index) => {
-          if (scores[metric.key] == null) return;
-          const point = radarPoint(index, scores[metric.key], metrics.length, 92);
-          svg.append(
-            makeSvgElement("circle", {
+          if (scores[metric.key] == null && !interactive) return;
+          const point = radarPoint(index, scores[metric.key] ?? 5, metrics.length, 92);
+          const handle = makeSvgElement("circle", {
               cx: point.x.toFixed(2),
               cy: point.y.toFixed(2),
-              r: "3.4",
-              fill: "#f0a23a",
+              r: interactive ? "9" : "3.4",
+              fill: scores[metric.key] == null ? "#26231e" : scores[metric.key] > 10 ? "#e84b6a" : "#f0a23a",
               stroke: "rgba(0,0,0,0.68)",
               "stroke-width": "1.5"
-            })
-          );
+            });
+          svg.append(handle);
+          if (interactive) {
+            handle.dataset.radarAxis = String(index);
+            handle.setAttribute("tabindex", "0"); handle.setAttribute("role", "slider");
+            handle.setAttribute("aria-label", `${metric.label}，可超过10分`);
+            handle.setAttribute("aria-valuemin", "0"); handle.setAttribute("aria-valuemax", "15");
+            handle.setAttribute("aria-valuenow", String(scores[metric.key] ?? 5));
+            handle.setAttribute("aria-valuetext", formatAspectScore(scores[metric.key]));
+            handle.style.cursor = "grab";
+          }
         });
-
+        if (interactive) attachRadarDrag(svg, shape, scores, category);
         return svg;
+      }
+
+      function radarValueAt(index, total, x, y) {
+        const angle = -Math.PI / 2 + index * Math.PI * 2 / total;
+        return Math.round(clampScore(((x - 150) * Math.cos(angle) + (y - 150) * Math.sin(angle)) / 92 * 10) * 10) / 10;
+      }
+
+      function attachRadarDrag(svg, shape, scores, category) {
+        const metrics = getMetrics(category);
+        svg.style.touchAction = "none"; svg.style.userSelect = "none";
+        let dragging = null;
+        const update = (index, value) => {
+          const metric = metrics[index]; scores[metric.key] = clampScore(value);
+          const input = el.aspectFields.querySelector(`[data-aspect-key="${metric.key}"]`);
+          if (input) { input.value = scores[metric.key]; input.dataset.unscored = "false"; input.setAttribute("aria-valuetext",formatAspectScore(value)); }
+          updateAspectOutput(metric.key, value);
+          shape.setAttribute("points", radarPoints(scores, metrics, 92));
+          const point = radarPoint(index, value, metrics.length, 92);
+          const handle = svg.querySelector(`[data-radar-axis="${index}"]`);
+          handle.setAttribute("cx",point.x); handle.setAttribute("cy",point.y); handle.setAttribute("fill",value > 10 ? "#e84b6a" : "#f0a23a");
+          handle.setAttribute("aria-valuenow",value); handle.setAttribute("aria-valuetext",formatAspectScore(value));
+          svg.querySelector(`[data-radar-score="${metric.key}"]`).textContent = formatAspectScore(value);
+          renderRadarSummary(scores, category);
+        };
+        const move = event => {
+          if (dragging == null) return;
+          const matrix = svg.getScreenCTM(); if (!matrix) return;
+          const p = svg.createSVGPoint(); p.x = event.clientX; p.y = event.clientY;
+          const local = p.matrixTransform(matrix.inverse());
+          update(dragging,radarValueAt(dragging,metrics.length,local.x,local.y));
+        };
+        svg.addEventListener("pointerdown", event => {
+          const axis = event.target?.dataset?.radarAxis;
+          if (axis == null || (event.button != null && event.button !== 0)) return;
+          event.preventDefault(); dragging = Number(axis); svg.setPointerCapture(event.pointerId); move(event);
+        });
+        svg.addEventListener("pointermove",move);
+        const finish = event => { dragging = null; if (svg.hasPointerCapture(event.pointerId)) svg.releasePointerCapture(event.pointerId); };
+        svg.addEventListener("pointerup",finish); svg.addEventListener("pointercancel",finish);
+        svg.addEventListener("lostpointercapture",() => { dragging = null; });
+        svg.addEventListener("keydown",event => {
+          const axis = event.target?.dataset?.radarAxis; if (axis == null) return;
+          const index = Number(axis), value = scores[metrics[index].key] ?? 5, step = event.shiftKey ? 1 : 0.1;
+          const next = {ArrowUp:value+step,ArrowRight:value+step,ArrowDown:value-step,ArrowLeft:value-step,Home:0,End:15}[event.key];
+          if (next == null) return; event.preventDefault(); update(index,Math.round(clampScore(next)*10)/10);
+        });
       }
 
       function renderRadar(item) {
         const scores = getAspectScores(item);
-        const metrics = getMetrics(item.category);
-        el.detailRadar.replaceChildren(createRadarSvg(scores, item.category));
-        el.radarAverage.textContent = formatAspectScore(averageAspectScores(scores, item.category));
+        el.detailRadar.replaceChildren(createRadarSvg(scores, item.category, true));
+        renderRadarSummary(scores, item.category);
+      }
+
+      function renderRadarSummary(scores, category) {
+        const metrics = getMetrics(category);
+        el.radarAverage.textContent = formatAspectScore(averageAspectScores(scores, category));
         el.radarSummary.replaceChildren(
           ...metrics.map(metric => {
             const chip = document.createElement("span");
@@ -2347,6 +2415,8 @@
       }
 
       function closeDetail() {
+        document.querySelector(".radar-card").classList.remove("radar-expanded");
+        document.querySelector("#expandRadar").textContent = "放大拖动八维图";
         state.editingId = null;
         state.editingSource = null;
         el.detail.classList.remove("open");
@@ -2492,6 +2562,7 @@
           ids.add(id);
           const limit = [10, 50, 100].includes(Number(entry.limit)) ? Number(entry.limit) : 10;
           return { id, name: String(entry.name || "我的榜单").slice(0, 100), description: String(entry.description || "").slice(0, 300), limit,
+            tournament: normalizeTournament(entry.tournament, limit),
             itemIds: [...new Set((Array.isArray(entry.itemIds) ? entry.itemIds : []).map(String))].slice(0, limit) };
         });
       }
@@ -2614,7 +2685,7 @@
         document.querySelector("#createRanking").onclick = () => {
           const name = document.querySelector("#newRankingName").value.trim();
           if (!name) return showToast("请先给榜单取个名字");
-          const list = { id: crypto.randomUUID(), name, description: "", limit: Number(document.querySelector("#newRankingLimit").value), itemIds: [] };
+          const list = { id: crypto.randomUUID(), name, description: "", tournament: null, limit: Number(document.querySelector("#newRankingLimit").value), itemIds: [] };
           rankings.push(list); activeRanking = list.id; saveRankings();
           document.querySelector("#newRankingName").value = ""; navigateRanking(list.id);
         };
@@ -2716,7 +2787,163 @@
           return row;
         }));
         renderRankingCandidates();
+        renderTournament();
         refreshRankingPage();
+      }
+
+      function normalizeTournament(value, limit) {
+        if (!value || !Array.isArray(value.seeds)) return null;
+        const seeds = [...new Set(value.seeds.filter(id => typeof id === "string"))].slice(0,limit);
+        if (seeds.length < 2) return null;
+        return {seeds, history:(Array.isArray(value.history) ? value.history : [])
+          .filter(entry => entry && typeof entry.key === "string" && seeds.includes(entry.winner))
+          .slice(0,2000).map(entry => ({key:entry.key,winner:entry.winner}))};
+      }
+
+      // Every round's eliminated entrants play their own placement bracket.
+      // This gives every entrant a unique position instead of guessing tied ranks.
+      function evaluateTournament(tournament) {
+        const decisions = new Map(tournament.history.map(entry => [entry.key,entry.winner]));
+        const stages = [];
+        function placement(ids, path, startRank) {
+          if (ids.length <= 1) return {order:ids.slice(),next:null};
+          let size = 2; while (size < ids.length) size *= 2;
+          const pairs = [], doubleMatches = ids.length - size / 2;
+          let cursor = 0;
+          for (let i=0;i<size/2;i++) pairs.push([ids[cursor++],i<doubleMatches ? ids[cursor++] : null]);
+          const rounds = []; let prior = null, pending = null;
+          for (let round=0; round<Math.log2(size); round++) {
+            const matches=[];
+            for(let i=0;i<size/2**(round+1);i++) {
+              const parents = round ? [prior[i*2],prior[i*2+1]] : null;
+              const ready = !parents || parents.every(match => match.resolved);
+              const entrants = parents ? parents.map(match => match.winner || null) : pairs[i];
+              const key = `${path}:${round}:${i}`;
+              const [a,b] = entrants;
+              let winner=null, loser=null, resolved=false, bye=false;
+              if (ready) {
+                if (!a || !b) { winner=a||b; resolved=true; bye=true; }
+                else if (decisions.get(key) === a || decisions.get(key) === b) {
+                  winner=decisions.get(key); loser=winner===a ? b : a; resolved=true;
+                }
+              }
+              const match={key,entrants,ready,winner,loser,resolved,bye};
+              if (ready && !resolved && !pending) pending=match;
+              matches.push(match);
+            }
+            rounds.push(matches); prior=matches;
+          }
+          stages.push({path,startRank,endRank:startRank+ids.length-1,rounds});
+          if (!prior[0].resolved) return {order:[],next:pending};
+          const order=[prior[0].winner];
+          for(let r=rounds.length-1;r>=0;r--) {
+            const losers=rounds[r].map(match=>match.loser).filter(Boolean);
+            if (!losers.length) continue;
+            const result=placement(losers,`${path}.${r}`,startRank+order.length);
+            order.push(...result.order);
+            if (result.next) return {order,next:result.next};
+          }
+          return {order,next:null};
+        }
+        const result=placement(tournament.seeds,"main",1);
+        return {...result,stages,complete:!result.next && result.order.length===tournament.seeds.length};
+      }
+
+      function renderTournament() {
+        const host=document.querySelector("#tournamentContent"); if (!host) return;
+        host.replaceChildren();
+        const list=rankings.find(list=>list.id===activeRanking); if(!list)return;
+        const makeText=(tag,text)=>{const element=document.createElement(tag);element.textContent=text;return element;};
+        host.append(makeText("p",`从已有作品里选 2–${list.limit} 张专辑，不必先排顺序。随机分组，遇到人数不足会自动轮空；同轮淘汰者再加赛分出名次。`));
+        if (!list.tournament) {
+          const selected=new Set(list.itemIds.filter(id=>state.items.some(item=>item.id===id && item.category==="专辑")));
+          const count=makeText("p",""); const options=document.createElement("div"); options.className="tournament-pick-list";
+          const albums=state.items.filter(item=>item.category==="专辑");
+          const start=collectionButton("随机分组，开始比赛",()=>{
+            if(selected.size<2 || selected.size>list.limit)return;
+            const seeds=[...selected];
+            for(let i=seeds.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[seeds[i],seeds[j]]=[seeds[j],seeds[i]];}
+            list.tournament={seeds,history:[]};saveRankings();renderTournament();
+          });
+          const refresh=()=>{count.textContent=`已选 ${selected.size} / ${list.limit} 张`;start.disabled=selected.size<2 || selected.size>list.limit;};
+          const search=document.createElement("input");search.placeholder="搜索已导入专辑";search.setAttribute("aria-label","搜索参赛专辑");
+          search.oninput=()=>{for(const row of options.children)row.hidden=!row.dataset.search.includes(normalizeText(search.value));};
+          albums.forEach(item=>{
+            const row=document.createElement("label");row.className="bulk-entry";row.dataset.search=normalizeText(`${item.title} ${item.creator}`);
+            const check=document.createElement("input");check.type="checkbox";check.checked=selected.has(item.id);
+            check.onchange=()=>{
+              if(check.checked && selected.size>=list.limit){check.checked=false;showToast(`最多选择 ${list.limit} 张`);return;}
+              check.checked?selected.add(item.id):selected.delete(item.id);refresh();
+            };
+            row.append(check,document.createTextNode(`${item.title} · ${item.creator || "未知艺人"}`));options.append(row);
+          });
+          if(!albums.length)host.append(makeText("p","作品柜还没有专辑，先搜索导入几张再来比赛。"));
+          refresh();host.append(search,count,options,start);return;
+        }
+        const tournament=list.tournament;
+        const missing=tournament.seeds.some(id=>!state.items.some(item=>item.id===id));
+        const restart=collectionButton("重新选专辑",()=>{
+          if(!confirm("清除这次比赛进度，重新选择？已保存的榜单顺序会保留。"))return;
+          list.tournament=null;saveRankings();renderTournament();
+        });
+        if(missing){host.append(makeText("p","参赛作品已被删除，请重新选择。已保存的榜单不受影响。"),restart);return;}
+        const result=evaluateTournament(tournament);
+        const toolsRow=document.createElement("div");toolsRow.className="collection-row";
+        toolsRow.append(collectionButton("撤回上一场",()=>{tournament.history.pop();saveRankings();renderTournament();},!tournament.history.length),restart,
+          makeText("small",`${tournament.seeds.length} 张参赛 · 已完成 ${tournament.history.length} 场选择 · 进度自动保存`));
+        host.append(toolsRow);
+        const choose=(key,winner)=>{
+          const current=evaluateTournament(tournament).next;
+          if(!current || current.key!==key || !current.entrants.includes(winner))return;
+          tournament.history.push({key,winner});saveRankings();renderTournament();
+        };
+        if(result.next){
+          const stage=result.stages.find(stage=>stage.rounds.some(round=>round.includes(result.next)));
+          host.append(makeText("h3",stage.path==="main"?"冠军赛 · 这一场，你更喜欢哪张？":`第 ${stage.startRank}–${stage.endRank} 名排位赛 · 选出更喜欢的一张`));
+          const versus=document.createElement("div");versus.className="tournament-versus";
+          for(const id of result.next.entrants){
+            const item=state.items.find(item=>item.id===id);
+            const button=collectionButton("",()=>choose(result.next.key,id));button.className="tournament-choice";
+            button.append(createPoster(item),makeText("strong",item.title),makeText("small",item.creator||""),makeText("span","选它晋级 →"));versus.append(button);
+          }
+          host.append(versus);
+        } else if(result.complete) {
+          host.append(makeText("h3","比赛结束，完整排名已产生"));
+          const ordered=document.createElement("ol");ordered.className="tournament-result";
+          result.order.forEach(id=>ordered.append(makeText("li",state.items.find(item=>item.id===id).title)));host.append(ordered);
+          host.append(collectionButton("将比赛结果写入这份榜单",()=>{
+            if(!confirm("用这次比赛的完整顺序替换当前榜单？之后仍可手动调整。"))return;
+            list.itemIds=result.order.slice();saveRankings();renderRankingTools();showToast("比赛排名已写入，仍可手动调整");
+          }));
+        }
+        for(const stage of result.stages){
+          const details=document.createElement("details");details.open=stage.rounds.some(round=>round.some(match=>match.key===result.next?.key)) || stage.path==="main";
+          details.append(makeText("summary",stage.path==="main"?"冠军赛完整分支图":`第 ${stage.startRank}–${stage.endRank} 名分支图`));
+          const viewport=document.createElement("div");viewport.className="tournament-scroll";viewport.tabIndex=0;viewport.setAttribute("aria-label","比赛分支图，可横向滚动");
+          const board=document.createElement("div");board.className="tournament-board";
+          const height=stage.rounds[0].length*116;
+          board.style.width=`${stage.rounds.length*240}px`;board.style.height=`${height+35}px`;
+          const lines=makeSvgElement("svg",{width:stage.rounds.length*240,height:height+35,"aria-hidden":"true"});lines.classList.add("tournament-lines");
+          board.append(lines);
+          stage.rounds.forEach((round,r)=>{
+            const heading=makeText("strong",round.length===1?"决赛":round.length===2?"半决赛":`${round.length*2} 强`);heading.className="tournament-round-title";heading.style.left=`${r*240}px`;board.append(heading);
+            round.forEach((match,i)=>{
+              const center=(i+.5)*2**r*116+35;
+              if(r<stage.rounds.length-1){const nextCenter=(Math.floor(i/2)+.5)*2**(r+1)*116+35;
+                lines.append(makeSvgElement("path",{d:`M ${r*240+210} ${center} H ${r*240+225} V ${nextCenter} H ${(r+1)*240}`,fill:"none",stroke:match.resolved?"#b98237":"#49443b","stroke-width":2}));}
+              const box=document.createElement("div");box.className="tournament-match";box.style.left=`${r*240}px`;box.style.top=`${center-43}px`;
+              for(const id of match.entrants){
+                const item=state.items.find(item=>item.id===id);
+                const label=item?item.title:match.ready?"轮空":"待晋级";
+                const button=collectionButton(`${match.winner===id && id ? "✓ " : ""}${label}`,()=>choose(match.key,id),!id || match.key!==result.next?.key);
+                button.title=item?`${item.title} · ${item.creator||""}`:label;
+                if(id && id===match.winner)button.classList.add("match-winner");box.append(button);
+              }
+              board.append(box);
+            });
+          });
+          viewport.append(board);details.append(viewport);host.append(details);
+        }
       }
 
       function initializeRankingPage() {
@@ -2724,7 +2951,7 @@
         page.innerHTML = `<nav class="ranking-nav" aria-label="榜单导航"><a href="#">← 返回作品柜</a><a href="#rankings">全部榜单</a><span>MY COLLECTION / SELECTED WORKS</span></nav>
           <header class="ranking-hero"><p id="rankingEyebrow">THE PERSONAL CHARTS</p><h1 id="rankingPageTitle" tabindex="-1">我的榜单</h1><p id="rankingPageIntro">把最喜欢的作品，郑重地放在这里。</p><p id="rankingPageCount"></p></header>
           <section id="rankingIndex" aria-label="全部个人榜单"><div id="rankingShelf"></div><details id="rankingCreate"><summary>＋ 创建一份新榜单</summary><div id="rankingCreateForm"></div></details></section>
-          <section id="rankingExhibition" aria-label="榜单作品"><div class="ranking-toolbar"><a href="#rankings">← 选择其他榜单</a><button type="button" class="ghost-button" id="rankingEditToggle">编辑排名与作品</button><div id="rankingShareSlot"></div></div><div id="rankingDetailHost"></div></section>`;
+          <section id="rankingExhibition" aria-label="榜单作品"><div class="ranking-toolbar"><a href="#rankings">← 选择其他榜单</a><button type="button" class="ghost-button" id="rankingEditToggle">编辑排名与作品</button><div id="rankingShareSlot"></div></div><details id="tournamentPanel"><summary>🏆 淘汰赛排榜 · 先选专辑，再一场场决胜</summary><div id="tournamentContent"></div></details><div id="rankingDetailHost"></div></section>`;
         document.querySelector("main.app").after(page);
         const oldPanel = document.querySelector("#rankingsPanel");
         const panel = document.createElement("section"); panel.id = "rankingsPanel";
@@ -2748,6 +2975,7 @@
           #rankingShelf{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px}.ranking-shelf-card{display:block;padding:20px;border:1px solid var(--line);border-radius:14px;background:var(--panel-strong);transition:transform .2s}.ranking-shelf-card:hover{transform:translateY(-4px);border-color:var(--orange)}.ranking-shelf-covers{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-bottom:20px}.ranking-shelf-covers .poster{aspect-ratio:1}.ranking-shelf-covers .rating-badge{display:none}.ranking-shelf-card h2{color:var(--text);font-size:22px;overflow-wrap:anywhere}.ranking-shelf-card p{color:var(--muted);font-size:13px;line-height:1.7}
           .ranking-toolbar{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:24px}#rankingPage #rankingsPanel{border:0;padding:0;margin:0}#rankingPage #rankingsPanel>summary{display:none}#rankingPage #rankingEditor{margin:0 0 32px;padding:20px;border:1px solid var(--line);border-radius:12px}#rankingPage #rankingRows{gap:26px;margin-top:30px}#rankingPage .ranking-row{padding:18px;border-color:transparent;background:transparent}#rankingPage .ranking-row.podium{border-color:var(--line-bright)}#rankingPage .ranking-row:not(.podium) .poster{max-height:230px}#rankingPage .rank-number{font-size:32px}#rankingPage .ranking-title{font-size:18px;white-space:normal;height:auto;padding:10px 0}#rankingPage .ranking-row small{line-height:1.8;white-space:pre-wrap}#rankingPage:not(.editing) .ranking-actions{display:none}#rankingPage #rankingCreate{padding:24px;margin-top:30px;border:1px dashed var(--line-bright);border-radius:12px}#rankingPage .poster img{pointer-events:none}
           @media(max-width:700px){#rankingPage{padding:20px 16px 70px!important}.ranking-nav{gap:18px}.ranking-nav span{display:none}.ranking-hero{padding:50px 0 36px}#rankingShelf{grid-template-columns:1fr}#rankingPage #rankingRows{gap:12px}#rankingPage .ranking-row{padding:10px}#rankingPage .ranking-row:first-child .poster{max-width:340px}#rankingPage .ranking-title{font-size:15px}}
+          #tournamentPanel{border:1px solid var(--line-bright);border-radius:14px;padding:20px;margin:24px 0 36px;background:var(--panel)}#tournamentContent>p{color:var(--muted);line-height:1.8}#tournamentContent h3{margin:24px 0 16px}#tournamentContent details{margin:20px 0}.tournament-pick-list{max-height:360px;overflow:auto;margin:16px 0}.tournament-versus{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;max-width:600px;margin:20px auto}.tournament-choice{display:flex;flex-direction:column;gap:10px;padding:14px;background:var(--bg);border:1px solid var(--line-bright);border-radius:14px;text-align:left;cursor:pointer;color:var(--text)}.tournament-choice:hover{border-color:var(--blue)}.tournament-choice .poster{aspect-ratio:1}.tournament-choice strong{overflow-wrap:anywhere}.tournament-choice span{color:var(--orange)}.tournament-scroll{overflow:auto;max-height:650px;padding-bottom:12px}.tournament-board{position:relative;margin:15px 0}.tournament-lines{position:absolute;inset:0;pointer-events:none}.tournament-round-title{position:absolute;top:0;color:var(--orange)}.tournament-match{position:absolute;width:210px;height:86px;padding:5px;border:1px solid var(--line);border-radius:7px;background:#191814;display:grid;grid-template-rows:1fr 1fr;gap:3px}#rankingPage .tournament-match button{min-height:30px;padding:4px 8px;font-size:12px;text-align:left;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}#rankingPage .tournament-match button:disabled{opacity:.75}#rankingPage .tournament-match .match-winner{color:var(--orange);border-color:var(--orange)}.tournament-result{line-height:2;max-height:360px;overflow:auto}.radar-chart circle[role=slider]:focus{outline:none;stroke:#fff;stroke-width:3px}.radar-chart svg{max-height:none!important;width:100%}
         `; document.head.append(style);
         document.querySelector("#rankingEditToggle").onclick = () => {
           const editing = page.classList.toggle("editing"); editor.open = editing;
@@ -3035,6 +3263,10 @@
         });
       }
 
+      document.querySelector("#expandRadar").onclick = () => {
+        const expanded=document.querySelector(".radar-card").classList.toggle("radar-expanded");
+        document.querySelector("#expandRadar").textContent=expanded?"收起，返回作品详情":"放大拖动八维图";
+      };
       el.searchInput.addEventListener("input", event => {
         state.search = event.target.value;
         renderGallery();
