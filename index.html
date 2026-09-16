@@ -1221,23 +1221,24 @@
 
       /* ── Velvet Underground Banana Easter Egg ── */
       .banana-easter{margin-top:auto;padding-top:14px;border-top:1px solid rgba(244,232,211,.07);text-align:center}
-      .banana-trigger{display:inline-block;width:28px;height:28px;object-fit:contain;cursor:pointer;opacity:.15;transition:opacity .4s,transform .4s;border-radius:4px}
+      .banana-trigger{display:inline-block;width:28px;height:28px;object-fit:contain;cursor:pointer;opacity:.15;transition:opacity .4s,transform .4s;border-radius:4px;background:0 0}
       .banana-trigger:hover{opacity:.75;transform:rotate(-14deg) scale(1.2)}
       .banana-overlay{position:fixed;inset:0;z-index:9999;display:none;place-items:center;background:rgba(3,3,2,.92);backdrop-filter:blur(24px);opacity:0;transition:opacity .5s}
       .banana-overlay.show{display:grid;opacity:1}
       .banana-card{display:grid;gap:20px;place-items:center;text-align:center}
-      /* Peel container */
-      .peel-container{position:relative;width:min(340px,60vw);height:min(340px,60vw);cursor:pointer;perspective:800px}
-      .peel-container .peel-layer,.peel-container .peel-base{position:absolute;inset:0;display:grid;place-items:center}
-      .peel-container img{max-width:100%;max-height:100%;object-fit:contain;filter:drop-shadow(0 16px 40px rgba(0,0,0,.35))}
-      .peel-layer{z-index:2;transform-origin:left center;transition:transform 1.2s cubic-bezier(.4,0,.2,1),opacity .8s ease}
-      .peel-layer.peeled{transform:rotateY(-110deg) translateX(-30%) scale(.85);opacity:0}
-      .peel-layer .peel-hint{position:absolute;bottom:8%;left:50%;transform:translateX(-50%);color:rgba(244,232,211,.5);font-size:12px;font-weight:800;letter-spacing:.1em;white-space:nowrap;animation:pulse 2s ease-in-out infinite;transition:opacity .4s}
-      .peel-layer.peeled .peel-hint{opacity:0}
-      @keyframes pulse{0%,100%{opacity:.5}50%{opacity:1}}
-      .peel-base{z-index:1}
-      .peel-base img{animation:peeledFloat 3s ease-in-out infinite}
-      @keyframes peeledFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+      /* ── Peel Container ── */
+      .peel-container{position:relative;width:min(360px,65vw);height:min(360px,65vw);cursor:pointer;perspective:1000px}
+      .peel-layer,.peel-base{position:absolute;inset:0;display:grid;place-items:center;overflow:visible}
+      .peel-layer{z-index:2;transform-origin:20% 50%;transition:transform 1.4s cubic-bezier(.25,.46,.45,.94),opacity 1s ease .3s}
+      .peel-layer.peeled{transform:rotateY(-130deg) translateX(-40%) scale(.7);opacity:0;pointer-events:none}
+      .peel-layer img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 16px 40px rgba(0,0,0,.35));transition:filter .4s}
+      .peel-layer .peel-hint{position:absolute;bottom:6%;left:50%;transform:translateX(-50%);padding:8px 20px;border-radius:999px;background:rgba(211,155,73,.15);border:1px solid rgba(211,155,73,.3);color:var(--orange);font-size:12px;font-weight:800;letter-spacing:.12em;white-space:nowrap;cursor:pointer;transition:all .3s;animation:hintPulse 2.5s ease-in-out infinite}
+      .peel-layer .peel-hint:hover{background:rgba(211,155,73,.3);border-color:var(--orange);transform:translateX(-50%) scale(1.05)}
+      .peel-layer.peeled .peel-hint{opacity:0;pointer-events:none}
+      @keyframes hintPulse{0%,100%{box-shadow:0 0 0 0 rgba(211,155,73,0)}50%{box-shadow:0 0 0 8px rgba(211,155,73,.12)}}
+      .peel-base{z-index:1;opacity:0;transition:opacity .6s ease .6s}
+      .peel-base.revealed{opacity:1}
+      .peel-base img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 12px 30px rgba(0,0,0,.3));animation:none}
       .banana-card h2{font-family:Georgia,"Noto Serif SC",serif;font-size:clamp(20px,3.5vw,34px);font-weight:500;color:var(--text)}
       .banana-card p{color:var(--muted);font-size:14px;line-height:1.7;max-width:360px}
       .banana-card .dismiss{margin-top:4px;padding:10px 28px;border:1px solid rgba(244,232,211,.1);border-radius:999px;background:0 0;color:rgba(244,232,211,.4);font-size:12px;font-weight:800;letter-spacing:.06em;cursor:pointer;transition:all .2s}
@@ -1276,7 +1277,7 @@
           </section>
 
           <div class="banana-easter" aria-hidden="true">
-            <img class="banana-trigger" id="bananaTrigger" src="attachments/velvet-underground-banana.jpg" alt="🍌" />
+            <img class="banana-trigger" id="bananaTrigger" src="attachments/vu-banana-nobg.png" alt="🍌" />
           </div>
         </aside>
 
@@ -1366,16 +1367,16 @@
       <div class="banana-card">
         <div class="peel-container" id="peelContainer">
           <div class="peel-layer" id="peelLayer">
-            <img src="attachments/vu-banana-nobg.png" alt="Yellow banana (peel me)" />
-            <span class="peel-hint">◀ PEEL SLOWLY AND SEE</span>
+            <img src="attachments/vu-banana-nobg.png" alt="Yellow banana (peel me)" draggable="false" />
+            <span class="peel-hint" id="peelHint">◀ PEEL SLOWLY AND SEE</span>
           </div>
-          <div class="peel-base">
-            <img src="attachments/vu-peeled-nobg.png" alt="Pink banana revealed" />
+          <div class="peel-base" id="peelBase">
+            <img src="attachments/vu-peeled-nobg.png" alt="Pink banana revealed" draggable="false" />
           </div>
         </div>
         <h2>The Velvet Underground & Nico</h2>
         <p>"I'm waiting for my man…"<br/>Andy Warhol, 1967</p>
-        <button class="dismiss" id="bananaDismiss" type="button">peel it away</button>
+        <button class="dismiss" id="bananaDismiss" type="button">close</button>
       </div>
     </div>
 
@@ -4003,13 +4004,22 @@
       const bananaTrigger = document.getElementById("bananaTrigger");
       const bananaOverlay = document.getElementById("bananaOverlay");
       const bananaDismiss = document.getElementById("bananaDismiss");
-      const peelContainer = document.getElementById("peelContainer");
       const peelLayer = document.getElementById("peelLayer");
+      const peelBase = document.getElementById("peelBase");
+      const peelHint = document.getElementById("peelHint");
       let peeled = false;
 
       function resetPeel() {
         peeled = false;
         peelLayer?.classList.remove("peeled");
+        peelBase?.classList.remove("revealed");
+      }
+
+      function doPeel() {
+        if (peeled) return;
+        peeled = true;
+        peelBase?.classList.add("revealed");
+        peelLayer?.classList.add("peeled");
       }
 
       function openBanana() {
@@ -4019,17 +4029,17 @@
 
       function closeBanana() {
         bananaOverlay.classList.remove("show");
-        setTimeout(resetPeel, 600);
+        setTimeout(resetPeel, 800);
       }
 
       if (bananaTrigger && bananaOverlay) {
         bananaTrigger.addEventListener("click", openBanana);
         bananaDismiss?.addEventListener("click", closeBanana);
         bananaOverlay.addEventListener("click", e => { if (e.target === bananaOverlay) closeBanana(); });
-        peelContainer?.addEventListener("click", () => {
-          if (!peeled) { peeled = true; peelLayer.classList.add("peeled"); }
-          else { resetPeel(); }
-        });
+        // 点击提示文字触发撕皮
+        peelHint?.addEventListener("click", e => { e.stopPropagation(); doPeel(); });
+        // 也可以点击黄色香蕉本身触发
+        peelLayer?.addEventListener("click", e => { e.stopPropagation(); doPeel(); });
       }
     </script>
   </body>
