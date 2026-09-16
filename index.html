@@ -1327,6 +1327,43 @@
       .emotion-radar .radar-chart svg circle{fill:#9984b1}
       .emotion-radar .break-fill,.emotion-radar .break-thumb{background:#9984b1}
       .radar-chart{min-height:0!important;aspect-ratio:1;width:100%}
+      /* Comparison and expanded radar workspace */
+      .detail-panel{grid-template-columns:minmax(420px,54%) minmax(0,1fr);width:min(1420px,100%)}
+      .detail-art .radar-card{padding:14px;max-width:660px;margin:0 auto}
+      .detail-art>.poster{max-width:280px!important}
+      .grade-key{font-size:12px;line-height:1.7;color:var(--muted)}
+      .grade-key summary{cursor:pointer;color:var(--orange)}
+      .personal-field{background:#d39b490c;padding:14px;border-radius:8px}
+      .personal-field small{color:var(--muted);line-height:1.6}
+      .personal-affection{color:#ddbc8c}
+      .detail-form,.album-view-summary{grid-row:2}
+      .detail-actions{grid-row:3}
+      #pkDialog{padding:0;width:min(1040px,calc(100% - 28px));max-height:calc(100dvh - 28px);border:1px solid var(--line);border-radius:12px;background:#151513;color:var(--text);overflow:auto}
+      #pkDialog::backdrop{background:#000b;backdrop-filter:blur(5px)}
+      .pk-header{position:sticky;top:0;z-index:3;display:flex;justify-content:space-between;align-items:center;padding:20px 24px;background:#191815;border-bottom:1px solid var(--line)}
+      .pk-header small{color:var(--orange);font-size:10px;letter-spacing:.15em}
+      .pk-header h2{margin-top:5px;font-size:28px}
+      .pk-body{padding:22px}
+      .pk-selectors,.pk-cards{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px}
+      .pk-selectors label{font-size:13px;color:var(--muted)}
+      .pk-selectors select{display:block;width:100%;min-height:44px;margin-top:8px;border:1px solid var(--line);border-radius:8px;background:#0d0c0a;color:var(--text);padding:8px}
+      #pkMessage,.pk-note{color:var(--muted);font-size:12px;line-height:1.7;margin:16px 0}
+      .pk-album{display:grid;grid-template-columns:84px minmax(0,1fr);gap:14px;align-items:center;margin:10px 0 22px}
+      .pk-album .poster{aspect-ratio:1;background:#22211e}
+      .pk-album .poster img{object-fit:contain}
+      .pk-album h3{font-size:16px;overflow-wrap:anywhere}
+      .pk-album p{font-size:12px;color:var(--muted);margin-top:6px;line-height:1.5}
+      .pk-legend{font-size:13px;text-align:center;color:#ddbc8c;margin-top:16px}
+      .pk-radar{max-width:660px;margin:auto}
+      .pk-radar svg{display:block;width:100%;height:auto;overflow:visible}
+      .pk-radar .radar-score-label{font-size:11px}
+      .pk-table-wrap{overflow:auto}
+      .pk-table{border-collapse:collapse;width:100%;font-size:14px}
+      .pk-table caption{text-align:left;color:var(--muted);padding:12px 0}
+      .pk-table th,.pk-table td{text-align:left;padding:12px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+      .pk-table th{font-weight:500;color:var(--muted)}
+      @media(max-width:980px){.detail-panel{display:block}.detail-art .radar-card{max-width:620px}.detail-art>.poster{max-width:280px!important}}
+      @media(max-width:620px){.pk-body{padding:14px}.pk-selectors,.pk-cards{gap:10px}.pk-album{display:block}.pk-album .poster{width:100%;max-width:160px;margin-bottom:10px}.pk-table{font-size:12px}.pk-table th,.pk-table td{padding:10px 6px}}
     </style>
   </head>
   <body>
@@ -1396,6 +1433,7 @@
                 <option value="title">专辑名 A-Z</option>
               </select>
             </label>
+            <button class="ghost-button" id="pkOpen" type="button">专辑 PK</button>
             <button class="primary-button" id="addButton" type="button">＋ 添加专辑</button>
             <div class="view-toggle" aria-label="视图">
               <button class="icon-button active" id="gridView" type="button" title="封面墙">▦</button>
@@ -1412,6 +1450,18 @@
         </section>
       </div>
     </main>
+    <dialog id="pkDialog" aria-labelledby="pkTitle">
+      <header class="pk-header"><div><small>CABINET / SIDE A × SIDE B</small><h2 id="pkTitle">专辑 PK</h2></div><button type="button" class="close-button" id="pkClose" aria-label="关闭 PK">×</button></header>
+      <div class="pk-body">
+        <div class="pk-selectors"><label>A 面 · 选择专辑<select id="pkA"></select></label><label>B 面 · 选择专辑<select id="pkB"></select></label></div>
+        <p id="pkMessage" role="status"></p><div class="pk-cards" id="pkCards"></div>
+        <div class="radar-tabs" role="tablist" aria-label="PK 维度"><button type="button" role="tab" data-pk-mode="work" aria-selected="true">作品评价</button><button type="button" role="tab" data-pk-mode="feelings" aria-selected="false">情绪画像</button></div>
+        <p class="pk-legend">A 面：琥珀实线　B 面：紫色虚线</p>
+        <div class="pk-radar" id="pkRadar"></div>
+        <p class="pk-note">10 分为满格；高分段非线性展开，15 分可突破边界。图上显示 A 面 / B 面等级。</p>
+        <div class="pk-table-wrap"><table class="pk-table"><caption id="pkCaption"></caption><thead><tr><th>指标</th><th>A 面</th><th>B 面</th><th>比较</th></tr></thead><tbody id="pkRows"></tbody></table></div>
+      </div>
+    </dialog>
 
     <section class="detail" id="librarySearch" aria-hidden="true">
       <div class="library-panel" role="dialog" aria-modal="true" aria-labelledby="libraryTitle">
@@ -1473,6 +1523,7 @@
             <div class="radar-chart" id="detailRadar"></div>
             <button type="button" class="ghost-button" id="expandRadar">放大拖动九维图</button>
             <div class="radar-summary" id="radarSummary"></div>
+            <details class="grade-key"><summary>等级与刻度说明</summary><p>D ＜4 · C 4–5.9 · B 6–7.9 · A 8–8.9 · S 9–10 · S+ ＞10–12.9 · S++ 13–15。情绪等级仅表示强度。</p><p>网格依次为 4、6、8、9、10 分。高分段使用非线性展开，面积不代表总分；具体分数见评分条。</p></details>
             <small>10 分就是满分。还不够？拖动圆点冲出金色边界，破例多给一点。虚点待评，拖动后才记分；总评分仍为 10 分制。</small>
           </article>
         </aside>
@@ -1497,6 +1548,7 @@
                 <button class="ghost-button" id="editAlbumButton" type="button">编辑</button>
               </div>
             </div>
+            <p class="personal-affection" id="albumViewAffection"></p>
             <p class="album-view-original" id="albumViewOriginal"></p>
             <p class="album-view-meta" id="albumViewMeta"></p>
             <div class="album-view-flags" id="albumViewFlags"></div>
@@ -1555,6 +1607,7 @@
                 <strong class="rating-value" id="ratingValue">0.0</strong>
               </div>
             </div>
+            <div class="field full personal-field"><label for="personalRatingField">个人喜爱度 · 0–10</label><input id="personalRatingField" type="number" min="0" max="10" step="0.1" placeholder="待评" /><small>只问自己有多喜欢，与作品水准、情绪强度分开。可以留空。</small></div>
             <section class="preference-actions field full" id="preferenceActions">
               <button type="button" class="preference-toggle" id="favoriteToggle">♡ 私人最爱</button>
               <button type="button" class="preference-toggle" id="revisitToggle" hidden>待重听</button>
@@ -1944,8 +1997,8 @@
       el.tmdbKey.value = apiSettings.tmdb || "";
       el.rawgKey.value = apiSettings.rawg || "";
 
-      function getMetrics(category) {
-        return category==="专辑" ? (radarMode==="feelings"?emotionMetrics:metricSets["专辑"]) : (metricSets[category]||metricSets.default);
+      function getMetrics(category, mode = radarMode) {
+        return category==="专辑" ? (mode==="feelings"?emotionMetrics:metricSets["专辑"]) : (metricSets[category]||metricSets.default);
       }
 
       function renderAspectControls(category, scores = {}) {
@@ -2549,11 +2602,22 @@
         return element;
       }
 
+      function scoreGrade(value) {
+        if(value==null || value==="" || !Number.isFinite(Number(value)))return "—";
+        const n=clampScore(value);
+        return n>=13?"S++":n>10?"S+":n>=9?"S":n>=8?"A":n>=6?"B":n>=4?"C":"D";
+      }
+      function personalScore(value){
+        return value==null||value===""||!Number.isFinite(Number(value))?null:Math.max(0,Math.min(10,Number(value)));
+      }
+      // Nonlinear visual scale: amplify high-score differences, retain 10 at the boundary.
+      function scoreDistance(value){const n=clampScore(value);return n<=10?Math.pow(n/10,2):1+(n-10)*.09;}
+      function distanceScore(ratio){return clampScore(ratio<=1?Math.sqrt(Math.max(0,ratio))*10:10+(ratio-1)/.09);}
       const RADAR_RADIUS = 132;
 
       function radarPoint(index, value, total, radius = RADAR_RADIUS) {
         const angle = -Math.PI / 2 + (index * Math.PI * 2) / total;
-        const distance = (clampScore(value, 0) / 10) * radius;
+        const distance = scoreDistance(value) * radius;
         return {
           x: 150 + Math.cos(angle) * distance,
           y: 150 + Math.sin(angle) * distance
@@ -2569,15 +2633,15 @@
           .join(" ");
       }
 
-      function createRadarSvg(scores, category, interactive = false, emotionMode = "emotion") {
-        const metrics = getMetrics(category, emotionMode);
+      function createRadarSvg(scores, category, interactive = false, mode = radarMode) {
+        const metrics = getMetrics(category, mode);
         const svg = makeSvgElement("svg", {
           viewBox: "-100 -100 500 500",
           role: interactive ? "group" : "img",
-          "aria-label": radarMode==="feelings"?"情绪九维画像":"作品九维评分"
+          "aria-label": mode==="feelings"?"情绪九维画像":"作品九维评分"
         });
 
-        [0.25, 0.5, 0.75, 1].forEach(scale => {
+        [0.4, 0.6, 0.8, 0.9, 1].forEach(scale => {
           svg.append(
             makeSvgElement("polygon", {
               points: radarPoints(
@@ -2626,12 +2690,13 @@
             "dominant-baseline": "middle",
             class: "radar-score-label"
           });
-          scoreText.textContent = formatAspectScore(scores[metric.key]);
+          scoreText.textContent = scoreGrade(scores[metric.key]);
           scoreText.dataset.radarScore = metric.key;
           svg.append(scoreText);
         });
 
         const shape = makeSvgElement("polygon", {
+            class: "radar-shape",
             points: radarPoints(scores, metrics, RADAR_RADIUS),
             fill: "rgba(211,155,73,0.22)",
             stroke: "rgba(211,155,73,0.92)",
@@ -2667,7 +2732,7 @@
 
       function radarValueAt(index, total, x, y) {
         const angle = -Math.PI / 2 + index * Math.PI * 2 / total;
-        return Math.round(clampScore(((x - 150) * Math.cos(angle) + (y - 150) * Math.sin(angle)) / RADAR_RADIUS * 10) * 10) / 10;
+        return Math.round(distanceScore(((x - 150) * Math.cos(angle) + (y - 150) * Math.sin(angle)) / RADAR_RADIUS) * 10) / 10;
       }
 
       function attachRadarDrag(svg, shape, scores, category) {
@@ -2684,7 +2749,7 @@
           const handle = svg.querySelector(`[data-radar-axis="${index}"]`);
           handle.setAttribute("cx",point.x); handle.setAttribute("cy",point.y); handle.setAttribute("fill",value > 10 ? "#e84b6a" : "#f0a23a");
           handle.setAttribute("aria-valuenow",value); handle.setAttribute("aria-valuetext",formatAspectScore(value));
-          svg.querySelector(`[data-radar-score="${metric.key}"]`).textContent = formatAspectScore(value);
+          svg.querySelector(`[data-radar-score="${metric.key}"]`).textContent = scoreGrade(value);
           renderRadarSummary(scores, category);
         };
         const move = event => {
@@ -2713,7 +2778,7 @@
 
       function renderRadar(item) {
         const scores = getAspectScores(item);
-        el.detailRadar.replaceChildren(createRadarSvg(scores, item.category, true, state.editingEmotionMode));
+        el.detailRadar.replaceChildren(createRadarSvg(scores, item.category, true, radarMode));
         renderRadarSummary(scores, item.category);
       }
 
@@ -2959,6 +3024,8 @@
         const order=found>=0?found+1:albums.length+1;
         el.albumViewArchive.textContent=`CABINET / ALBUM / ${item.year || "----"} / ${String(order).padStart(3,"0")}`;
         el.albumViewRating.textContent = Number(item.rating || 0).toFixed(1);
+        const affection=personalScore(item.personalRating);
+        document.querySelector("#albumViewAffection").textContent="个人喜爱度 · "+(affection==null?"待评":affection.toFixed(1)+" / 10");
         el.albumViewOriginal.textContent=item.originalTitle || "";
         el.albumViewMeta.textContent = [item.creator, item.year, splitLabels(item.genres).join(" / "), splitLabels(item.languages).join(" / ")].filter(Boolean).join(" · ") || "还没有补充专辑资料";
         el.albumViewComment.textContent = item.comment || "还没有短评。";
@@ -3036,6 +3103,7 @@
         document.querySelector("#genresField").value = splitLabels(item.genres).join(", ");
         el.posterField.value = item.poster || "";
         el.ratingField.value = Number(item.rating || 0);
+        document.querySelector("#personalRatingField").value=personalScore(item.personalRating) ?? "";
         el.ratingValue.textContent = Number(item.rating || 0).toFixed(1);
         document.querySelector("#evaluationHistory").open=false;
         renderEvaluationHistory();renderPreferenceActions();
@@ -3080,6 +3148,7 @@
           languages: splitLabels(document.querySelector("#languagesField").value),
           genres: splitLabels(document.querySelector("#genresField").value),
           rating: Number(el.ratingField.value || 0),
+          personalRating: personalScore(document.querySelector("#personalRatingField").value),
           evaluationHistory: normalizeEvaluationHistory(state.editingEvaluationHistory),
           favorite: state.editingFavorite,
           revisit: state.items.find(item=>item.id===state.editingId)?.revisit || false,
@@ -3123,7 +3192,7 @@
       }
 
       function exportData() {
-        const blob = new Blob([JSON.stringify({ version: 5, items: state.items, rankings }, null, 2)], { type: "application/json" });
+        const blob = new Blob([JSON.stringify({ version: 6, items: state.items, rankings }, null, 2)], { type: "application/json" });
         const url = URL.createObjectURL(blob);
         const link = document.createElement("a");
         link.href = url;
@@ -3148,6 +3217,7 @@
           creator: String(item.creator || ""),
           year: item.year || "",
           rating: Number(item.rating || 0),
+          personalRating: personalScore(item.personalRating),
           evaluationHistory: normalizeEvaluationHistory(item.evaluationHistory?.length ? item.evaluationHistory : item.relistenHistory),
           favorite: Boolean(item.favorite),
           revisit: item.category === "专辑" && Boolean(item.revisit),
@@ -4107,6 +4177,66 @@
           const next=document.querySelector('[data-radar-tab="'+mode+'"]');next.click();next.focus();
         });
       });
+
+      let pkMode="work",pkFocus=null;
+      const pkDialog=document.querySelector("#pkDialog");
+      function pkValue(value){return value==null?"待评":Number(value).toFixed(1);}
+      function pkComparison(a,b,emotion=false){
+        if(a==null||b==null)return "待补评分";
+        if(a===b)return emotion?"强度相同":"持平";
+        return (a>b?"A 面":"B 面")+(emotion?"更强 ":"领先 ")+Math.abs(a-b).toFixed(1);
+      }
+      function renderPk(){
+        const a=state.items.find(x=>x.id===document.querySelector("#pkA").value);
+        const b=state.items.find(x=>x.id===document.querySelector("#pkB").value);
+        const cards=document.querySelector("#pkCards"),chart=document.querySelector("#pkRadar"),rows=document.querySelector("#pkRows");
+        cards.replaceChildren();chart.replaceChildren();rows.replaceChildren();
+        document.querySelectorAll("[data-pk-mode]").forEach(button=>button.setAttribute("aria-selected",String(button.dataset.pkMode===pkMode)));
+        if(!a||!b||a.id===b.id){document.querySelector("#pkMessage").textContent="请从收藏中选择两张不同的专辑。";return;}
+        document.querySelector("#pkMessage").textContent="比作品，也比偏爱。情绪只比较强弱，不判胜负。";
+        [a,b].forEach((item,index)=>{
+          const card=document.createElement("article");card.className="pk-album";
+          card.append(createPoster(item));
+          const info=document.createElement("div"),name=document.createElement("h3"),meta=document.createElement("p"),score=document.createElement("p");
+          name.textContent=(index?"B 面 · ":"A 面 · ")+item.title;meta.textContent=[item.creator,item.year].filter(Boolean).join(" · ");
+          score.textContent="总评分 "+pkValue(item.rating>0?item.rating:null)+" / 个人喜爱 "+pkValue(personalScore(item.personalRating));
+          info.append(name,meta,score);card.append(info);cards.append(card);
+        });
+        const sa=getAspectScores(a),sb=getAspectScores(b),metrics=getMetrics("专辑",pkMode);
+        const svg=createRadarSvg(sa,"专辑",false,pkMode);
+        svg.setAttribute("aria-label","两张专辑的"+(pkMode==="work"?"作品评价":"情绪画像")+"对比");
+        svg.querySelectorAll("circle").forEach(n=>n.remove());
+        metrics.forEach(m=>{svg.querySelector('[data-radar-score="'+m.key+'"]').textContent=scoreGrade(sa[m.key])+" / "+scoreGrade(sb[m.key]);});
+        const second=makeSvgElement("polygon",{points:radarPoints(sb,metrics),fill:"rgba(153,132,177,.12)",stroke:"#b09ac8","stroke-width":"2.2","stroke-dasharray":"6 4"});
+        svg.append(second);chart.append(svg);
+        const addRow=(label,left,right,emotion=false)=>{
+          const tr=document.createElement("tr");
+          [label,pkValue(left)+(left==null?"":" · "+scoreGrade(left)),pkValue(right)+(right==null?"":" · "+scoreGrade(right)),pkComparison(left,right,emotion)].forEach((text,i)=>{const cell=document.createElement(i?"td":"th");cell.textContent=text;if(i===0)cell.scope="row";tr.append(cell);});
+          rows.append(tr);
+        };
+        addRow("总评分",a.rating>0?Number(a.rating):null,b.rating>0?Number(b.rating):null);
+        addRow("个人喜爱度",personalScore(a.personalRating),personalScore(b.personalRating));
+        metrics.forEach(m=>addRow(m.label,sa[m.key],sb[m.key],pkMode==="feelings"));
+        document.querySelector("#pkCaption").textContent=pkMode==="work"?"作品九维 · 逐项比较（缺分不判输赢）":"情绪九维 · 强度比较（高低不是好坏）";
+      }
+      document.querySelector("#pkOpen").addEventListener("click",()=>{
+        const albums=state.items.filter(x=>x.category==="专辑");
+        if(albums.length<2){showToast("先收藏至少两张专辑，再来 PK。");return;}
+        const selects=[document.querySelector("#pkA"),document.querySelector("#pkB")];
+        selects.forEach((select,index)=>{
+          const previous=select.value;select.replaceChildren();
+          albums.forEach(item=>{const option=document.createElement("option");option.value=item.id;option.textContent=item.title+" · "+(item.creator||"未知艺人");select.append(option);});
+          select.value=albums.some(x=>x.id===previous)?previous:albums[index].id;
+        });
+        pkFocus=document.activeElement;renderPk();pkDialog.showModal();document.querySelector("#pkA").focus();
+      });
+      document.querySelector("#pkClose").addEventListener("click",()=>pkDialog.close());
+      pkDialog.addEventListener("close",()=>pkFocus?.focus());
+      pkDialog.addEventListener("click",event=>{if(event.target===pkDialog){const r=pkDialog.getBoundingClientRect();if(event.clientX<r.left||event.clientX>r.right||event.clientY<r.top||event.clientY>r.bottom)pkDialog.close();}});
+      ["#pkA","#pkB"].forEach(id=>document.querySelector(id).addEventListener("change",renderPk));
+      document.querySelectorAll("[data-pk-mode]").forEach(button=>button.addEventListener("click",()=>{pkMode=button.dataset.pkMode;renderPk();}));
+
+
       initializeCollectionTools();
       initializeRankingPage();
       render();
