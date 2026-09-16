@@ -2564,6 +2564,7 @@
           #collectionTools #rankingDescription{width:100%}
           @media(max-width:600px){#collectionTools #rankingRows{grid-template-columns:repeat(2,minmax(0,1fr))}#collectionTools .ranking-row:first-child{grid-column:1/-1}#collectionTools .ranking-row:first-child .poster{max-width:280px;align-self:center}}
           @media(max-width:600px){#collectionTools{padding:12px}#collectionTools .collection-row>input,#collectionTools .collection-row>select{width:100%}#collectionTools .ghost-button{padding:8px}}`;
+        style.textContent = style.textContent.replaceAll("#collectionTools", ":is(#collectionTools,#rankingPage)");
         document.head.append(style);
         document.querySelector("#collectionTools").innerHTML = `
           <div class="collection-row">
@@ -2615,9 +2616,9 @@
           if (!name) return showToast("请先给榜单取个名字");
           const list = { id: crypto.randomUUID(), name, description: "", limit: Number(document.querySelector("#newRankingLimit").value), itemIds: [] };
           rankings.push(list); activeRanking = list.id; saveRankings();
-          document.querySelector("#newRankingName").value = ""; renderRankingTools();
+          document.querySelector("#newRankingName").value = ""; navigateRanking(list.id);
         };
-        document.querySelector("#rankingSelect").onchange = event => { activeRanking = event.target.value; renderRankingTools(); };
+        document.querySelector("#rankingSelect").onchange = event => navigateRanking(event.target.value);
         document.querySelector("#renameRanking").onclick = () => {
           const list = rankings.find(list => list.id === activeRanking); if (!list) return;
           const name = prompt("榜单新名称", list.name)?.trim(); if (!name) return;
@@ -2626,12 +2627,12 @@
         document.querySelector("#deleteRanking").onclick = () => {
           if (!activeRanking || !confirm("删除这个榜单？作品与评分会保留。")) return;
           rankings = rankings.filter(list => list.id !== activeRanking); activeRanking = rankings[0]?.id || "";
-          saveRankings(); renderRankingTools();
+          saveRankings(); navigateRanking();
         };
         document.querySelector("#rankingSearch").oninput = renderRankingCandidates;
         document.querySelector("#saveRankingDescription").onclick = () => {
           const list = rankings.find(list => list.id === activeRanking); if (!list) return;
-          list.description = document.querySelector("#rankingDescription").value.trim(); saveRankings(); showToast("榜单介绍已保存");
+          list.description = document.querySelector("#rankingDescription").value.trim(); saveRankings(); refreshRankingPage(); showToast("榜单介绍已保存");
         };
         document.querySelector("#shareRanking").onclick = exportRankingImage;
         document.querySelector("#addToRanking").onclick = () => {
@@ -2715,6 +2716,86 @@
           return row;
         }));
         renderRankingCandidates();
+        refreshRankingPage();
+      }
+
+      function initializeRankingPage() {
+        const page = document.createElement("section"); page.id = "rankingPage"; page.hidden = true;
+        page.innerHTML = `<nav class="ranking-nav" aria-label="榜单导航"><a href="#">← 返回作品柜</a><a href="#rankings">全部榜单</a><span>MY COLLECTION / SELECTED WORKS</span></nav>
+          <header class="ranking-hero"><p id="rankingEyebrow">THE PERSONAL CHARTS</p><h1 id="rankingPageTitle" tabindex="-1">我的榜单</h1><p id="rankingPageIntro">把最喜欢的作品，郑重地放在这里。</p><p id="rankingPageCount"></p></header>
+          <section id="rankingIndex" aria-label="全部个人榜单"><div id="rankingShelf"></div><details id="rankingCreate"><summary>＋ 创建一份新榜单</summary><div id="rankingCreateForm"></div></details></section>
+          <section id="rankingExhibition" aria-label="榜单作品"><div class="ranking-toolbar"><a href="#rankings">← 选择其他榜单</a><button type="button" class="ghost-button" id="rankingEditToggle">编辑排名与作品</button><div id="rankingShareSlot"></div></div><div id="rankingDetailHost"></div></section>`;
+        document.querySelector("main.app").after(page);
+        const oldPanel = document.querySelector("#rankingsPanel");
+        const panel = document.createElement("section"); panel.id = "rankingsPanel";
+        panel.append(...oldPanel.children); oldPanel.replaceWith(panel);
+        const rows = [...panel.children].filter(child => child.classList.contains("collection-row"));
+        if (rows[0]) document.querySelector("#rankingCreateForm").append(rows[0]);
+        const editor = document.createElement("details"); editor.id = "rankingEditor";
+        const summary = document.createElement("summary"); summary.textContent = "添加作品、修改介绍与管理榜单"; editor.append(summary);
+        rows.slice(1).forEach(row => editor.append(row));
+        panel.querySelector("summary")?.remove(); panel.open = true;
+        panel.prepend(editor);
+        document.querySelector("#rankingDetailHost").append(panel);
+        document.querySelector("#rankingShareSlot").append(document.querySelector("#shareRanking"));
+        const entrance = document.createElement("a"); entrance.className = "rankings-entrance"; entrance.href = "#rankings";
+        entrance.textContent = "我的榜单 ↗"; document.querySelector("#collectionTools").prepend(entrance);
+        const style = document.createElement("style"); style.textContent = `
+          [hidden]{display:none!important}#rankingPage{max-width:1320px;min-height:100vh;margin:auto;padding:30px 48px 100px!important;border:0!important;background:transparent!important}
+          #rankingPage a,.rankings-entrance{color:var(--orange);text-decoration:none} .rankings-entrance{display:inline-block;padding:12px 18px;border:1px solid var(--line-bright);border-radius:8px;margin-bottom:12px;font-weight:800}
+          .ranking-nav{display:flex;gap:24px;align-items:center;border-bottom:1px solid var(--line);padding-bottom:24px;font-size:14px}.ranking-nav span{margin-left:auto;letter-spacing:2px;color:var(--soft);font-size:10px}
+          .ranking-hero{text-align:center;padding:76px 0 60px;max-width:900px;margin:auto}.ranking-hero>p:first-child{letter-spacing:5px;color:var(--orange);font-size:12px}.ranking-hero h1{font-size:clamp(38px,7vw,78px);font-weight:850;line-height:1.12;letter-spacing:-2px;margin:22px 0;overflow-wrap:anywhere}.ranking-hero #rankingPageIntro{color:var(--muted);line-height:1.9;white-space:pre-wrap}.ranking-hero #rankingPageCount{font-size:12px;color:var(--soft);margin-top:24px;letter-spacing:2px}
+          #rankingShelf{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px}.ranking-shelf-card{display:block;padding:20px;border:1px solid var(--line);border-radius:14px;background:var(--panel-strong);transition:transform .2s}.ranking-shelf-card:hover{transform:translateY(-4px);border-color:var(--orange)}.ranking-shelf-covers{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-bottom:20px}.ranking-shelf-covers .poster{aspect-ratio:1}.ranking-shelf-covers .rating-badge{display:none}.ranking-shelf-card h2{color:var(--text);font-size:22px;overflow-wrap:anywhere}.ranking-shelf-card p{color:var(--muted);font-size:13px;line-height:1.7}
+          .ranking-toolbar{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:24px}#rankingPage #rankingsPanel{border:0;padding:0;margin:0}#rankingPage #rankingsPanel>summary{display:none}#rankingPage #rankingEditor{margin:0 0 32px;padding:20px;border:1px solid var(--line);border-radius:12px}#rankingPage #rankingRows{gap:26px;margin-top:30px}#rankingPage .ranking-row{padding:18px;border-color:transparent;background:transparent}#rankingPage .ranking-row.podium{border-color:var(--line-bright)}#rankingPage .ranking-row:not(.podium) .poster{max-height:230px}#rankingPage .rank-number{font-size:32px}#rankingPage .ranking-title{font-size:18px;white-space:normal;height:auto;padding:10px 0}#rankingPage .ranking-row small{line-height:1.8;white-space:pre-wrap}#rankingPage:not(.editing) .ranking-actions{display:none}#rankingPage #rankingCreate{padding:24px;margin-top:30px;border:1px dashed var(--line-bright);border-radius:12px}#rankingPage .poster img{pointer-events:none}
+          @media(max-width:700px){#rankingPage{padding:20px 16px 70px!important}.ranking-nav{gap:18px}.ranking-nav span{display:none}.ranking-hero{padding:50px 0 36px}#rankingShelf{grid-template-columns:1fr}#rankingPage #rankingRows{gap:12px}#rankingPage .ranking-row{padding:10px}#rankingPage .ranking-row:first-child .poster{max-width:340px}#rankingPage .ranking-title{font-size:15px}}
+        `; document.head.append(style);
+        document.querySelector("#rankingEditToggle").onclick = () => {
+          const editing = page.classList.toggle("editing"); editor.open = editing;
+          document.querySelector("#rankingEditToggle").textContent = editing ? "完成，欣赏榜单" : "编辑排名与作品";
+        };
+        window.addEventListener("hashchange", routeRankingPage);
+        routeRankingPage();
+      }
+
+      function navigateRanking(id = "") {
+        window.location.hash = id ? `rankings/${encodeURIComponent(id)}` : "rankings";
+        routeRankingPage();
+      }
+
+      function routeRankingPage() {
+        const hash = window.location.hash;
+        let id = ""; try { id = decodeURIComponent(hash.startsWith("#rankings/") ? hash.slice(10) : ""); } catch {}
+        if (rankings.some(list => list.id === id)) activeRanking = id;
+        closeDetail(); closeLibrarySearch(); renderRankingTools();
+        window.scrollTo?.(0, 0);
+        if (hash.startsWith("#rankings")) document.querySelector("#rankingPageTitle").focus({preventScroll:true});
+      }
+
+      function refreshRankingPage() {
+        const page = document.querySelector("#rankingPage"); if (!page) return;
+        const hash = window.location.hash; const isRanking = hash === "#rankings" || hash.startsWith("#rankings/");
+        document.querySelector("main.app").hidden = isRanking; page.hidden = !isRanking;
+        let id = ""; try { id = decodeURIComponent(hash.startsWith("#rankings/") ? hash.slice(10) : ""); } catch {}
+        const list = rankings.find(list => list.id === id);
+        document.querySelector("#rankingIndex").hidden = !!list;
+        document.querySelector("#rankingExhibition").hidden = !list;
+        document.querySelector("#rankingEyebrow").textContent = list ? `PERSONAL SELECTION / TOP ${list.limit}` : "THE PERSONAL CHARTS";
+        document.querySelector("#rankingPageTitle").textContent = list?.name || "我的榜单";
+        document.querySelector("#rankingPageIntro").textContent = list ? list.description || "留下来的，都是偏爱。" : "把最喜欢的作品，郑重地放在这里。";
+        document.querySelector("#rankingPageCount").textContent = list ? `${list.itemIds.length} 部作品 · 我的顺序，我的选择` : `${rankings.length} 份私人精选`;
+        document.title = isRanking ? `${list?.name || "我的榜单"} · 作品柜` : "Yao · 作品柜";
+        const cards = rankings.map(entry => {
+          const card = document.createElement("a"); card.href = `#rankings/${encodeURIComponent(entry.id)}`; card.className = "ranking-shelf-card";
+          const covers = document.createElement("div"); covers.className = "ranking-shelf-covers";
+          entry.itemIds.slice(0,3).forEach(itemId => { const item = state.items.find(item => item.id === itemId); if (item) covers.append(createPoster(item)); });
+          if (!covers.children.length) covers.append(createPoster({title:"等待你的第一名"}));
+          const heading = document.createElement("h2"); heading.textContent = entry.name;
+          const meta = document.createElement("p"); meta.textContent = `TOP ${entry.limit} · 已选 ${entry.itemIds.length} 部`;
+          const intro = document.createElement("p"); intro.textContent = entry.description || "打开这份私人精选 →";
+          card.append(covers,meta,heading,intro); return card;
+        });
+        document.querySelector("#rankingShelf").replaceChildren(...cards);
+        if (!rankings.length) document.querySelector("#rankingCreate").open = true;
       }
 
       async function exportRankingImage() {
@@ -3064,6 +3145,7 @@
       });
 
       initializeCollectionTools();
+      initializeRankingPage();
       render();
       registerWebMcpTools();
     </script>
