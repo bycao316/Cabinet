@@ -682,6 +682,7 @@
         font-size: 13px;
         font-weight: 900;
       }
+      .aspect-field .emotion-choice { justify-self:start; width:auto; min-height:32px; padding:3px 8px; color:var(--orange); font-size:13px; font-weight:900; border:1px solid var(--line-bright); border-radius:7px; background:var(--bg); }
 
       .break-slider { grid-column:1/-1; position:relative; height:48px; touch-action:none; user-select:none; cursor:ew-resize; }
       .break-slider input { position:absolute; left:10px; top:0; width:calc(100% - 82px); height:42px; opacity:0; margin:0; padding:0!important; }
@@ -1518,12 +1519,14 @@
       el.tmdbKey.value = apiSettings.tmdb || "";
       el.rawgKey.value = apiSettings.rawg || "";
 
-      function getMetrics(category) {
-        return metricSets[category] || metricSets.default;
+      function getMetrics(category, emotionMode = "emotion") {
+        const metrics = metricSets[category] || metricSets.default;
+        return category === "专辑" && emotionMode === "awe"
+          ? metrics.map(metric => metric.key === "emotion" ? {...metric,label:"震撼"} : metric) : metrics;
       }
 
       function renderAspectControls(category, scores = {}) {
-        const metrics = getMetrics(category);
+        const metrics = getMetrics(category, state.editingEmotionMode);
         el.aspectHint.textContent = "10 分满分。到顶不松手，继续向右拉，可突破边界。";
         el.aspectFields.replaceChildren();
         metrics.forEach(metric => {
@@ -1541,6 +1544,7 @@
           input.max = "10";
           input.step = "0.1";
           input.dataset.aspectKey = metric.key;
+          input.setAttribute("aria-label",metric.label);
           input.dataset.unscored = String(scores[metric.key] == null);
           input.value = scores[metric.key] == null ? "5" : Math.min(10,clampScore(scores[metric.key])).toFixed(1);
           input.dataset.actualScore = String(scores[metric.key] ?? 5);
@@ -1552,7 +1556,20 @@
           output.textContent = formatBreakScore(scores[metric.key]);
 
           const slider=createBreakSlider(input);
-          row.append(label, output, slider);
+          if (category === "专辑" && metric.key === "emotion") {
+            const choice=document.createElement("select");choice.className="emotion-choice";
+            choice.setAttribute("aria-label","这个维度评价感动还是震撼");
+            for(const [value,text] of [["emotion","感动"],["awe","震撼"]]) {
+              const option=document.createElement("option");option.value=value;option.textContent=text;choice.append(option);
+            }
+            choice.value=state.editingEmotionMode === "awe" ? "awe" : "emotion";
+            choice.addEventListener("change",()=>{
+              state.editingEmotionMode=choice.value;
+              input.setAttribute("aria-label",choice.value === "awe" ? "震撼" : "感动");
+              renderRadar({category,aspectScores:getCurrentAspectScores()});
+            });
+            row.append(choice,output,slider);
+          } else row.append(label, output, slider);
           el.aspectFields.append(row);
         });
       }
@@ -2136,8 +2153,8 @@
           .join(" ");
       }
 
-      function createRadarSvg(scores, category, interactive = false) {
-        const metrics = getMetrics(category);
+      function createRadarSvg(scores, category, interactive = false, emotionMode = "emotion") {
+        const metrics = getMetrics(category, emotionMode);
         const svg = makeSvgElement("svg", {
           viewBox: "-65 -65 430 430",
           role: interactive ? "group" : "img",
@@ -2280,12 +2297,12 @@
 
       function renderRadar(item) {
         const scores = getAspectScores(item);
-        el.detailRadar.replaceChildren(createRadarSvg(scores, item.category, true));
+        el.detailRadar.replaceChildren(createRadarSvg(scores, item.category, true, state.editingEmotionMode));
         renderRadarSummary(scores, item.category);
       }
 
       function renderRadarSummary(scores, category) {
-        const metrics = getMetrics(category);
+        const metrics = getMetrics(category, state.editingEmotionMode);
         el.radarAverage.textContent = formatAspectScore(averageAspectScores(scores, category));
         el.radarSummary.replaceChildren(
           ...metrics.map(metric => {
@@ -2473,6 +2490,7 @@
             updatedAt: new Date().toISOString()
           };
         state.editingId = item.id;
+        state.editingEmotionMode = item.emotionMode === "awe" ? "awe" : "emotion";
         state.editingSource = { source: item.source || "", sourceId: item.sourceId || "", sourceUrl: item.sourceUrl || "" };
         el.detailTitle.textContent = item.title || "新作品";
         el.detailSubtitle.textContent = [item.category, item.creator, item.year].filter(Boolean).join(" · ") || "编辑评分与短评";
@@ -2515,6 +2533,7 @@
           title: el.titleField.value.trim() || "未命名作品",
           originalTitle: el.originalTitleField.value.trim(),
           category: el.categoryField.value,
+          emotionMode: state.editingEmotionMode === "awe" ? "awe" : "emotion",
           status: el.statusField.value,
           creator: el.creatorField.value.trim(),
           year: el.yearField.value.trim(),
@@ -2586,6 +2605,7 @@
           poster: String(item.poster || ""),
           tags: Array.isArray(item.tags) ? item.tags.map(String) : [],
           aspectScores: getAspectScores(item),
+          emotionMode: item.emotionMode === "awe" ? "awe" : "emotion",
           source: String(item.source || ""),
           sourceId: String(item.sourceId || ""),
           sourceUrl: String(item.sourceUrl || ""),
