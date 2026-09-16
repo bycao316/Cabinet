@@ -1225,12 +1225,22 @@
       .banana-trigger:hover{opacity:.75;transform:rotate(-14deg) scale(1.2)}
       .banana-overlay{position:fixed;inset:0;z-index:9999;display:none;place-items:center;background:rgba(3,3,2,.92);backdrop-filter:blur(24px);opacity:0;transition:opacity .5s}
       .banana-overlay.show{display:grid;opacity:1}
-      .banana-card{display:grid;gap:24px;place-items:center;text-align:center;animation:bFloat 3s ease-in-out infinite}
-      @keyframes bFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
-      .banana-card .big-banana{width:min(320px,60vw);max-height:60vh;object-fit:contain;border-radius:8px;filter:drop-shadow(0 20px 50px rgba(211,155,73,.25))}
+      .banana-card{display:grid;gap:20px;place-items:center;text-align:center}
+      /* Peel container */
+      .peel-container{position:relative;width:min(340px,60vw);height:min(340px,60vw);cursor:pointer;perspective:800px}
+      .peel-container .peel-layer,.peel-container .peel-base{position:absolute;inset:0;display:grid;place-items:center}
+      .peel-container img{max-width:100%;max-height:100%;object-fit:contain;filter:drop-shadow(0 16px 40px rgba(0,0,0,.35))}
+      .peel-layer{z-index:2;transform-origin:left center;transition:transform 1.2s cubic-bezier(.4,0,.2,1),opacity .8s ease}
+      .peel-layer.peeled{transform:rotateY(-110deg) translateX(-30%) scale(.85);opacity:0}
+      .peel-layer .peel-hint{position:absolute;bottom:8%;left:50%;transform:translateX(-50%);color:rgba(244,232,211,.5);font-size:12px;font-weight:800;letter-spacing:.1em;white-space:nowrap;animation:pulse 2s ease-in-out infinite;transition:opacity .4s}
+      .peel-layer.peeled .peel-hint{opacity:0}
+      @keyframes pulse{0%,100%{opacity:.5}50%{opacity:1}}
+      .peel-base{z-index:1}
+      .peel-base img{animation:peeledFloat 3s ease-in-out infinite}
+      @keyframes peeledFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
       .banana-card h2{font-family:Georgia,"Noto Serif SC",serif;font-size:clamp(20px,3.5vw,34px);font-weight:500;color:var(--text)}
       .banana-card p{color:var(--muted);font-size:14px;line-height:1.7;max-width:360px}
-      .banana-card .dismiss{margin-top:8px;padding:10px 28px;border:1px solid rgba(244,232,211,.1);border-radius:999px;background:0 0;color:rgba(244,232,211,.4);font-size:12px;font-weight:800;letter-spacing:.06em;cursor:pointer;transition:all .2s}
+      .banana-card .dismiss{margin-top:4px;padding:10px 28px;border:1px solid rgba(244,232,211,.1);border-radius:999px;background:0 0;color:rgba(244,232,211,.4);font-size:12px;font-weight:800;letter-spacing:.06em;cursor:pointer;transition:all .2s}
       .banana-card .dismiss:hover{border-color:var(--orange);color:var(--orange);background:rgba(211,155,73,.08)}
     </style>
   </head>
@@ -1354,7 +1364,15 @@
 
     <div class="banana-overlay" id="bananaOverlay">
       <div class="banana-card">
-        <img class="big-banana" src="attachments/velvet-underground-banana.jpg" alt="The Velvet Underground & Nico" />
+        <div class="peel-container" id="peelContainer">
+          <div class="peel-layer" id="peelLayer">
+            <img src="attachments/vu-banana-nobg.png" alt="Yellow banana (peel me)" />
+            <span class="peel-hint">◀ PEEL SLOWLY AND SEE</span>
+          </div>
+          <div class="peel-base">
+            <img src="attachments/vu-peeled-nobg.png" alt="Pink banana revealed" />
+          </div>
+        </div>
         <h2>The Velvet Underground & Nico</h2>
         <p>"I'm waiting for my man…"<br/>Andy Warhol, 1967</p>
         <button class="dismiss" id="bananaDismiss" type="button">peel it away</button>
@@ -3985,10 +4003,33 @@
       const bananaTrigger = document.getElementById("bananaTrigger");
       const bananaOverlay = document.getElementById("bananaOverlay");
       const bananaDismiss = document.getElementById("bananaDismiss");
+      const peelContainer = document.getElementById("peelContainer");
+      const peelLayer = document.getElementById("peelLayer");
+      let peeled = false;
+
+      function resetPeel() {
+        peeled = false;
+        peelLayer?.classList.remove("peeled");
+      }
+
+      function openBanana() {
+        resetPeel();
+        bananaOverlay.classList.add("show");
+      }
+
+      function closeBanana() {
+        bananaOverlay.classList.remove("show");
+        setTimeout(resetPeel, 600);
+      }
+
       if (bananaTrigger && bananaOverlay) {
-        bananaTrigger.addEventListener("click", () => bananaOverlay.classList.add("show"));
-        bananaDismiss?.addEventListener("click", () => bananaOverlay.classList.remove("show"));
-        bananaOverlay.addEventListener("click", e => { if (e.target === bananaOverlay) bananaOverlay.classList.remove("show"); });
+        bananaTrigger.addEventListener("click", openBanana);
+        bananaDismiss?.addEventListener("click", closeBanana);
+        bananaOverlay.addEventListener("click", e => { if (e.target === bananaOverlay) closeBanana(); });
+        peelContainer?.addEventListener("click", () => {
+          if (!peeled) { peeled = true; peelLayer.classList.add("peeled"); }
+          else { resetPeel(); }
+        });
       }
     </script>
   </body>
