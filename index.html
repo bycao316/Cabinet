@@ -1289,6 +1289,58 @@
         .archive-title{align-items:start}.archive-average{display:none}.topbar .search{flex-basis:100%}.topbar .control{flex:1 1 44%}.topbar .control select{width:100%;min-width:0}.topbar .primary-button{flex:1 1 100%}.gallery{grid-template-columns:repeat(2,minmax(0,1fr));gap:24px 12px}.gallery.list{grid-template-columns:1fr}.detail-head h2{font-size:31px}.radar-card{padding:14px}.radar-chart{min-height:330px}.album-view-scoreline{align-items:stretch}.album-view-actions{justify-content:stretch}.album-view-actions>*{flex:1}
       }
 
+      /* ── New Order floral sleeve Easter egg ── */
+      .flower-easter{position:fixed;z-index:12;top:clamp(18px,2.7vw,44px);right:clamp(18px,3vw,58px);pointer-events:none}
+      .flower-trigger{display:grid;place-items:center;width:clamp(104px,11vw,172px);aspect-ratio:1;padding:0;border:0;background:transparent;cursor:pointer;pointer-events:auto;filter:saturate(.58);opacity:.19;transition:transform .22s ease,opacity .22s ease,filter .22s ease}
+      .flower-trigger img{display:block;width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 10px 16px rgba(0,0,0,.18))}
+      .flower-trigger:hover,.flower-trigger:focus-visible{transform:translateY(-3px) rotate(1.5deg);opacity:.65;filter:saturate(.82)}
+      .flower-trigger:focus-visible{outline:1px solid rgba(242,235,221,.58);outline-offset:5px;border-radius:12px}
+      .flower-overlay{position:fixed;inset:0;z-index:9998;display:none;place-items:center;padding:22px;background:rgba(6,6,5,.78);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+      .flower-overlay.show{display:grid;animation:flowerEnter .22s ease-out}
+      .flower-card{position:relative;width:min(620px,100%);min-height:360px;display:grid;grid-template-columns:minmax(180px,.82fr) minmax(0,1fr);align-items:center;gap:10px;padding:34px 36px 30px;border:1px solid rgba(242,235,221,.11);border-radius:14px;background:radial-gradient(circle at 12% 10%,rgba(122,44,47,.28),transparent 14rem),#171513;box-shadow:0 28px 90px rgba(0,0,0,.62)}
+      .flower-close{position:absolute;top:13px;right:13px;width:38px;height:38px;border:1px solid rgba(242,235,221,.14);border-radius:9px;background:rgba(255,255,255,.035);color:var(--text);cursor:pointer;font-size:21px;line-height:1}
+      .flower-close:hover,.flower-close:focus-visible{border-color:var(--line-bright);background:rgba(211,155,73,.12)}
+      .flower-art{align-self:stretch;display:grid;place-items:center;margin:0;padding:8px 0}
+      .flower-art img{width:min(100%,280px);max-height:290px;object-fit:contain;filter:drop-shadow(0 15px 22px rgba(0,0,0,.3))}
+      .flower-copy{display:grid;gap:12px;padding:12px 0}
+      .flower-edition{color:var(--orange);font-size:11px;font-weight:900;letter-spacing:.14em}
+      .flower-copy h2{font-size:clamp(27px,4vw,42px);line-height:1.04;letter-spacing:-.03em}
+      .flower-meta{color:rgba(242,236,226,.68);font-weight:800}
+      .flower-description{color:var(--muted);font-size:14px;line-height:1.8}
+      .flower-note{margin-top:4px;color:rgba(242,236,226,.42);font-size:12px;letter-spacing:.05em}
+      @keyframes flowerEnter{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+      @media(max-width:760px){.flower-easter{top:74px;right:10px}.flower-trigger{width:88px;opacity:.17}.flower-card{grid-template-columns:1fr;gap:0;padding:34px 26px 26px;text-align:center}.flower-art{height:190px;padding:0}.flower-art img{max-height:205px;width:205px}.flower-copy{padding:4px 0 0}.flower-description{line-height:1.7}}
+      @media(prefers-reduced-motion:reduce){.flower-trigger,.flower-overlay.show{animation:none;transition:none}}
+
+      /* ── New Order floral sleeve Easter egg ── */
+      (() => {
+        const trigger=document.getElementById("flowerTrigger");
+        const overlay=document.getElementById("flowerOverlay");
+        const close=document.getElementById("flowerClose");
+        let previousFocus=null,previousOverflow="";
+        function openFlower(){
+          previousFocus=document.activeElement;previousOverflow=document.body.style.overflow;
+          overlay.classList.add("show");overlay.setAttribute("aria-hidden","false");
+          document.body.style.overflow="hidden";close.focus();
+        }
+        function closeFlower(){
+          if(!overlay.classList.contains("show"))return;
+          overlay.classList.remove("show");overlay.setAttribute("aria-hidden","true");
+          document.body.style.overflow=previousOverflow;previousFocus?.focus();
+        }
+        trigger.addEventListener("click",openFlower);
+        close.addEventListener("click",closeFlower);
+        overlay.addEventListener("click",event=>{if(event.target===overlay)closeFlower();});
+        document.addEventListener("keydown",event=>{
+          if(!overlay.classList.contains("show"))return;
+          if(event.key==="Escape"){event.preventDefault();closeFlower();}
+          if(event.key==="Tab"){
+            const focusable=[close],index=focusable.indexOf(document.activeElement);
+            event.preventDefault();focusable[(index+(event.shiftKey?-1:1)+focusable.length)%focusable.length].focus();
+          }
+        },true);
+      })();
+
       /* ── Velvet Underground Banana Easter Egg ── */
       .banana-easter{margin-top:auto;padding:6px 8px 0;display:flex;justify-content:flex-end}
       .banana-trigger{position:relative;display:block;width:44px;height:44px;padding:0;overflow:hidden;border:0;border-radius:0;background:transparent;cursor:pointer;isolation:isolate}
@@ -1509,6 +1561,25 @@
         </div>
       </div>
     </section>
+
+    <div class="flower-easter">
+      <button class="flower-trigger" id="flowerTrigger" type="button" aria-label="打开一张隐藏专辑的介绍">
+        <img src="attachments/new-order-flowers-transparent-v1.webp" alt="" />
+      </button>
+    </div>
+    <div class="flower-overlay" id="flowerOverlay" role="dialog" aria-modal="true" aria-labelledby="flowerTitle" aria-hidden="true">
+      <article class="flower-card">
+        <button class="flower-close" id="flowerClose" type="button" aria-label="关闭彩蛋">×</button>
+        <figure class="flower-art"><img src="attachments/new-order-flowers-transparent-v1.webp" alt="" /></figure>
+        <div class="flower-copy">
+          <span class="flower-edition">CABINET · HIDDEN SLEEVE / 1983</span>
+          <h2 id="flowerTitle">Power, Corruption &amp; Lies</h2>
+          <p class="flower-meta">New Order · 1983</p>
+          <p class="flower-description">New Order 的第二张录音室专辑；“Age of Consent”和“Your Silent Face”都在这里。右上角这束花，是封套里留给你的暗号。</p>
+          <p class="flower-note">点击空白处，或按 Esc 返回唱片架。</p>
+        </div>
+      </article>
+    </div>
 
     <div class="banana-overlay" id="bananaOverlay" role="dialog" aria-modal="true" aria-labelledby="bananaTitle" aria-hidden="true">
       <div class="banana-card">
