@@ -1402,6 +1402,27 @@
       .radar-tabs{padding:4px;border-radius:10px;background:rgba(0,0,0,.16)}
       .radar-tabs button{border-radius:7px;font-weight:750}
       .ranking-toolbar-actions .ghost-button,.ranking-toolbar-actions .primary-button{min-height:40px;padding:0 13px}
+
+      /* Personal record / public gallery modes */
+      .mode-switch{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:5px;border:1px solid var(--line);border-radius:10px;background:rgba(0,0,0,.16)}
+      .mode-switch button{min-height:34px;border:0;border-radius:7px;background:transparent;color:var(--muted);font-size:12px;font-weight:850;cursor:pointer}
+      .mode-switch button.active{background:rgba(211,155,73,.18);color:var(--text)}
+      .mode-note{margin:8px 2px 0;color:var(--soft);font-size:12px;line-height:1.55}
+      .data-settings{margin-top:10px;border-top:1px solid var(--line);padding-top:10px}
+      .data-settings summary{cursor:pointer;color:var(--muted);font-size:13px}
+      .data-settings p{margin:9px 0;color:var(--soft);font-size:12px;line-height:1.6}
+      .data-settings .tool-button{margin-top:7px;width:100%}
+      .app.gallery-mode .personal-only{display:none!important}
+      .app.gallery-mode .archive-title>div>p::after{content:" · PUBLIC GALLERY";color:var(--orange)}
+      .app.gallery-mode .view-favorite-toggle{display:none!important}
+      .app.gallery-mode #rankingCreate,.app.gallery-mode #rankingEditor,.app.gallery-mode .ranking-toolbar-actions,.app.gallery-mode .ranking-shelf-actions,.app.gallery-mode #tournamentPanel{display:none!important}
+      .cover-note{display:block;margin-top:4px;font-size:11px;line-height:1.35;color:var(--soft)}
+      .poster-fallback{justify-content:end;background:radial-gradient(circle at 68% 18%,rgba(211,155,73,.22),transparent 34%),#191713}
+      .poster-fallback::before{content:"";position:absolute;inset:16% 16% auto auto;width:36%;aspect-ratio:1;border:1px solid rgba(242,236,226,.16);border-radius:50%;box-shadow:inset 0 0 0 8px rgba(242,236,226,.035),inset 0 0 0 23px rgba(242,236,226,.025)}
+      .archive-head .topbar{padding:12px 16px;gap:9px;background:rgba(0,0,0,.06)}
+      .archive-head .topbar .search{min-width:min(100%,260px)}
+      @media(max-width:980px){.mode-switch{max-width:360px}.archive-head .topbar{padding:12px}.archive-head .topbar .search{min-width:0}.gallery-wrap{padding:14px}.gallery{gap:20px 12px}}
+
     </style>
   </head>
   <body>
@@ -1412,6 +1433,11 @@
             <div class="vinyl-mark" aria-hidden="true"><span></span></div>
             <small>CABINET / ALBUM ARCHIVE</small>
             <h1>唱片柜</h1>
+            <div class="mode-switch" aria-label="浏览模式">
+              <button id="personalModeButton" type="button">我的记录</button>
+              <button id="galleryModeButton" type="button">展柜浏览</button>
+            </div>
+            <p class="mode-note" id="modeNote">只保存在这台设备里。</p>
           </section>
 
           <nav aria-label="专辑收藏导航">
@@ -1419,20 +1445,19 @@
             <div class="category-list" id="categoryList"></div>
           </nav>
 
-          <section class="sidebar-data">
-            <div class="section-title">资料</div>
+          <section class="sidebar-data personal-only">
+            <div class="section-title">数据</div>
             <div class="tool-list">
-              <button class="tool-button" id="exportButton" type="button">
-                <span>导出备份</span>
-              </button>
-              <button class="tool-button" id="importButton" type="button">
-                <span>导入备份</span>
-              </button>
-              <button class="tool-button" id="resetButton" type="button">
-                <span>设置与清空</span>
-              </button>
+              <button class="tool-button" id="exportButton" type="button"><span>导出备份</span></button>
+              <button class="tool-button" id="importButton" type="button"><span>导入备份</span></button>
               <input class="file-input" id="fileInput" type="file" accept="application/json" />
             </div>
+            <details class="data-settings">
+              <summary>数据设置</summary>
+              <button class="tool-button" id="exportPublicButton" type="button"><span>导出为展柜数据</span></button>
+              <p>下载后替换仓库内 <code>data/public-collection.json</code>，重新部署即可更新公开展柜。</p>
+              <button class="tool-button" id="resetButton" type="button"><span>清空本机数据</span></button>
+            </details>
           </section>
 
           <div class="banana-easter"><button class="banana-trigger" id="bananaTrigger" type="button" aria-label="打开香蕉剥皮彩蛋"><canvas id="bananaIcon" width="144" height="144" aria-hidden="true"></canvas></button></div>
@@ -1518,15 +1543,8 @@
           </form>
           <div class="library-message" id="libraryMessage">输入专辑名或艺人名开始搜索。</div>
           <div class="library-results" id="libraryResults"></div>
-          <details class="api-settings" hidden>
-            <summary>电影与游戏资料库设置（只需一次）</summary>
-            <div class="api-key-grid">
-              <label>TMDB API Key（电影）<input id="tmdbKey" type="password" autocomplete="off" placeholder="免费申请的 API Key" /><a href="https://www.themoviedb.org/settings/api" target="_blank" rel="noreferrer">申请 TMDB Key</a></label>
-              <label>RAWG API Key（游戏）<input id="rawgKey" type="password" autocomplete="off" placeholder="免费申请的 API Key" /><a href="https://rawg.io/apidocs" target="_blank" rel="noreferrer">申请 RAWG Key</a></label>
-            </div>
-          </details>
+
           <div class="library-foot">
-            <small>密钥只保存在当前浏览器，不会上传到作品柜。</small>
             <button class="ghost-button" id="manualAddButton" type="button">手动录入专辑</button>
           </div>
         </div>
@@ -1970,7 +1988,8 @@
         editingFavorite: false,
         editingRevisit: false,
         specialFilter: "all",
-        libraryBusy: false
+        libraryBusy: false,
+        mode: initialCabinetMode()
       };
 
       const el = {
@@ -1994,8 +2013,10 @@
         libraryResults: document.querySelector("#libraryResults"),
         libraryCloseButton: document.querySelector("#libraryCloseButton"),
         manualAddButton: document.querySelector("#manualAddButton"),
-        tmdbKey: document.querySelector("#tmdbKey"),
-        rawgKey: document.querySelector("#rawgKey"),
+        personalModeButton: document.querySelector("#personalModeButton"),
+        galleryModeButton: document.querySelector("#galleryModeButton"),
+        modeNote: document.querySelector("#modeNote"),
+        exportPublicButton: document.querySelector("#exportPublicButton"),
         detail: document.querySelector("#detail"),
         detailTitle: document.querySelector("#detailTitle"),
         detailSubtitle: document.querySelector("#detailSubtitle"),
@@ -2049,10 +2070,6 @@
           el.categoryField.append(option);
           el.libraryCategory.append(option.cloneNode(true));
         });
-
-      const apiSettings = loadApiSettings();
-      el.tmdbKey.value = apiSettings.tmdb || "";
-      el.rawgKey.value = apiSettings.rawg || "";
 
       function getMetrics(category, mode = radarMode) {
         return category==="专辑" ? (mode==="feelings"?emotionMetrics:metricSets["专辑"]) : (metricSets[category]||metricSets.default);
@@ -2596,6 +2613,7 @@
       }
 
       function saveItems() {
+        if (isGalleryMode()) return;
         localStorage.setItem(STORAGE_KEY, JSON.stringify(state.items));
         saveRankings();
       }
@@ -2952,7 +2970,7 @@
         poster.append(fallback);
         if (item.poster) {
           const image = document.createElement("img");
-          image.loading = "lazy";
+          image.loading = poster.closest(".detail-art") ? "eager" : "lazy";
           image.decoding = "async";
           image.referrerPolicy = "no-referrer";
           image.style.opacity = "0";
@@ -2965,7 +2983,10 @@
           };
           image.onerror = () => {
             image.remove();
-            fallback.title = "封面源暂时无法访问，可在专辑编辑中更换封面 URL";
+            fallback.title = "封面源暂时无法访问";
+            const note = document.createElement("small");
+            note.className = "cover-note"; note.textContent = "封面暂未到达";
+            fallback.append(note);
           };
           image.src = item.poster;
           poster.append(image);
@@ -2984,13 +3005,15 @@
         if (document.querySelector("#bulkRows")) renderBulkTools();
         const items = getFilteredItems();
         el.gallery.className = `gallery ${state.view}`;
-        el.resultTitle.textContent = state.specialFilter === "favorite" ? "私人最爱" : state.status === "all" ? "我的专辑" : state.status;
-        el.resultMeta.textContent = `共收藏 ${items.length} 张专辑 · ${el.sortSelect.options[el.sortSelect.selectedIndex].text}`;
+        el.resultTitle.textContent = state.specialFilter === "favorite" ? "私人最爱" : state.status === "all" ? (isGalleryMode() ? "公开展柜" : "我的专辑") : state.status;
+        el.resultMeta.textContent = isGalleryMode() ? `展柜陈列 ${items.length} 张专辑 · 只读浏览` : `共收藏 ${items.length} 张专辑 · ${el.sortSelect.options[el.sortSelect.selectedIndex].text}`;
 
         if (!items.length) {
           const empty = document.createElement("div");
           empty.className = "empty-state";
-          empty.innerHTML = "<div><div class='vinyl-mark' aria-hidden='true'><span></span></div><strong>唱片架还是空的</strong><p>放入第一张专辑，开始建立自己的私人档案。</p></div>";
+          empty.innerHTML = isGalleryMode()
+            ? "<div><div class='vinyl-mark' aria-hidden='true'><span></span></div><strong>展柜暂未布展</strong><p>将导出的 public-collection.json 放入仓库 data 文件夹并重新部署后，这里会显示公开收藏。</p></div>"
+            : "<div><div class='vinyl-mark' aria-hidden='true'><span></span></div><strong>唱片架还是空的</strong><p>放入第一张专辑，开始建立自己的私人档案。</p></div>";
           el.gallery.replaceChildren(empty);
           return;
         }
@@ -3113,6 +3136,7 @@
       }
 
       function setDetailEditMode(editing) {
+        editing = editing && !isGalleryMode();
         if (editing) resetDetailVisualState();
         const isAlbum = el.categoryField.value === "专辑";
         el.detailPanel.classList.toggle("album-detail", isAlbum);
@@ -3174,11 +3198,13 @@
         el.detailPoster.replaceChildren(createPoster({ ...item, aspectScores }));
         renderRadar({ ...item, aspectScores });
         el.detailPanel.style.setProperty?.("--album-art", item.poster ? `url(${JSON.stringify(item.poster)})` : "none");
-        el.deleteButton.style.visibility = isPersisted ? "visible" : "hidden";
-        setDetailEditMode(!(item.category === "专辑" && isPersisted));
+        el.deleteButton.style.visibility = !isGalleryMode() && isPersisted ? "visible" : "hidden";
+        el.editAlbumButton.hidden = isGalleryMode();
+        el.viewFavoriteToggle.hidden = isGalleryMode();
+        setDetailEditMode(!isGalleryMode() && !(item.category === "专辑" && isPersisted));
         el.detail.classList.add("open");
         el.detail.setAttribute("aria-hidden", "false");
-        setTimeout(() => (item.category === "专辑" && isPersisted ? el.editAlbumButton : el.titleField).focus(), 0);
+        setTimeout(() => (isGalleryMode() || (item.category === "专辑" && isPersisted) ? el.closeButton : el.titleField).focus(), 0);
       }
 
       function closeDetail() {
@@ -3228,6 +3254,7 @@
       }
 
       function upsertItem(item) {
+        if (isGalleryMode()) return;
         const index = state.items.findIndex(entry => entry.id === item.id);
         const previous=index>=0 ? state.items[index] : null;
         if(previous?.evaluationHistory && !item.evaluationHistory?.length)item.evaluationHistory=previous.evaluationHistory;
@@ -3239,7 +3266,7 @@
       }
 
       function deleteCurrentItem() {
-        if (!state.editingId) return;
+        if (isGalleryMode() || !state.editingId) return;
         if(!confirm("确定删除这张专辑？此操作无法撤销。"))return;
         state.items = state.items.filter(item => item.id !== state.editingId);
         saveItems();
@@ -3249,16 +3276,12 @@
       }
 
       function exportData() {
-        const blob = new Blob([JSON.stringify({ version: 6, items: state.items, rankings }, null, 2)], { type: "application/json" });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.href = url;
-        link.download = `album-cabinet-${new Date().toISOString().slice(0, 10)}.json`;
-        link.click();
-        URL.revokeObjectURL(url);
+        if (isGalleryMode()) return;
+        downloadJson({ version: 6, items: state.items, rankings }, `album-cabinet-${new Date().toISOString().slice(0, 10)}.json`);
       }
 
       async function importData(file) {
+        if (isGalleryMode()) return;
         const text = await file.text();
         const parsed = JSON.parse(text);
         const incoming = Array.isArray(parsed) ? parsed : parsed?.items;
@@ -3300,6 +3323,7 @@
       }
 
       function resetData() {
+        if (isGalleryMode()) return;
         if (!confirm("清空本机全部专辑档案和榜单？此操作无法撤销，请先导出备份。")) return;
         state.items = [];
         rankings = [];
@@ -3332,6 +3356,81 @@
       let rankings = loadRankings();
       let activeRanking = rankings[0]?.id || "";
       const bulkSelection = new Set();
+      const PUBLIC_COLLECTION_URL = "data/public-collection.json";
+      function initialCabinetMode() {
+        const params = new URLSearchParams(location.search);
+        return params.get("mode") === "gallery" || location.hash === "#gallery" ? "gallery" : "personal";
+      }
+      function isGalleryMode() { return state.mode === "gallery"; }
+      function publicItems(value) {
+        if (!Array.isArray(value)) return [];
+        return value.filter(item => item && typeof item === "object" && item.category === "专辑").map(item => ({
+          ...item, id: String(item.id || crypto.randomUUID()), category: "专辑",
+          title: String(item.title || "未命名专辑"), creator: String(item.creator || ""),
+          rating: Number(item.rating || 0), personalRating: personalScore(item.personalRating),
+          aspectScores: getAspectScores(item), evaluationHistory: normalizeEvaluationHistory(item.evaluationHistory),
+          tags: splitLabels(item.tags), genres: splitLabels(item.genres), languages: splitLabels(item.languages),
+          favoriteTracks: splitLabels(item.favoriteTracks), poster: String(item.poster || "")
+        }));
+      }
+      function applyCabinetModeUI() {
+        const gallery = isGalleryMode();
+        document.querySelector(".app").classList.toggle("gallery-mode", gallery);
+        el.personalModeButton.classList.toggle("active", !gallery);
+        el.galleryModeButton.classList.toggle("active", gallery);
+        el.modeNote.textContent = gallery ? "公开展柜 · 只读浏览" : "只保存在这台设备里。";
+        el.addButton.hidden = gallery;
+        el.exportButton.closest(".sidebar-data")?.classList.toggle("personal-only", true);
+        el.editAlbumButton.hidden = gallery;
+        el.viewFavoriteToggle.hidden = gallery;
+      }
+      async function setCabinetMode(mode) {
+        if (mode === "personal") {
+          state.mode = "personal";
+          state.items = loadItems();
+          rankings = loadRankings();
+          activeRanking = rankings[0]?.id || "";
+          if (location.hash === "#gallery") history.replaceState(null, "", location.pathname + location.search);
+        } else {
+          state.mode = "gallery";
+          try {
+            const response = await fetch(PUBLIC_COLLECTION_URL, { cache: "no-store" });
+            if (!response.ok) throw new Error("not found");
+            const payload = await response.json();
+            state.items = publicItems(payload?.items);
+            rankings = normalizeRankings(payload?.rankings);
+            activeRanking = rankings[0]?.id || "";
+          } catch {
+            state.items = [];
+            rankings = [];
+            activeRanking = "";
+          }
+          if (location.hash !== "#rankings" && !location.hash.startsWith("#rankings/")) history.replaceState(null, "", location.pathname + location.search + "#gallery");
+        }
+        state.search = ""; state.status = "all"; state.specialFilter = "all";
+        el.searchInput.value = ""; el.statusFilter.value = "all";
+        applyCabinetModeUI(); render(); routeRankingPage();
+      }
+      function downloadJson(data, filename) {
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url; link.download = filename; link.click();
+        URL.revokeObjectURL(url);
+      }
+      function exportPublicCollection() {
+        if (isGalleryMode()) return;
+        const items = state.items.filter(item => item.category === "专辑");
+        const ids = new Set(items.map(item => item.id));
+        const publicRankings = rankings.map(list => ({
+          ...list,
+          itemIds: list.itemIds.filter(id => ids.has(id)),
+          snapshots: (list.snapshots || []).map(snapshot => ({ ...snapshot, itemIds: snapshot.itemIds.filter(id => ids.has(id)) }))
+        }));
+        downloadJson({ version: 1, exportedAt: new Date().toISOString(), items, rankings: publicRankings }, "public-collection.json");
+        showToast("已导出展柜数据");
+      }
+
 
       function normalizeRankingSnapshots(value, limit) {
         if(!Array.isArray(value))return [];
@@ -3367,6 +3466,7 @@
       }
 
       function saveRankings() {
+        if (isGalleryMode()) return;
         const ids = new Set(state.items.map(item => item.id));
         rankings.forEach(list => { list.itemIds = list.itemIds.filter(id => ids.has(id)); });
         localStorage.setItem(RANKINGS_KEY, JSON.stringify(rankings));
@@ -4163,6 +4263,9 @@
         el.gridView.classList.remove("active");
         renderGallery();
       });
+      el.personalModeButton.addEventListener("click", () => setCabinetMode("personal"));
+      el.galleryModeButton.addEventListener("click", () => setCabinetMode("gallery"));
+      el.exportPublicButton.addEventListener("click", exportPublicCollection);
       el.addButton.addEventListener("click", openLibrarySearch);
       el.libraryCloseButton.addEventListener("click", closeLibrarySearch);
       el.librarySearch.addEventListener("click", event => {
@@ -4262,6 +4365,7 @@
         event.target.value = "";
       });
       el.resetButton.addEventListener("click", resetData);
+      window.addEventListener("hashchange", () => { if (location.hash === "#gallery") setCabinetMode("gallery"); });
       window.addEventListener("keydown", event => {
         if (event.key === "Escape") {
           closeLibrarySearch();
@@ -4341,7 +4445,9 @@
 
       initializeCollectionTools();
       initializeRankingPage();
+      applyCabinetModeUI();
       render();
+      if (isGalleryMode()) setCabinetMode("gallery");
       registerWebMcpTools();
 
       /* ── New Order floral sleeve Easter egg ── */
