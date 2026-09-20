@@ -3679,12 +3679,32 @@
             for(let i=seeds.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[seeds[i],seeds[j]]=[seeds[j],seeds[i]];}
             list.tournament={seeds,history:[]};saveRankings();renderTournament();
           });
-          const refresh=()=>{count.textContent=`已选 ${selected.size} / ${list.limit} 张`;start.disabled=selected.size<2 || selected.size>list.limit;};
+          const visibleChecks=()=>[...options.children].filter(row=>!row.hidden).map(row=>row.querySelector("input"));
+          const selectAll=collectionButton("全选",()=>{
+            const checks=visibleChecks();
+            const clear=checks.length>0 && checks.every(check=>check.checked);
+            let limited=false;
+            checks.forEach(check=>{
+              if(clear){selected.delete(check.value);check.checked=false;}
+              else if(!check.checked){
+                if(selected.size>=list.limit){limited=true;return;}
+                selected.add(check.value);check.checked=true;
+              }
+            });
+            refresh();
+            if(limited)showToast(`最多选择 ${list.limit} 张，已选到上限`);
+          });
+          const refresh=()=>{
+            count.textContent=`已选 ${selected.size} / ${list.limit} 张`;start.disabled=selected.size<2 || selected.size>list.limit;
+            const checks=visibleChecks();
+            selectAll.disabled=!checks.length;
+            selectAll.textContent=checks.length>0 && checks.every(check=>check.checked)?"取消全选":search.value.trim()?"全选搜索结果":"全选";
+          };
           const search=document.createElement("input");search.placeholder="搜索已导入专辑";search.setAttribute("aria-label","搜索参赛专辑");
-          search.oninput=()=>{for(const row of options.children)row.hidden=!row.dataset.search.includes(normalizeText(search.value));};
+          search.oninput=()=>{for(const row of options.children)row.hidden=!row.dataset.search.includes(normalizeText(search.value));refresh();};
           albums.forEach(item=>{
             const row=document.createElement("label");row.className="bulk-entry";row.dataset.search=normalizeText(`${item.title} ${item.creator}`);
-            const check=document.createElement("input");check.type="checkbox";check.checked=selected.has(item.id);
+            const check=document.createElement("input");check.type="checkbox";check.value=item.id;check.checked=selected.has(item.id);
             check.onchange=()=>{
               if(check.checked && selected.size>=list.limit){check.checked=false;showToast(`最多选择 ${list.limit} 张`);return;}
               check.checked?selected.add(item.id):selected.delete(item.id);refresh();
@@ -3692,7 +3712,8 @@
             row.append(check,document.createTextNode(`${item.title} · ${item.creator || "未知艺人"}`));options.append(row);
           });
           if(!albums.length)host.append(makeText("p","唱片柜还没有专辑，先搜索导入几张再来比赛。"));
-          refresh();host.append(search,count,options,start);return;
+          const selectionTools=document.createElement("div");selectionTools.className="collection-row";selectionTools.append(selectAll,count);
+          refresh();host.append(search,selectionTools,options,start);return;
         }
         const tournament=list.tournament;
         const missing=tournament.seeds.some(id=>!state.items.some(item=>item.id===id));
